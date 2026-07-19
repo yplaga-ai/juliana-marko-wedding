@@ -426,6 +426,16 @@
   }
   btn.addEventListener('click', tryUnlock);
   pw.addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
+
+  /* ---- Deep-link: /photos (from the QR code) jumps to the uploader ---- */
+  if (/^\/photos\/?$/i.test(location.pathname)) {
+    const goToPhotos = () => {
+      const el = document.getElementById('photos');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    if (document.readyState === 'complete') goToPhotos();
+    else window.addEventListener('load', goToPhotos);
+  }
 </script>
 </body>
 </html>
