@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/album", "destination": "/album.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
