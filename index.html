@@ -161,6 +161,21 @@
 
   .lock{font-size:2rem;color:var(--rust);}
 
+  /* ---------- HENS ITINERARY ---------- */
+  .itin{max-width:600px;margin:6px auto 0;text-align:left;}
+  .itin-day{margin:8px 0 26px;}
+  .itin-day h4{font-family:"Sacramento",cursive;font-weight:400;font-size:2.1rem;color:var(--rust);margin:0;text-align:center;line-height:1.1;}
+  .itin-day .dm{text-align:center;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);margin:2px 0 14px;}
+  .itin-row{display:flex;gap:16px;padding:10px 2px;border-bottom:1px dashed rgba(201,123,63,.28);}
+  .itin-row:last-child{border-bottom:0;}
+  .itin-time{flex:0 0 84px;color:var(--rust);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;padding-top:3px;}
+  .itin-act{flex:1;font-size:1rem;}
+  .itin-act .note{display:block;font-size:.82rem;color:var(--ink-soft);margin-top:2px;}
+  .tba{font-style:italic;color:var(--sage-deep);}
+  .itin-stay{max-width:600px;margin:0 auto 6px;text-align:center;}
+  .itin-stay a{color:var(--rust);text-decoration:none;border-bottom:1px solid rgba(201,106,43,.4);}
+  .itin-stay a:hover{color:var(--rust-deep);}
+
   /* ---------- RSVP FORMS (Kitchen Tea + Hens) ---------- */
   .rsvp-form{max-width:340px;margin:6px auto 0;text-align:left;}
   .rsvp-form label{display:block;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust);margin:14px 0 5px;}
@@ -251,7 +266,7 @@
   <a href="#photos">Photos</a>
   <a href="#wishes">Well Wishes</a>
   <a href="#kitchen">Kitchen Tea</a>
-  <a href="#hens">Hens</a>
+  <a href="/hens">Hens</a>
   <a href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
 </nav>
 
@@ -422,59 +437,6 @@
 
 <hr class="rule" />
 
-<!-- HENS -->
-<section class="sec" id="hens">
-  <span class="floral fl-bl bg-f1"></span>
-  <span class="floral fl-br bg-f1"></span>
-  <div class="wrap">
-    <h2 class="flourish">Hens</h2>
-    <p class="sub caps">shhh &mdash; girls only</p>
-
-    <div class="card gate" id="gate">
-      <div class="lock">&#128274;</div>
-      <p style="font-size:.9rem;color:var(--ink-soft)">Enter the secret word to reveal the plans.</p>
-      <input type="password" id="hensPw" placeholder="Secret word" autocomplete="off" />
-      <button id="hensBtn">Unlock</button>
-      <div class="err" id="hensErr"></div>
-    </div>
-
-    <div class="card secret" id="hensSecret" style="margin-top:22px;text-align:center">
-      <div style="font-size:1.6rem">&#127864;</div>
-      <h3 class="flourish" style="font-size:2rem;margin:.2rem 0">You're in, gorgeous!</h3>
-      <div style="margin:22px 0;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">When</div>
-        <p style="margin:.2rem 0 0">Saturday, 3 October 2026 &nbsp;&bull;&nbsp; from 2:00 pm</p>
-      </div>
-      <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
-      <div style="margin:22px 0;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">The Vibe</div>
-        <p style="margin:.2rem 0 0">Cocktails, dancing &amp; surprises. Dress code: glam &amp; comfy shoes.</p>
-      </div>
-      <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
-      <div style="margin:22px 0 4px;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">Secret Details</div>
-        <p style="margin:.2rem 0 0;font-size:.9rem">Full itinerary, what to bring &amp; the kitty go here &mdash; hidden from prying eyes.</p>
-      </div>
-      <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
-      <div style="margin:22px 0 4px;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">RSVP &amp; Booking</div>
-        <p style="margin:.2rem 0 10px;font-size:.85rem;color:var(--ink-soft)">Let us know you're coming &mdash; and drop any booking details below.</p>
-        <form class="rsvp-form" data-event="hens">
-          <label>Name</label>
-          <input type="text" name="name" autocomplete="name" required />
-          <label>Email</label>
-          <input type="email" name="email" autocomplete="email" required />
-          <label>Booking details / notes</label>
-          <textarea name="notes" placeholder="Dietary needs, accommodation, questions, anything for the kitty…"></textarea>
-          <button type="submit">Send RSVP</button>
-          <p class="rsvp-msg"></p>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr class="rule" />
 
 <footer>
   <span class="floral fl-bl lg bg-f3"></span>
@@ -531,23 +493,6 @@
       .catch(err => { badge.textContent = '⚠'; cell.classList.add('err'); cell.title = err.message; failed++; })
       .finally(() => { inFlight--; renderStatus(); });
   }
-
-  /* ---- Hens password gate (client-side, placeholder) ---- */
-  const PW = "bubbly";
-  const btn = document.getElementById('hensBtn');
-  const pw = document.getElementById('hensPw');
-  const err = document.getElementById('hensErr');
-  function tryUnlock(){
-    if(pw.value.trim().toLowerCase() === PW){
-      document.getElementById('gate').style.display = 'none';
-      document.getElementById('hensSecret').classList.add('reveal');
-    } else {
-      err.textContent = "That's not it — try again, love.";
-      pw.value = "";
-    }
-  }
-  btn.addEventListener('click', tryUnlock);
-  pw.addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
 
   /* ---- RSVP forms (Kitchen Tea + Hens) → Cloudflare Worker ---- */
   document.querySelectorAll('.rsvp-form').forEach(function(form){
