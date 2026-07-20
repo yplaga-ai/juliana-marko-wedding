@@ -33,6 +33,11 @@
   .count{text-transform:uppercase;letter-spacing:.16em;font-size:.8rem;color:var(--ink-soft);}
   .refresh{cursor:pointer;border:1px solid var(--rust);color:var(--rust);background:none;border-radius:3px;padding:.4rem 1rem;text-transform:uppercase;letter-spacing:.16em;font-size:.7rem;}
   .refresh:hover{background:var(--rust);color:#fff;}
+  .bar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .btn-primary{cursor:pointer;border:1px solid var(--rust);background:var(--rust);color:#fff;border-radius:3px;padding:.4rem 1rem;text-transform:uppercase;letter-spacing:.14em;font-size:.7rem;}
+  .btn-primary:hover{background:var(--rust-deep);}
+  .btn-primary:disabled{opacity:.6;cursor:default;}
+  .dlprogress{text-align:right;font-size:.82rem;color:var(--sage-deep);min-height:1.1em;margin:-6px 0 16px;font-style:italic;}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
   .grid a,.grid .vwrap{position:relative;display:block;border-radius:6px;overflow:hidden;background:#f0eadd;aspect-ratio:1;border:1px solid rgba(0,0,0,.05);}
   .grid img,.grid video{width:100%;height:100%;object-fit:cover;display:block;}
@@ -54,6 +59,7 @@
   .wish-card .dl{display:inline-block;margin-top:8px;font-size:.72rem;letter-spacing:.06em;color:var(--sage-deep);text-decoration:none;}
   .wish-card .dl:hover{text-decoration:underline;}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 <header>
@@ -75,8 +81,12 @@
 <div id="gallery" class="wrap hidden">
   <div class="bar">
     <div class="count" id="count"></div>
-    <button class="refresh" id="refresh">Refresh</button>
+    <div class="bar-actions">
+      <button class="btn-primary" id="downloadAll">&#11015; Download everything</button>
+      <button class="refresh" id="refresh">Refresh</button>
+    </div>
   </div>
+  <div class="dlprogress" id="dlprogress"></div>
 
   <section id="wishesSec" class="wishes-sec hidden">
     <h2 class="sec-h">Well Wishes <span class="sec-n" id="wishesCount"></span></h2>
@@ -93,6 +103,7 @@
 <script>
   const WORKER = "https://juliana-marko-photos.xanivarcloud.workers.dev";
   let PW = "";
+  let ALL_PHOTOS = [], ALL_WISHES = [];
   const $ = id => document.getElementById(id);
   const isVideo = k => /\.(mp4|mov|webm|m4v|avi|3gp)$/i.test(k);
 
@@ -116,6 +127,7 @@
   function fmtDate(ts){ const d=new Date(ts); if(isNaN(d)) return ""; try{ return d.toLocaleString('en-AU',{timeZone:'Australia/Melbourne',dateStyle:'medium',timeStyle:'short'}); }catch(e){ return d.toLocaleString(); } }
 
   function renderWishes(items){
+    ALL_WISHES = items || [];
     const sec = $("wishesSec"), list = $("wishesList");
     $("wishesCount").textContent = items.length ? ("(" + items.length + ")") : "";
     list.innerHTML = "";
@@ -147,6 +159,7 @@
   function fileUrl(key){ return WORKER + "/file/" + key + "?pw=" + encodeURIComponent(PW); }
 
   function render(items){
+    ALL_PHOTOS = items || [];
     $("login").classList.add("hidden");
     $("gallery").classList.remove("hidden");
     $("count").textContent = items.length + (items.length === 1 ? " photo" : " photos");
@@ -185,9 +198,72 @@
     finally{ $("go").disabled = false; $("go").textContent = "View the album"; }
   }
 
+  function sanitizeName(s){ return (s||"").replace(/[^\w.\- ]/g,"_").replace(/\s+/g," ").trim().slice(0,60); }
+  function baseName(key){ return (key||"").split("/").pop().replace(/^\d+-[a-z0-9]+-/i, ""); }
+  function extFromType(t, key){
+    t = t || "";
+    if(/mp4/.test(t)) return "mp4"; if(/webm/.test(t)) return "webm"; if(/quicktime|mov/.test(t)) return "mov";
+    if(/jpeg|jpg/.test(t)) return "jpg"; if(/png/.test(t)) return "png"; if(/gif/.test(t)) return "gif";
+    const m = (key||"").match(/\.([a-z0-9]{2,4})$/i); return m ? m[1].toLowerCase() : "dat";
+  }
+
+  async function downloadAll(){
+    const btn = $("downloadAll"), prog = $("dlprogress");
+    if(typeof JSZip === "undefined"){ prog.textContent = "Download tool didn't load — please refresh and try again."; return; }
+    const photos = ALL_PHOTOS || [], wishes = ALL_WISHES || [];
+    const withMedia = wishes.filter(w => w.mediaKey);
+    const total = photos.length + withMedia.length;
+    if(total === 0 && !wishes.length){ prog.textContent = "Nothing to download yet — check back once guests have shared."; return; }
+    btn.disabled = true; const label = btn.innerHTML; btn.textContent = "Preparing…";
+    const zip = new JSZip();
+    const pf = zip.folder("photos-and-videos");
+    const wf = zip.folder("well-wishes");
+    let done = 0;
+    const bump = () => { prog.textContent = "Gathering… " + Math.min(done, total) + " / " + total + " files"; };
+
+    if(wishes.length){
+      let txt = "Well Wishes for Juliana & Marko\r\n================================\r\n\r\n";
+      wishes.forEach((w, i) => {
+        txt += (i+1) + ". " + (w.name || "A guest") + "  (" + fmtDate(w.ts) + ")\r\n";
+        if(w.message) txt += w.message + "\r\n";
+        if(w.mediaKey) txt += "[video/photo attached — see the well-wishes folder]\r\n";
+        txt += "\r\n";
+      });
+      wf.file("messages.txt", "﻿" + txt);
+    }
+
+    try {
+      bump();
+      for(let i=0;i<photos.length;i++){
+        const blob = await fetch(fileUrl(photos[i].key)).then(r=>r.blob());
+        const nm = String(i+1).padStart(3,"0") + "-" + (baseName(photos[i].key) || ("file-"+(i+1)));
+        pf.file(nm, blob); done++; bump();
+      }
+      for(let i=0;i<withMedia.length;i++){
+        const w = withMedia[i];
+        const blob = await fetch(fileUrl(w.mediaKey)).then(r=>r.blob());
+        const nm = String(i+1).padStart(2,"0") + "-" + (sanitizeName(w.name) || ("wish-"+(i+1))) + "." + extFromType(w.mediaType, w.mediaKey);
+        wf.file(nm, blob); done++; bump();
+      }
+      prog.textContent = "Zipping it all up…";
+      const out = await zip.generateAsync({ type:"blob" }, (meta) => { prog.textContent = "Zipping it all up… " + Math.round(meta.percent) + "%"; });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(out);
+      a.download = "juliana-marko-album.zip";
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+      prog.textContent = "Done! Your download should be starting 🤍";
+    } catch(e){
+      prog.textContent = "Something interrupted the download — please try again.";
+    } finally {
+      btn.disabled = false; btn.innerHTML = label;
+    }
+  }
+
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
   $("refresh").addEventListener("click", () => loadAlbum().catch(e => alert(e.message)));
+  $("downloadAll").addEventListener("click", downloadAll);
 </script>
 </body>
 </html>
