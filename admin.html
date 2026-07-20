@@ -50,6 +50,19 @@
   a.email:hover{text-decoration:underline;}
   .empty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
   .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
+
+  /* Hens gallery management */
+  .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+  .acell{position:relative;border-radius:8px;overflow:hidden;background:#eee6d8;aspect-ratio:1;}
+  .acell img,.acell video{width:100%;height:100%;object-fit:cover;display:block;}
+  .acell .open{position:absolute;inset:0;cursor:zoom-in;}
+  .acell .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.4rem;text-shadow:0 1px 5px rgba(0,0,0,.55);pointer-events:none;}
+  .adel{position:absolute;right:6px;bottom:6px;background:rgba(181,72,31,.92);color:#fff;border:0;border-radius:5px;padding:.3rem .6rem;font-size:.7rem;font-weight:700;cursor:pointer;z-index:2;}
+  .adel:hover{background:#b5481f;}
+  .adel.confirm{background:#8a1f0f;}
+  .adel:disabled{opacity:.7;cursor:default;}
+  .agempty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
+  .gallery-note{font-size:.85rem;color:var(--ink-soft);margin:0 0 12px;}
 </style>
 </head>
 <body>
@@ -96,6 +109,18 @@
       </div>
       <div class="tablewrap" id="table-hens"></div>
     </section>
+
+    <section class="event" id="ev-gallery">
+      <div class="meta">
+        <div>
+          <h2>Hens Gallery</h2>
+          <span class="count" id="count-gallery"></span>
+        </div>
+        <button class="btn" id="refresh-gallery">Refresh gallery</button>
+      </div>
+      <p class="gallery-note">Everyone's uploaded photos &amp; videos from the hens. Tap an item to open it. Only you can delete here &mdash; deletes are permanent, so each needs a second click to confirm.</p>
+      <div class="agrid" id="gallery-grid"></div>
+    </section>
   </div>
 </div>
 
@@ -126,6 +151,7 @@
         ALL[ev].push(it);
       }
       renderAll();
+      loadGallery();
       $("status").textContent = "";
     } catch(e){
       if(String(e.message) === "unauthorized"){
@@ -216,15 +242,78 @@
         ALL[ev].push(it);
       }
       renderAll();
+      loadGallery();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
     $("go").disabled = false;
   }
 
+  /* ---- Hens gallery management (view + admin-only delete) ---- */
+  const HENS_TOKEN = "bubbly";
+  let HMEDIA = [];
+  function hUrl(key){ return WORKER + "/hens-file/" + key + "?pw=" + encodeURIComponent(HENS_TOKEN); }
+  function hIsVid(key){ return /\.(mp4|mov|m4v|webm|3gp|avi|mkv|qt)$/i.test(key); }
+
+  async function loadGallery(){
+    try{
+      const r = await fetch(WORKER + "/hens-list?pw=" + encodeURIComponent(HENS_TOKEN));
+      const data = await r.json();
+      HMEDIA = (data && data.items) || [];
+      renderGallery();
+    } catch(e){ $("count-gallery").textContent = "couldn't load gallery"; }
+  }
+  function galleryCount(){ $("count-gallery").textContent = HMEDIA.length + (HMEDIA.length === 1 ? " item" : " items"); }
+  function renderGallery(){
+    galleryCount();
+    const box = $("gallery-grid");
+    if(!HMEDIA.length){ box.innerHTML = '<div class="agempty">No hens photos or videos yet.</div>'; return; }
+    box.innerHTML = "";
+    for(const it of HMEDIA){
+      const key = it.key, url = hUrl(key);
+      const cell = document.createElement("div"); cell.className = "acell";
+      if(hIsVid(key)){
+        const v = document.createElement("video"); v.src = url; v.muted = true; v.preload = "metadata"; cell.appendChild(v);
+        const p = document.createElement("div"); p.className = "play"; p.textContent = "▶"; cell.appendChild(p);
+      } else {
+        const img = document.createElement("img"); img.loading = "lazy"; img.src = url; img.alt = ""; cell.appendChild(img);
+      }
+      const open = document.createElement("div"); open.className = "open"; open.title = "Open";
+      open.addEventListener("click", () => window.open(url, "_blank")); cell.appendChild(open);
+      const del = document.createElement("button"); del.className = "adel"; del.textContent = "Delete";
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if(del.classList.contains("confirm")){ doDelete(key, del, cell); }
+        else {
+          del.classList.add("confirm"); del.textContent = "Confirm?";
+          setTimeout(() => { if(del.isConnected && del.classList.contains("confirm")){ del.classList.remove("confirm"); del.textContent = "Delete"; } }, 3500);
+        }
+      });
+      cell.appendChild(del);
+      box.appendChild(cell);
+    }
+  }
+  async function doDelete(key, del, cell){
+    del.disabled = true; del.textContent = "Deleting…";
+    try{
+      const r = await fetch(WORKER + "/hens-delete", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ key: key, pw: PW }) });
+      const j = await r.json().catch(() => ({}));
+      if(r.ok && j.ok){
+        HMEDIA = HMEDIA.filter(x => x.key !== key);
+        cell.remove();
+        if(!HMEDIA.length) renderGallery(); else galleryCount();
+        $("status").textContent = "Item deleted.";
+      } else {
+        del.disabled = false; del.classList.remove("confirm"); del.textContent = "Delete";
+        $("status").textContent = (j && j.error) || "Couldn't delete that item.";
+      }
+    } catch(e){ del.disabled = false; del.textContent = "Delete"; $("status").textContent = "Couldn't delete that item."; }
+  }
+
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
-  $("refresh").addEventListener("click", load);
+  $("refresh").addEventListener("click", () => { load(); loadGallery(); });
+  $("refresh-gallery").addEventListener("click", loadGallery);
   document.querySelectorAll("[data-csv]").forEach(b => b.addEventListener("click", () => downloadCSV(b.getAttribute("data-csv"))));
 </script>
 </body>

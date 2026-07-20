@@ -105,6 +105,28 @@
   footer{text-align:center;padding:40px 22px 54px;}
   footer .script{font-size:1.7rem;}
   footer .caps{color:var(--ink-soft);margin-top:6px;}
+
+  /* Hens shared gallery */
+  .gal-upload{text-align:center;margin:18px 0 4px;}
+  .gal-add{display:inline-block;cursor:pointer;background:var(--rust);color:#fff;border-radius:6px;padding:.75rem 1.4rem;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;}
+  .gal-add:hover{background:var(--rust-deep);}
+  .gal-hint{font-size:.82rem;color:var(--ink-soft);margin-top:10px;min-height:1.1em;}
+  .gal-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:16px 0 2px;}
+  .gal-count{font-size:.8rem;color:var(--ink-soft);margin-right:auto;}
+  .gal-btn{font-family:inherit;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:.45rem .9rem;border-radius:5px;border:1px solid var(--sage);background:#fff;color:var(--ink);cursor:pointer;}
+  .gal-btn:hover{border-color:var(--rust);color:var(--rust);}
+  .gal-tip{text-align:center;font-size:.76rem;color:var(--ink-soft);margin:6px auto 14px;max-width:470px;}
+  .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px;}
+  .gal-tile{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee6d8;cursor:pointer;}
+  .gal-tile img,.gal-tile video{width:100%;height:100%;object-fit:cover;display:block;}
+  .gal-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.5rem;text-shadow:0 1px 5px rgba(0,0,0,.55);pointer-events:none;}
+  .gal-save{position:absolute;right:6px;bottom:6px;background:rgba(255,255,255,.92);color:var(--rust);border:0;border-radius:5px;padding:.32rem .6rem;font-size:.72rem;font-weight:700;cursor:pointer;}
+  .gal-save:hover{background:#fff;}
+  .gal-check{position:absolute;left:6px;top:6px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.9);border:2px solid var(--rust);color:transparent;display:none;align-items:center;justify-content:center;font-size:.74rem;font-weight:bold;}
+  .gal-grid.selectmode .gal-check{display:flex;}
+  .gal-grid.selectmode .gal-save{display:none;}
+  .gal-tile.sel .gal-check{background:var(--rust);color:#fff;}
+  .gal-empty{text-align:center;color:var(--ink-soft);font-size:.9rem;padding:18px 0;}
 </style>
 </head>
 <body>
@@ -208,6 +230,27 @@
         <p class="rsvp-msg"></p>
       </form>
 
+      <hr class="rule" />
+
+      <div class="sech">The Footage</div>
+      <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 0;max-width:470px">Everyone's photos &amp; videos from the weekend, all in one place. Add yours, and grab anyone's for your posts.</p>
+
+      <div class="gal-upload">
+        <label for="galFile" class="gal-add">&#128247;&nbsp; Add photos &amp; videos</label>
+        <input id="galFile" type="file" accept="image/*,video/*" multiple hidden />
+        <div class="gal-hint" id="galUpMsg"></div>
+      </div>
+
+      <div class="gal-bar">
+        <span class="gal-count" id="galCount"></span>
+        <button class="gal-btn" id="galSelect">Select</button>
+        <button class="gal-btn" id="galSaveSel" style="display:none">Save selected (0)</button>
+        <button class="gal-btn" id="galRefresh">Refresh</button>
+      </div>
+      <p class="gal-tip">On iPhone: tap a photo to open it, then press &amp; hold &rarr; <b>Save to Photos</b>. On Android or laptop, tap <b>Save</b>.</p>
+      <div class="gal-grid" id="galGrid"></div>
+      <div class="gal-empty" id="galEmpty" style="display:none">No footage yet &mdash; be the first to add some &#127870;</div>
+
     </div>
 
     <footer>
@@ -231,6 +274,7 @@
       secret.classList.add('reveal');
       secret.style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      galLoad();
     } else {
       err.textContent = "That's not it — try again, love.";
       pw.value = "";
@@ -262,6 +306,105 @@
       })
       .catch(() => { msg.className='rsvp-msg bad'; msg.textContent='Something went wrong — please try again.'; sbtn.disabled=false; sbtn.textContent=label; });
   });
+
+  /* ---- Hens shared gallery (everyone can view + add + download; delete is admin-only, on /admin) ---- */
+  const HENS_TOKEN = "bubbly";
+  const galGrid = document.getElementById('galGrid');
+  let GAL = [], galSelectMode = false;
+  const galSel = new Set();
+
+  function galUrl(key){ return WORKER_URL + '/hens-file/' + key + '?pw=' + encodeURIComponent(HENS_TOKEN); }
+  function isVid(key){ return /\.(mp4|mov|m4v|webm|3gp|avi|mkv|qt)$/i.test(key); }
+  function galBase(key){ const p = (key.split('/').pop() || 'file'); return p.replace(/^\d+-[a-z0-9]+-/i, '') || 'hens-media'; }
+
+  function galRender(){
+    galGrid.innerHTML = '';
+    document.getElementById('galCount').textContent = GAL.length ? (GAL.length + (GAL.length === 1 ? ' item' : ' items')) : '';
+    document.getElementById('galEmpty').style.display = GAL.length ? 'none' : 'block';
+    for(const it of GAL){
+      const key = it.key, url = galUrl(key);
+      const tile = document.createElement('div'); tile.className = 'gal-tile';
+      if(isVid(key)){
+        const v = document.createElement('video'); v.src = url; v.muted = true; v.preload = 'metadata'; v.setAttribute('playsinline','');
+        tile.appendChild(v);
+        const p = document.createElement('div'); p.className = 'gal-play'; p.textContent = '▶'; tile.appendChild(p);
+      } else {
+        const img = document.createElement('img'); img.loading = 'lazy'; img.src = url; img.alt = '';
+        tile.appendChild(img);
+      }
+      const chk = document.createElement('div'); chk.className = 'gal-check'; chk.innerHTML = '&#10003;'; tile.appendChild(chk);
+      const sv = document.createElement('button'); sv.className = 'gal-save'; sv.textContent = 'Save';
+      sv.addEventListener('click', e => { e.stopPropagation(); galSaveOne(key); });
+      tile.appendChild(sv);
+      tile.addEventListener('click', () => { if(galSelectMode){ galToggle(key, tile); } else { window.open(url, '_blank'); } });
+      galGrid.appendChild(tile);
+    }
+  }
+
+  function galToggle(key, tile){
+    if(galSel.has(key)){ galSel.delete(key); tile.classList.remove('sel'); }
+    else { galSel.add(key); tile.classList.add('sel'); }
+    document.getElementById('galSaveSel').textContent = 'Save selected (' + galSel.size + ')';
+  }
+
+  async function galSaveOne(key){
+    const url = galUrl(key);
+    try{
+      const r = await fetch(url); if(!r.ok) throw new Error('fetch');
+      const blob = await r.blob();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = galBase(key);
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    } catch(e){ window.open(url, '_blank'); }
+  }
+
+  async function galSaveSelected(){
+    const keys = GAL.filter(x => galSel.has(x.key)).map(x => x.key);
+    if(!keys.length) return;
+    for(const k of keys){ await galSaveOne(k); await new Promise(r => setTimeout(r, 700)); }
+  }
+
+  function galSetSelect(on){
+    galSelectMode = on;
+    galGrid.classList.toggle('selectmode', on);
+    document.getElementById('galSelect').textContent = on ? 'Done' : 'Select';
+    document.getElementById('galSaveSel').style.display = on ? '' : 'none';
+    if(!on){ galSel.clear(); galGrid.querySelectorAll('.gal-tile.sel').forEach(t => t.classList.remove('sel')); document.getElementById('galSaveSel').textContent = 'Save selected (0)'; }
+  }
+
+  async function galLoad(){
+    try{
+      const r = await fetch(WORKER_URL + '/hens-list?pw=' + encodeURIComponent(HENS_TOKEN));
+      const j = await r.json();
+      GAL = (j && j.items) || [];
+      galRender();
+    } catch(e){ /* leave as-is */ }
+  }
+
+  const galFile = document.getElementById('galFile');
+  galFile.addEventListener('change', async () => {
+    const files = Array.from(galFile.files || []);
+    if(!files.length) return;
+    const msg = document.getElementById('galUpMsg');
+    let ok = 0, bad = 0;
+    msg.textContent = 'Adding 0/' + files.length + '…';
+    for(const f of files){
+      const fd = new FormData(); fd.append('file', f);
+      try{
+        const r = await fetch(WORKER_URL + '/hens-upload', { method:'POST', body: fd });
+        const j = await r.json().catch(() => ({}));
+        if(j && j.ok) ok++; else bad++;
+      } catch(e){ bad++; }
+      msg.textContent = 'Adding ' + (ok + bad) + '/' + files.length + '…';
+    }
+    msg.textContent = ok + ' added' + (bad ? (', ' + bad + " didn't upload") : '') + ' 🤍';
+    galFile.value = '';
+    galLoad();
+  });
+
+  document.getElementById('galSelect').addEventListener('click', () => galSetSelect(!galSelectMode));
+  document.getElementById('galSaveSel').addEventListener('click', galSaveSelected);
+  document.getElementById('galRefresh').addEventListener('click', galLoad);
 </script>
 </body>
 </html>
