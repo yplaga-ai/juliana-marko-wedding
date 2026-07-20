@@ -179,6 +179,34 @@
   .rsvp-msg.ok{color:var(--sage-deep);}
   .rsvp-msg.bad{color:#b5481f;}
 
+  /* ---------- WELL WISHES ---------- */
+  .wish-form{max-width:400px;margin:10px auto 0;text-align:left;}
+  .wish-form .wish-label{display:block;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust);margin:16px 0 5px;}
+  .wish-form .opt{color:var(--ink-soft);letter-spacing:0;text-transform:none;font-size:.9em;}
+  .wish-form input[type=text],.wish-form textarea{
+    font-family:inherit;font-size:1rem;padding:.65rem .85rem;width:100%;box-sizing:border-box;
+    border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);
+  }
+  .wish-form textarea{min-height:90px;resize:vertical;}
+  .wish-media{margin-top:20px;padding-top:16px;border-top:1px dashed rgba(138,154,107,.5);}
+  .wish-choice{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;text-align:center;}
+  .wish-btns,.wish-stage-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .wish-mini{font-family:inherit;font-size:.78rem;padding:.5rem .85rem;border-radius:4px;cursor:pointer;border:1px solid var(--sage);background:#fff;color:var(--ink);}
+  .wish-mini:hover{background:#f3efe4;}
+  .wish-mini.ghost{border-color:rgba(0,0,0,.15);color:var(--ink-soft);}
+  .wish-mini:disabled{opacity:.55;cursor:default;}
+  .wish-stage{margin-top:14px;text-align:center;}
+  .wish-stage video{width:100%;max-width:340px;border-radius:8px;background:#000;aspect-ratio:3/4;object-fit:cover;}
+  .wish-timer{font-size:.8rem;color:var(--ink-soft);margin:8px 0;min-height:1em;font-variant-numeric:tabular-nums;}
+  .wish-attached{margin-top:16px;text-align:center;}
+  .wish-attached video,.wish-attached img{width:100%;max-width:320px;border-radius:8px;background:#000;display:block;margin:0 auto;}
+  .wish-attached .rm{display:inline-block;margin-top:8px;font-size:.75rem;color:#b5481f;cursor:pointer;text-decoration:underline;}
+  .wish-send{margin-top:22px;width:100%;padding:.75rem;border:0;border-radius:4px;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;}
+  .wish-send:hover{background:var(--rust-deep);}
+  .wish-send:disabled{opacity:.6;cursor:default;}
+  .wish-bar{height:6px;background:#eee;border-radius:3px;margin-top:12px;overflow:hidden;}
+  .wish-bar>div{height:100%;width:0;background:var(--sage);transition:width .2s;}
+
   /* ---------- FOOTER ---------- */
   footer{position:relative;overflow:hidden;text-align:center;padding:44px 0 70px;color:var(--ink-soft);}
   footer .script{font-size:2.2rem;color:var(--ink);}
@@ -221,6 +249,7 @@
   <a href="#home">Home</a>
   <a href="#plan">The Plan</a>
   <a href="#photos">Photos</a>
+  <a href="#wishes">Well Wishes</a>
   <a href="#kitchen">Kitchen Tea</a>
   <a href="#hens">Hens</a>
   <a href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
@@ -304,6 +333,53 @@
       <p style="font-size:.72rem;color:var(--ink-soft);margin-top:18px">
         Everything you share drops straight into Juliana &amp; Marko's private album.
       </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- WELL WISHES -->
+<section class="sec" id="wishes">
+  <span class="floral fl-bl bg-f3"></span>
+  <span class="floral fl-tr bg-f4"></span>
+  <div class="wrap">
+    <h2 class="flourish">Well Wishes</h2>
+    <p class="sub caps">a little message for the newlyweds</p>
+    <div class="card" style="max-width:560px;margin:0 auto;text-align:center">
+      <p style="margin-top:0">Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana &amp; Marko something to keep &mdash; write a note, record a video, or both.</p>
+
+      <div class="wish-form">
+        <label class="wish-label">Your name</label>
+        <input type="text" id="wishName" autocomplete="name" placeholder="Who's this from?" />
+
+        <label class="wish-label">Your message <span class="opt">(optional)</span></label>
+        <textarea id="wishMsg" placeholder="A few words for the happy couple&hellip;"></textarea>
+
+        <div class="wish-media">
+          <div class="wish-choice">Add a video or photo <span class="opt">(optional)</span></div>
+          <div class="wish-btns">
+            <button type="button" id="wishRecStart" class="wish-mini">&#127909; Record a video</button>
+            <button type="button" id="wishUpBtn" class="wish-mini">&#128228; Upload instead</button>
+          </div>
+          <input type="file" id="wishFile" accept="image/*,video/*" style="display:none" />
+
+          <div id="wishStage" class="wish-stage" style="display:none">
+            <video id="wishVideo" playsinline muted></video>
+            <div id="wishTimer" class="wish-timer"></div>
+            <div class="wish-stage-btns">
+              <button type="button" id="wishRecToggle" class="wish-mini">&#9679; Start</button>
+              <button type="button" id="wishCancel" class="wish-mini ghost">Cancel</button>
+            </div>
+          </div>
+
+          <div id="wishAttached" class="wish-attached" style="display:none"></div>
+        </div>
+
+        <button type="button" id="wishSend" class="wish-send">Send your wishes</button>
+        <div id="wishBar" class="wish-bar" style="display:none"><div id="wishBarFill"></div></div>
+        <p id="wishStatus" class="rsvp-msg"></p>
+      </div>
     </div>
   </div>
 </section>
@@ -498,6 +574,130 @@
         .catch(function(){ msg.className='rsvp-msg bad'; msg.textContent='Network error — please try again.'; sbtn.disabled=false; sbtn.textContent=label; });
     });
   });
+
+  /* ---- Well Wishes: record in-browser / upload / note → Cloudflare Worker ---- */
+  (function(){
+    var $ = function(id){ return document.getElementById(id); };
+    var nameEl=$('wishName'), msgEl=$('wishMsg'), fileEl=$('wishFile');
+    var recStartBtn=$('wishRecStart'), upBtn=$('wishUpBtn');
+    var stage=$('wishStage'), video=$('wishVideo'), timerEl=$('wishTimer');
+    var recToggle=$('wishRecToggle'), cancelBtn=$('wishCancel');
+    var attached=$('wishAttached'), sendBtn=$('wishSend'), statusEl=$('wishStatus');
+    var bar=$('wishBar'), barFill=$('wishBarFill');
+    if(!sendBtn) return;
+
+    var stream=null, recorder=null, chunks=[], mediaBlob=null, mediaName='', mediaMime='';
+    var timerInt=null, secs=0, MAX_SECS=180;
+    var recSupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    if(!recSupported){ recStartBtn.style.display='none'; }
+
+    function status(m, bad){ statusEl.className='rsvp-msg' + (bad?' bad':(m?' ok':'')); statusEl.textContent=m||''; }
+    function fmt(s){ var m=Math.floor(s/60), r=s%60; return m+':'+(r<10?'0':'')+r; }
+    function stopStream(){ if(stream){ stream.getTracks().forEach(function(t){ t.stop(); }); stream=null; } }
+    function pickMime(){
+      var prefs=['video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+      for(var i=0;i<prefs.length;i++){ try{ if(MediaRecorder.isTypeSupported(prefs[i])) return prefs[i]; }catch(e){} }
+      return '';
+    }
+    function resetStage(){
+      if(timerInt){ clearInterval(timerInt); timerInt=null; }
+      stopStream();
+      stage.style.display='none';
+      try{ video.srcObject=null; }catch(e){}
+      video.removeAttribute('src'); video.load && video.load();
+      video.controls=false; video.muted=true;
+      timerEl.textContent='';
+      recToggle.textContent='● Start'; recToggle.disabled=false;
+    }
+    function showAttached(){
+      attached.innerHTML='';
+      if(!mediaBlob){ attached.style.display='none'; return; }
+      var url=URL.createObjectURL(mediaBlob), node;
+      if(/^image\//.test(mediaMime)){ node=document.createElement('img'); node.src=url; }
+      else { node=document.createElement('video'); node.src=url; node.controls=true; node.playsInline=true; node.setAttribute('playsinline',''); }
+      attached.appendChild(node);
+      var rm=document.createElement('div'); rm.className='rm'; rm.textContent='Remove';
+      rm.onclick=function(){ mediaBlob=null; mediaMime=''; mediaName=''; attached.innerHTML=''; attached.style.display='none'; };
+      attached.appendChild(rm);
+      attached.style.display='block';
+    }
+
+    recStartBtn.addEventListener('click', function(){
+      status(''); mediaBlob=null; showAttached();
+      navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:true }).then(function(s){
+        stream=s; stage.style.display='block';
+        video.srcObject=stream; video.muted=true; video.controls=false;
+        var p=video.play(); if(p&&p.catch) p.catch(function(){});
+        recToggle.textContent='● Start';
+      }).catch(function(){
+        status('Couldn’t reach your camera or mic — please allow access, or use “Upload instead”.', true);
+      });
+    });
+
+    recToggle.addEventListener('click', function(){
+      if(!recorder || recorder.state==='inactive'){
+        chunks=[];
+        var mime=pickMime();
+        try{ recorder = mime ? new MediaRecorder(stream,{ mimeType:mime }) : new MediaRecorder(stream); }
+        catch(e){ try{ recorder=new MediaRecorder(stream); }catch(e2){ status('Recording isn’t supported on this browser — please use “Upload instead”.', true); return; } }
+        mediaMime = recorder.mimeType || mime || 'video/webm';
+        recorder.ondataavailable=function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+        recorder.onstop=function(){
+          mediaBlob=new Blob(chunks,{ type:mediaMime });
+          mediaName='well-wish.' + (/mp4/.test(mediaMime)?'mp4':'webm');
+          resetStage(); showAttached();
+          status('Looks lovely! Add a note if you like, then send.');
+        };
+        recorder.start();
+        secs=0; timerEl.textContent=fmt(0)+' / '+fmt(MAX_SECS);
+        timerInt=setInterval(function(){ secs++; timerEl.textContent=fmt(secs)+' / '+fmt(MAX_SECS); if(secs>=MAX_SECS){ recToggle.click(); } },1000);
+        recToggle.textContent='■ Stop';
+      } else {
+        recToggle.disabled=true;
+        if(timerInt){ clearInterval(timerInt); timerInt=null; }
+        try{ recorder.stop(); }catch(e){}
+      }
+    });
+
+    cancelBtn.addEventListener('click', function(){ if(recorder && recorder.state!=='inactive'){ try{recorder.stop();}catch(e){} } recorder=null; resetStage(); });
+
+    upBtn.addEventListener('click', function(){ resetStage(); fileEl.click(); });
+    fileEl.addEventListener('change', function(e){
+      var f=e.target.files && e.target.files[0]; e.target.value='';
+      if(!f) return;
+      if(!/^(image|video)\//.test(f.type)){ status('Please choose a photo or video.', true); return; }
+      mediaBlob=f; mediaMime=f.type; mediaName=f.name||'well-wish';
+      showAttached(); status('Added. Add a note if you like, then send.');
+    });
+
+    sendBtn.addEventListener('click', function(){
+      var name=(nameEl.value||'').trim(), message=(msgEl.value||'').trim();
+      if(!name){ status('Please add your name.', true); nameEl.focus(); return; }
+      if(!message && !mediaBlob){ status('Leave a message, a video, or a photo.', true); return; }
+      sendBtn.disabled=true; var label=sendBtn.textContent; sendBtn.textContent='Sending…'; status('');
+      var fd=new FormData();
+      fd.append('name', name); fd.append('message', message);
+      if(mediaBlob){ fd.append('file', mediaBlob, mediaName||'well-wish'); }
+      var xhr=new XMLHttpRequest();
+      xhr.open('POST', WORKER_URL+'/wish');
+      if(mediaBlob){ bar.style.display='block'; barFill.style.width='0'; }
+      xhr.upload.onprogress=function(ev){ if(ev.lengthComputable && mediaBlob){ barFill.style.width=Math.round(ev.loaded/ev.total*100)+'%'; } };
+      xhr.onload=function(){
+        bar.style.display='none';
+        var res={}; try{ res=JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status>=200 && xhr.status<300 && res.ok){
+          nameEl.value=''; msgEl.value=''; mediaBlob=null; mediaMime=''; mediaName='';
+          attached.innerHTML=''; attached.style.display='none'; sendBtn.style.display='none';
+          status('Thank you — your message is on its way to Juliana & Marko. 🤍');
+        } else {
+          status((res && res.error) || 'Something went wrong — please try again.', true);
+          sendBtn.disabled=false; sendBtn.textContent=label;
+        }
+      };
+      xhr.onerror=function(){ bar.style.display='none'; status('Network error — please try again.', true); sendBtn.disabled=false; sendBtn.textContent=label; };
+      xhr.send(fd);
+    });
+  })();
 
   /* ---- Deep-link: /photos (from the QR code) jumps to the uploader ---- */
   if (/^\/photos\/?$/i.test(location.pathname)) {

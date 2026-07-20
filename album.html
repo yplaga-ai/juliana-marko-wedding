@@ -40,6 +40,19 @@
   .empty{text-align:center;color:var(--ink-soft);padding:50px 0;font-style:italic;}
   footer{text-align:center;color:var(--ink-soft);font-size:.8rem;padding:30px 0;}
   .hidden{display:none;}
+
+  /* well wishes */
+  .sec-h{font-family:"Sacramento",cursive;font-weight:400;font-size:2.2rem;color:var(--rust);margin:24px 0 14px;text-align:center;}
+  .sec-n{font-family:"Cormorant Garamond",serif;font-size:.95rem;color:var(--ink-soft);letter-spacing:.08em;}
+  .wishes-sec{margin-bottom:26px;}
+  .wishes-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .wish-card{background:#fff;border:1px solid rgba(201,106,43,.18);border-radius:10px;padding:18px;box-shadow:0 8px 24px -18px rgba(80,60,30,.45);}
+  .wish-card .from{font-family:"Great Vibes",cursive;font-size:1.7rem;color:var(--ink);line-height:1.1;}
+  .wish-card .when{font-size:.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.1em;margin:2px 0 12px;}
+  .wish-card .msg{white-space:pre-wrap;font-size:1.02rem;line-height:1.5;color:var(--ink);margin:0 0 12px;}
+  .wish-card video,.wish-card img{width:100%;border-radius:8px;background:#000;display:block;}
+  .wish-card .dl{display:inline-block;margin-top:8px;font-size:.72rem;letter-spacing:.06em;color:var(--sage-deep);text-decoration:none;}
+  .wish-card .dl:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -64,6 +77,13 @@
     <div class="count" id="count"></div>
     <button class="refresh" id="refresh">Refresh</button>
   </div>
+
+  <section id="wishesSec" class="wishes-sec hidden">
+    <h2 class="sec-h">Well Wishes <span class="sec-n" id="wishesCount"></span></h2>
+    <div class="wishes-list" id="wishesList"></div>
+  </section>
+
+  <h2 class="sec-h" id="photosH">Photos &amp; Videos</h2>
   <div class="grid" id="grid"></div>
   <div class="empty hidden" id="empty">No photos yet — they'll appear here as guests share them.</div>
 </div>
@@ -82,6 +102,46 @@
     if(!r.ok) throw new Error("Something went wrong (" + r.status + ")");
     const data = await r.json();
     render(data.items || []);
+    try { await loadWishes(); } catch(e) { /* wishes are optional; don't block the album */ }
+  }
+
+  async function loadWishes(){
+    const r = await fetch(WORKER + "/wishes?pw=" + encodeURIComponent(PW));
+    if(!r.ok) return;
+    const data = await r.json();
+    renderWishes(data.items || []);
+  }
+
+  function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmtDate(ts){ const d=new Date(ts); if(isNaN(d)) return ""; try{ return d.toLocaleString('en-AU',{timeZone:'Australia/Melbourne',dateStyle:'medium',timeStyle:'short'}); }catch(e){ return d.toLocaleString(); } }
+
+  function renderWishes(items){
+    const sec = $("wishesSec"), list = $("wishesList");
+    $("wishesCount").textContent = items.length ? ("(" + items.length + ")") : "";
+    list.innerHTML = "";
+    if(!items.length){ sec.classList.add("hidden"); return; }
+    sec.classList.remove("hidden");
+    for(const it of items){
+      const card = document.createElement("div"); card.className = "wish-card";
+      let html = '<div class="from">' + esc(it.name || "A guest") + '</div>' +
+                 '<div class="when">' + esc(fmtDate(it.ts)) + '</div>';
+      if(it.message){ html += '<div class="msg">' + esc(it.message) + '</div>'; }
+      card.innerHTML = html;
+      if(it.mediaKey){
+        const url = fileUrl(it.mediaKey);
+        if(/^video\//.test(it.mediaType || "") || isVideo(it.mediaKey)){
+          const v = document.createElement("video"); v.src = url; v.controls = true; v.preload = "metadata"; v.setAttribute("playsinline","");
+          card.appendChild(v);
+        } else {
+          const a = document.createElement("a"); a.href = url; a.target = "_blank"; a.rel = "noopener";
+          const img = document.createElement("img"); img.loading = "lazy"; img.src = url; img.alt = "";
+          a.appendChild(img); card.appendChild(a);
+        }
+        const dl = document.createElement("a"); dl.className = "dl"; dl.href = url; dl.setAttribute("download",""); dl.target = "_blank"; dl.rel = "noopener"; dl.textContent = "Download";
+        card.appendChild(dl);
+      }
+      list.appendChild(card);
+    }
   }
 
   function fileUrl(key){ return WORKER + "/file/" + key + "?pw=" + encodeURIComponent(PW); }
