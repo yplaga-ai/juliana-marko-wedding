@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/album", "destination": "/album.html" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

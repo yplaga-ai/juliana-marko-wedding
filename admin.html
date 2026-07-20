@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Juliana &amp; Marko — Guest Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Sacramento&display=swap" rel="stylesheet" />
+<style>
+  :root{--cream:#FCF9F2;--ink:#413F3A;--ink-soft:#6f6a60;--sage:#8A9A6B;--sage-deep:#6f7f52;--rust:#C96A2B;--rust-deep:#a9531c;--rule:#c97b3f;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:"Cormorant Garamond",Georgia,serif;font-size:18px;-webkit-font-smoothing:antialiased;}
+  header{text-align:center;padding:40px 20px 6px;}
+  h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:3rem;margin:.1rem 0;color:var(--ink);}
+  .sub{text-transform:uppercase;letter-spacing:.22em;font-size:.72rem;color:var(--ink-soft);}
+  .rule{height:1px;background:var(--rule);opacity:.5;border:0;max-width:960px;margin:16px auto;}
+  .wrap{max-width:960px;margin:0 auto;padding:0 18px 70px;}
+
+  /* login */
+  .gate{max-width:400px;margin:30px auto;background:#fff;border:1px solid rgba(201,106,43,.22);border-radius:8px;padding:34px 28px;text-align:center;box-shadow:0 10px 30px -20px rgba(80,60,30,.4);}
+  .lock{font-size:2rem;}
+  .gate p{color:var(--ink-soft);font-size:.95rem;}
+  .gate input{font-family:inherit;font-size:1rem;padding:.7rem 1rem;width:100%;border:1px solid var(--sage);border-radius:4px;text-align:center;letter-spacing:.08em;margin-top:6px;}
+  .gate button{margin-top:14px;width:100%;padding:.7rem;border:0;border-radius:4px;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
+  .gate button:hover{background:var(--rust-deep);}
+  .gate button:disabled{opacity:.6;cursor:default;}
+  .err{color:#b5481f;font-size:.85rem;margin-top:10px;min-height:1.1em;}
+
+  #app{display:none;}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:6px 0 26px;}
+  .btn{font-family:inherit;font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;padding:.55rem .9rem;border-radius:4px;cursor:pointer;border:1px solid var(--sage);background:#fff;color:var(--ink);text-decoration:none;display:inline-block;}
+  .btn:hover{background:#f3efe4;}
+  .btn.primary{background:var(--rust);color:#fff;border-color:var(--rust);}
+  .btn.primary:hover{background:var(--rust-deep);}
+
+  .event{margin:0 0 40px;}
+  .event h2{font-family:"Sacramento",cursive;font-weight:400;font-size:2.3rem;color:var(--rust);margin:0 0 2px;}
+  .event .meta{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+  .count{font-size:.9rem;color:var(--ink-soft);}
+  .tablewrap{overflow-x:auto;border:1px solid rgba(0,0,0,.08);border-radius:8px;background:#fff;}
+  table{border-collapse:collapse;width:100%;font-size:.95rem;}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:top;}
+  th{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--rust);background:#faf6ee;position:sticky;top:0;}
+  tr:last-child td{border-bottom:0;}
+  td.notes{white-space:pre-wrap;color:var(--ink-soft);max-width:340px;}
+  td.when{color:var(--ink-soft);font-size:.85rem;white-space:nowrap;}
+  a.email{color:var(--sage-deep);text-decoration:none;}
+  a.email:hover{text-decoration:underline;}
+  .empty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
+  .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
+</style>
+</head>
+<body>
+<header>
+  <div class="sub">Guest Admin</div>
+  <h1>Juliana &amp; Marko</h1>
+</header>
+<hr class="rule" />
+
+<div id="login" class="gate">
+  <div class="lock">&#128274;</div>
+  <p>Enter your admin password, Juliana.</p>
+  <input type="password" id="pw" placeholder="Admin password" autocomplete="current-password" />
+  <button id="go">Enter</button>
+  <div class="err" id="err"></div>
+</div>
+
+<div id="app">
+  <div class="wrap">
+    <div class="toolbar">
+      <button class="btn primary" id="refresh">Refresh</button>
+      <a class="btn" href="/album" target="_blank" rel="noopener">Photo album &#8599;</a>
+    </div>
+    <div class="status" id="status"></div>
+
+    <section class="event" id="ev-kitchen">
+      <div class="meta">
+        <div>
+          <h2>Kitchen Tea</h2>
+          <span class="count" id="count-kitchen"></span>
+        </div>
+        <button class="btn" data-csv="kitchen">Download CSV</button>
+      </div>
+      <div class="tablewrap" id="table-kitchen"></div>
+    </section>
+
+    <section class="event" id="ev-hens">
+      <div class="meta">
+        <div>
+          <h2>Hens</h2>
+          <span class="count" id="count-hens"></span>
+        </div>
+        <button class="btn" data-csv="hens">Download CSV</button>
+      </div>
+      <div class="tablewrap" id="table-hens"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  const WORKER = "https://juliana-marko-photos.xanivarcloud.workers.dev";
+  const $ = id => document.getElementById(id);
+  let PW = "";
+  let ALL = { kitchen: [], hens: [] };
+
+  function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(ts){
+    const d = new Date(ts);
+    if(isNaN(d)) return "";
+    try { return d.toLocaleString('en-AU', { timeZone:'Australia/Melbourne', dateStyle:'medium', timeStyle:'short' }); }
+    catch(_) { return d.toLocaleString(); }
+  }
+
+  async function load(){
+    $("status").textContent = "Loading…";
+    try {
+      const r = await fetch(WORKER + "/rsvps?pw=" + encodeURIComponent(PW));
+      if(r.status === 401) throw new Error("unauthorized");
+      if(!r.ok) throw new Error("failed");
+      const data = await r.json();
+      ALL = { kitchen: [], hens: [] };
+      for(const it of (data.items || [])){
+        const ev = (it.event === "hens") ? "hens" : "kitchen";
+        ALL[ev].push(it);
+      }
+      renderAll();
+      $("status").textContent = "";
+    } catch(e){
+      if(String(e.message) === "unauthorized"){
+        // password rejected after entering app — send back to login
+        $("app").style.display = "none";
+        $("login").style.display = "block";
+        $("err").textContent = "That password isn't right — try again.";
+      } else {
+        $("status").textContent = "Couldn't load RSVPs — please refresh.";
+      }
+    }
+  }
+
+  function renderAll(){
+    renderKitchen();
+    renderHens();
+  }
+
+  function renderKitchen(){
+    const items = ALL.kitchen;
+    $("count-kitchen").textContent = items.length + (items.length === 1 ? " reply" : " replies");
+    const box = $("table-kitchen");
+    if(!items.length){ box.innerHTML = '<div class="empty">No Kitchen Tea RSVPs yet.</div>'; return; }
+    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Received</th></tr></thead><tbody>';
+    for(const it of items){
+      h += '<tr><td>' + esc(it.name) + '</td>' +
+           '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
+           '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+    }
+    box.innerHTML = h + '</tbody></table>';
+  }
+
+  function renderHens(){
+    const items = ALL.hens;
+    $("count-hens").textContent = items.length + (items.length === 1 ? " reply" : " replies");
+    const box = $("table-hens");
+    if(!items.length){ box.innerHTML = '<div class="empty">No Hens RSVPs yet.</div>'; return; }
+    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Booking details / notes</th><th>Received</th></tr></thead><tbody>';
+    for(const it of items){
+      h += '<tr><td>' + esc(it.name) + '</td>' +
+           '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
+           '<td class="notes">' + esc(it.notes || "") + '</td>' +
+           '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+    }
+    box.innerHTML = h + '</tbody></table>';
+  }
+
+  function csvCell(s){
+    s = (s==null?"":String(s));
+    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+  function downloadCSV(ev){
+    const items = ALL[ev] || [];
+    const isHens = (ev === "hens");
+    const head = isHens ? ["Name","Email","Booking details / notes","Received"] : ["Name","Email","Received"];
+    const rows = [head.map(csvCell).join(",")];
+    for(const it of items){
+      const row = isHens
+        ? [it.name, it.email, it.notes || "", fmt(it.ts)]
+        : [it.name, it.email, fmt(it.ts)];
+      rows.push(row.map(csvCell).join(","));
+    }
+    const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (isHens ? "hens" : "kitchen-tea") + "-rsvps.csv";
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  async function attempt(){
+    const val = $("pw").value.trim();
+    if(!val){ $("err").textContent = "Please enter the password."; return; }
+    $("go").disabled = true;
+    $("err").textContent = "";
+    try {
+      const r = await fetch(WORKER + "/rsvps?pw=" + encodeURIComponent(val));
+      if(r.status === 401){ $("err").textContent = "That password isn't right — try again."; $("go").disabled = false; return; }
+      if(!r.ok) throw new Error("failed");
+      PW = val;
+      $("login").style.display = "none";
+      $("app").style.display = "block";
+      const data = await r.json();
+      ALL = { kitchen: [], hens: [] };
+      for(const it of (data.items || [])){
+        const ev = (it.event === "hens") ? "hens" : "kitchen";
+        ALL[ev].push(it);
+      }
+      renderAll();
+    } catch(e){
+      $("err").textContent = "Something went wrong — please try again.";
+    }
+    $("go").disabled = false;
+  }
+
+  $("go").addEventListener("click", attempt);
+  $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
+  $("refresh").addEventListener("click", load);
+  document.querySelectorAll("[data-csv]").forEach(b => b.addEventListener("click", () => downloadCSV(b.getAttribute("data-csv"))));
+</script>
+</body>
+</html>

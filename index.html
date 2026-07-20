@@ -161,6 +161,24 @@
 
   .lock{font-size:2rem;color:var(--rust);}
 
+  /* ---------- RSVP FORMS (Kitchen Tea + Hens) ---------- */
+  .rsvp-form{max-width:340px;margin:6px auto 0;text-align:left;}
+  .rsvp-form label{display:block;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rust);margin:14px 0 5px;}
+  .rsvp-form input,.rsvp-form textarea{
+    font-family:inherit;font-size:1rem;padding:.65rem .85rem;width:100%;box-sizing:border-box;
+    border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);
+  }
+  .rsvp-form textarea{min-height:74px;resize:vertical;}
+  .rsvp-form button{
+    margin-top:18px;width:100%;padding:.7rem;border:0;border-radius:4px;cursor:pointer;
+    background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;
+  }
+  .rsvp-form button:hover{background:var(--rust-deep);}
+  .rsvp-form button:disabled{opacity:.6;cursor:default;}
+  .rsvp-msg{min-height:1.2em;margin:12px 0 0;font-size:.85rem;text-align:center;}
+  .rsvp-msg.ok{color:var(--sage-deep);}
+  .rsvp-msg.bad{color:#b5481f;}
+
   /* ---------- FOOTER ---------- */
   footer{position:relative;overflow:hidden;text-align:center;padding:44px 0 70px;color:var(--ink-soft);}
   footer .script{font-size:2.2rem;color:var(--ink);}
@@ -312,10 +330,16 @@
       </div>
       <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
       <div style="margin:22px 0 6px;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">Gift Registry</div>
-        <p style="margin:.2rem 0 0;font-size:.9rem">A little wishlist link can live here.</p>
+        <div class="caps" style="color:var(--rust);font-size:.85rem">RSVP</div>
+        <form class="rsvp-form" data-event="kitchen">
+          <label>Name</label>
+          <input type="text" name="name" autocomplete="name" required />
+          <label>Email</label>
+          <input type="email" name="email" autocomplete="email" required />
+          <button type="submit">Send RSVP</button>
+          <p class="rsvp-msg"></p>
+        </form>
       </div>
-      <a class="cta" href="#" style="margin-top:8px">RSVP for Kitchen Tea</a>
     </div>
   </div>
 </section>
@@ -354,6 +378,21 @@
       <div style="margin:22px 0 4px;">
         <div class="caps" style="color:var(--rust);font-size:.85rem">Secret Details</div>
         <p style="margin:.2rem 0 0;font-size:.9rem">Full itinerary, what to bring &amp; the kitty go here &mdash; hidden from prying eyes.</p>
+      </div>
+      <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
+      <div style="margin:22px 0 4px;">
+        <div class="caps" style="color:var(--rust);font-size:.85rem">RSVP &amp; Booking</div>
+        <p style="margin:.2rem 0 10px;font-size:.85rem;color:var(--ink-soft)">Let us know you're coming &mdash; and drop any booking details below.</p>
+        <form class="rsvp-form" data-event="hens">
+          <label>Name</label>
+          <input type="text" name="name" autocomplete="name" required />
+          <label>Email</label>
+          <input type="email" name="email" autocomplete="email" required />
+          <label>Booking details / notes</label>
+          <textarea name="notes" placeholder="Dietary needs, accommodation, questions, anything for the kitty…"></textarea>
+          <button type="submit">Send RSVP</button>
+          <p class="rsvp-msg"></p>
+        </form>
       </div>
     </div>
   </div>
@@ -433,6 +472,32 @@
   }
   btn.addEventListener('click', tryUnlock);
   pw.addEventListener('keydown', e => { if(e.key==='Enter') tryUnlock(); });
+
+  /* ---- RSVP forms (Kitchen Tea + Hens) → Cloudflare Worker ---- */
+  document.querySelectorAll('.rsvp-form').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var msg = form.querySelector('.rsvp-msg');
+      var sbtn = form.querySelector('button[type="submit"]');
+      var notesEl = form.querySelector('[name="notes"]');
+      var data = {
+        event: form.getAttribute('data-event') || 'kitchen',
+        name: (form.querySelector('[name="name"]').value || '').trim(),
+        email: (form.querySelector('[name="email"]').value || '').trim(),
+        notes: notesEl ? notesEl.value.trim() : ''
+      };
+      if(!data.name || !data.email){ msg.className='rsvp-msg bad'; msg.textContent='Please enter your name and email.'; return; }
+      var label = sbtn.textContent; sbtn.disabled = true; sbtn.textContent = 'Sending…';
+      msg.className='rsvp-msg'; msg.textContent='';
+      fetch(WORKER_URL + '/rsvp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
+        .then(function(r){ return r.json().catch(function(){return {};}).then(function(jj){ return {ok:r.ok, j:jj}; }); })
+        .then(function(res){
+          if(res.ok){ form.reset(); msg.className='rsvp-msg ok'; msg.textContent='Thank you! Your RSVP has been received.'; sbtn.style.display='none'; }
+          else { msg.className='rsvp-msg bad'; msg.textContent=(res.j && res.j.error) || 'Something went wrong — please try again.'; sbtn.disabled=false; sbtn.textContent=label; }
+        })
+        .catch(function(){ msg.className='rsvp-msg bad'; msg.textContent='Network error — please try again.'; sbtn.disabled=false; sbtn.textContent=label; });
+    });
+  });
 
   /* ---- Deep-link: /photos (from the QR code) jumps to the uploader ---- */
   if (/^\/photos\/?$/i.test(location.pathname)) {
