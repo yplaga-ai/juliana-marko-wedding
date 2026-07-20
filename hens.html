@@ -7,6 +7,7 @@
 <title>Hens · Juliana &amp; Marko</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Sacramento&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --cream:#FCF9F2;
@@ -105,6 +106,13 @@
   footer{text-align:center;padding:40px 22px 54px;}
   footer .script{font-size:1.7rem;}
   footer .caps{color:var(--ink-soft);margin-top:6px;}
+
+  /* Footage QR */
+  .qr-card{max-width:240px;margin:20px auto 6px;text-align:center;background:#fff;border:1px solid rgba(201,123,63,.28);border-radius:12px;padding:18px 18px 14px;box-shadow:0 8px 24px rgba(65,63,58,.06);}
+  .qr-box{display:flex;justify-content:center;min-height:180px;}
+  .qr-box canvas,.qr-box img{display:block;width:180px !important;height:180px !important;}
+  .qr-cap{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust);margin-top:12px;}
+  .qr-sub{font-size:.78rem;color:var(--ink-soft);margin-top:3px;}
 
   /* Hens shared gallery */
   .gal-upload{text-align:center;margin:18px 0 4px;}
@@ -235,6 +243,12 @@
       <div class="sech">The Footage</div>
       <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 0;max-width:470px">Everyone's photos &amp; videos from the weekend, all in one place. Add yours, and grab anyone's for your posts.</p>
 
+      <div class="qr-card">
+        <div id="qrBox" class="qr-box"></div>
+        <div class="qr-cap">Scan to open on your phone</div>
+        <div class="qr-sub">Point your camera here to add &amp; save photos</div>
+      </div>
+
       <div class="gal-upload">
         <label for="galFile" class="gal-add">&#128247;&nbsp; Add photos &amp; videos</label>
         <input id="galFile" type="file" accept="image/*,video/*" multiple hidden />
@@ -261,6 +275,18 @@
 
 <script>
   const WORKER_URL = "https://juliana-marko-photos.xanivarcloud.workers.dev";
+
+  /* Footage QR — links to this page so the girls can scan & open it on their phones */
+  try {
+    if (typeof QRCode !== "undefined") {
+      new QRCode(document.getElementById("qrBox"), {
+        text: "https://julianamarko.com/hens",
+        width: 180, height: 180,
+        colorDark: "#413F3A", colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+  } catch (e) {}
 
   /* Secret word gate (client-side) */
   const PW = "bubbly";
