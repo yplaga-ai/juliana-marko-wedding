@@ -92,6 +92,10 @@
     transition:all .2s;
   }
   .cta:hover{background:var(--rust);color:#fff;}
+  .cta-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px;}
+  .cta-row .cta{margin-top:0;}
+  .cta-fill{background:var(--rust);color:#fff;}
+  .cta-fill:hover{background:var(--rust-deep);color:#fff;border-color:var(--rust-deep);}
 
   /* ---------- SECTION HEADINGS ---------- */
   .sec{padding:58px 0;text-align:center;}
@@ -201,6 +205,7 @@
   <a href="#photos">Photos</a>
   <a href="#kitchen">Kitchen Tea</a>
   <a href="#hens">Hens</a>
+  <a href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
 </nav>
 
 <!-- HERO -->
@@ -213,7 +218,10 @@
     <div class="caps date">17 October 2026</div>
     <div class="place caps">Potters Receptions &nbsp;&bull;&nbsp; Warrandyte</div>
 
-    <a class="cta" href="#photos">Share &amp; Celebrate</a>
+    <div class="cta-row">
+      <a class="cta cta-fill" href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
+      <a class="cta" href="#photos">Share &amp; Celebrate</a>
+    </div>
   </div>
 </section>
 
