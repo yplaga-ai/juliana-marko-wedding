@@ -57,9 +57,10 @@
   </header>
 
   <div id="gate" class="gate" style="display:none">
-    <p>Enter your personal access code to see your plan for the day.</p>
-    <input id="code-in" type="text" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
-    <button id="code-go">View my plan</button>
+    <p>Log in to see your plan for the day.</p>
+    <input id="name-in" type="text" placeholder="Your name" autocomplete="name" spellcheck="false" style="margin-bottom:10px;text-transform:none;letter-spacing:normal;">
+    <input id="pw-in" type="password" placeholder="Your password" autocomplete="off" spellcheck="false" style="text-transform:none;letter-spacing:normal;">
+    <button id="go">View my plan</button>
     <div class="msg" id="gate-msg"></div>
   </div>
 
@@ -91,9 +92,9 @@
   function niceDate(d){ if(!d) return ""; var x=new Date(d+"T00:00:00"); if(isNaN(x)) return d;
     try{ return x.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}); }catch(e){ return d; } }
 
-  function getCode(){
-    var m = location.search.match(/[?&]code=([^&]+)/);
-    return m ? decodeURIComponent(m[1]).trim() : "";
+  function getParam(k){
+    var m = location.search.match(new RegExp("[?&]" + k + "=([^&]+)"));
+    return m ? decodeURIComponent(m[1].replace(/\+/g, " ")).trim() : "";
   }
   function showGate(msg){
     document.getElementById('content').style.display = 'none';
@@ -144,28 +145,38 @@
     }
   }
 
-  function load(code){
-    if(!code){ showGate(""); return; }
-    fetch(WORKER + "/crew?code=" + encodeURIComponent(code))
+  function login(name, pw){
+    var btn = document.getElementById('go');
+    document.getElementById('gate-msg').textContent = "";
+    btn.disabled = true; var label = btn.textContent; btn.textContent = "Checking…";
+    fetch(WORKER + "/crew", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ name:name, pw:pw }) })
       .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, status:r.status, j:j }; }); })
       .then(function(res){
+        btn.disabled = false; btn.textContent = label;
         if(res.ok && res.j && res.j.data){ render(res.j.data); }
-        else if(res.status === 404){ showGate("We couldn't find that code — please check it with the couple."); }
+        else if(res.status === 404){ showGate("That name and password didn't match — please check with the couple."); }
+        else if(res.status === 400){ showGate("Please enter your name and password."); }
         else { showGate("Something went wrong — please try again."); }
       })
-      .catch(function(){ showGate("Network error — please try again."); });
+      .catch(function(){ btn.disabled = false; btn.textContent = label; showGate("Network error — please try again."); });
   }
 
-  document.getElementById('code-go').addEventListener('click', function(){
-    var v = (document.getElementById('code-in').value || "").trim();
-    if(!v){ document.getElementById('gate-msg').textContent = "Please enter your code."; return; }
-    var url = location.pathname + "?code=" + encodeURIComponent(v);
-    history.replaceState(null, "", url);
-    load(v);
+  function submitLogin(){
+    var name = (document.getElementById('name-in').value || "").trim();
+    var pw = (document.getElementById('pw-in').value || "");
+    if(!name || !pw){ document.getElementById('gate-msg').textContent = "Please enter your name and password."; return; }
+    login(name, pw);
+  }
+  document.getElementById('go').addEventListener('click', submitLogin);
+  ['name-in','pw-in'].forEach(function(id){
+    document.getElementById(id).addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); submitLogin(); } });
   });
-  document.getElementById('code-in').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('code-go').click(); } });
 
-  load(getCode());
+  // Prefill the name from the personal link (?name=…); the password is never in the URL.
+  var preName = getParam('name');
+  if(preName){ document.getElementById('name-in').value = preName; }
+  showGate("");
+  var pf = document.getElementById(preName ? 'pw-in' : 'name-in'); if(pf) pf.focus();
 </script>
 </body>
 </html>

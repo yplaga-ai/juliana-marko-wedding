@@ -260,9 +260,9 @@
           <span class="count" id="people-count"></span>
         </div>
       </div>
-      <p class="subnote">The people helping on the day &mdash; bride, groom, coordinator, photographer, family. Names here fill the &ldquo;Who&rdquo; pickers on the run sheet and task board. Add a private note, print that person&rsquo;s pack (their schedule + tasks + notes), and &mdash; once you generate an access code &mdash; choose what they can see if you share their personal link. Saves automatically.</p>
+      <p class="subnote">The people helping on the day &mdash; bride, groom, coordinator, photographer, family. Names here fill the &ldquo;Who&rdquo; pickers on the run sheet and task board. Add a private note and print that person&rsquo;s pack (their schedule + tasks + notes). To give someone their own live view, <strong>set a password</strong> (type your own or hit Suggest, and change it anytime), tick what they&rsquo;re allowed to see, then <strong>Copy link</strong> and send them the link &mdash; tell them their password separately. They open the link and log in with their name + password. Saves automatically.</p>
       <div class="tablewrap"><table id="tbl-people">
-        <thead><tr><th style="width:150px">Name</th><th>Private note</th><th style="width:150px" class="center">Can see</th><th style="width:170px">Personal access</th><th style="width:96px"></th></tr></thead>
+        <thead><tr><th style="width:150px">Name</th><th>Private note</th><th style="width:150px" class="center">Can see</th><th style="width:180px">Password &amp; link</th><th style="width:96px"></th></tr></thead>
         <tbody id="people-body"></tbody>
       </table></div>
       <button class="btn addrow" id="people-add">+ Add a person</button>
@@ -271,7 +271,7 @@
     <section class="event" id="ev-tasks">
       <div class="meta">
         <div>
-          <h2>Task Board (WIP)</h2>
+          <h2>Task Board</h2>
           <span class="count" id="tasks-count"></span>
         </div>
         <div class="savebar" style="flex-wrap:wrap;gap:8px;">
@@ -1038,12 +1038,11 @@
   }
 
   /* ---- People & Access ---- */
-  function genCode(){ const cs = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s = ""; for(let i=0;i<8;i++){ s += cs[Math.floor(Math.random()*cs.length)]; if(i===3) s += "-"; } return s; }
+  function genPw(){ const cs = "abcdefghijkmnpqrstuvwxyz23456789"; let s = ""; for(let i=0;i<7;i++){ s += cs[Math.floor(Math.random()*cs.length)]; } return s; }
   function renderPeople(){
     const b = $("people-body"); if(!b || !WED || !Array.isArray(WED.people)) return; b.innerHTML = "";
     WED.people.forEach(p => {
       if(!p.view || typeof p.view !== "object") p.view = { run:true, tasks:true, notes:false };
-      const hasCode = !!(p.code||"").trim();
       const tr = document.createElement("tr");
       tr.innerHTML =
         '<td><input type="text" class="pp-name" value="' + esc(p.name||"") + '" placeholder="e.g. Sarah (coordinator)"></td>' +
@@ -1053,25 +1052,23 @@
           '<label><input type="checkbox" class="pv-tasks"' + (p.view.tasks !== false ? " checked" : "") + '> Their tasks</label>' +
           '<label><input type="checkbox" class="pv-notes"' + (p.view.notes ? " checked" : "") + '> Shared notes</label>' +
         '</div></td>' +
-        '<td><div class="pcode-row">' + (hasCode
-            ? ('<span class="pcode">' + esc(p.code) + '</span><button class="btn mini pp-copy">Copy link</button><button class="btn mini pp-newcode">New code</button>')
-            : '<button class="btn mini pp-gencode">Generate access code</button>') + '</div></td>' +
+        '<td><div class="pcode-row"><input type="text" class="pp-pw" value="' + esc(p.pw||"") + '" placeholder="Set a password" autocomplete="off" spellcheck="false"><div style="display:flex;gap:4px;"><button class="btn mini pp-suggest" title="Fill a random password (you can edit it)">Suggest</button><button class="btn mini pp-copy" title="Copy this person\'s login link">Copy link</button></div></div></td>' +
         '<td style="white-space:nowrap"><button class="btn mini pp-pack" title="Print this person\'s schedule + tasks + notes">Print pack</button><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const nm = tr.querySelector(".pp-name"), nt = tr.querySelector(".pp-note");
+      const nm = tr.querySelector(".pp-name"), nt = tr.querySelector(".pp-note"), pwi = tr.querySelector(".pp-pw");
       nm.addEventListener("input", () => { p.name = nm.value; wedMark(); });
       nm.addEventListener("change", refreshSchedWho);
       nt.addEventListener("input", () => { p.note = nt.value; wedMark(); });
+      pwi.addEventListener("input", () => { p.pw = pwi.value; wedMark(); });
       tr.querySelector(".pv-run").addEventListener("change", function(){ p.view.run = this.checked; wedMark(); });
       tr.querySelector(".pv-tasks").addEventListener("change", function(){ p.view.tasks = this.checked; wedMark(); });
       tr.querySelector(".pv-notes").addEventListener("change", function(){ p.view.notes = this.checked; wedMark(); });
-      const gen = tr.querySelector(".pp-gencode"); if(gen) gen.addEventListener("click", () => { p.code = genCode(); wedMark(); renderPeople(); });
-      const nc = tr.querySelector(".pp-newcode"); if(nc) nc.addEventListener("click", () => { p.code = genCode(); wedMark(); renderPeople(); });
-      const cp = tr.querySelector(".pp-copy"); if(cp) cp.addEventListener("click", function(){
-        const link = location.origin + "/crew?code=" + encodeURIComponent(p.code);
+      tr.querySelector(".pp-suggest").addEventListener("click", () => { p.pw = genPw(); pwi.value = p.pw; wedMark(); });
+      tr.querySelector(".pp-copy").addEventListener("click", function(){
+        const link = location.origin + "/crew?name=" + encodeURIComponent((p.name||"").trim());
         const btn = this;
         (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(link) : Promise.reject())
           .then(() => { btn.textContent = "Copied ✓"; setTimeout(() => btn.textContent = "Copy link", 1500); })
-          .catch(() => { prompt("Copy this personal link:", link); });
+          .catch(() => { prompt("Copy this person's login link (tell them their password separately):", link); });
       });
       tr.querySelector(".pp-pack").addEventListener("click", () => { printPersonPack(p.name); });
       tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.people.indexOf(p); if(k>=0) WED.people.splice(k,1); wedMark(); renderPeople(); refreshSchedWho(); });
@@ -1271,7 +1268,7 @@
   $("wexp-budget").addEventListener("input", function(){ WED.budget = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
   $("wexp-heads").addEventListener("input", function(){ WED.headcount = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
   $("todo-add").addEventListener("click", () => { WED.todos.push({text:"",done:false}); wedMark(); renderTodos(); });
-  $("people-add").addEventListener("click", () => { WED.people.push({name:"",note:"",code:"",view:{run:true,tasks:true,notes:false}}); wedMark(); renderPeople(); });
+  $("people-add").addEventListener("click", () => { WED.people.push({name:"",note:"",pw:"",view:{run:true,tasks:true,notes:false}}); wedMark(); renderPeople(); });
   $("tasks-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:""}); wedMark(); renderTasks(); });
   $("tasks-filter").addEventListener("change", renderTasks);
   $("wed-notes").addEventListener("input", function(){ WED.notes = this.value; wedMark(); });

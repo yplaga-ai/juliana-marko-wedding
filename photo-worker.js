@@ -169,31 +169,34 @@ export default {
       }
     }
 
-    // --- Crew self-view (public, per-person access code) ---
+    // --- Crew self-view (public, per-person NAME + PASSWORD) ---
+    // POST { name, pw }. The person's name is not secret (it's in their link); the password is.
     // Returns ONLY the matching person's slice of the wedding plan (their schedule rows + their tasks,
     // and the shared notes if the admin allowed it). Never any hens data; never another person's items;
-    // never the admin's private per-person note or anyone's access code.
-    if (request.method === "GET" && url.pathname === "/crew") {
-      const code = (url.searchParams.get("code") || "").trim();
-      if (!code) return j({ error: "Missing code" }, 400);
+    // never the admin's private per-person note or anyone's password.
+    if (request.method === "POST" && url.pathname === "/crew") {
+      let name = "", pw = "";
+      try { const b = await request.json(); name = (b.name || "").toString().trim(); pw = (b.pw || "").toString(); } catch (_) {}
+      if (!name || !pw) return j({ error: "Please enter your name and password" }, 400);
       const obj = await env.PHOTOS.get("admin/hens-tracker.json");
       let data = null;
       if (obj) { try { data = JSON.parse(await obj.text()); } catch (_) {} }
       const wed = (data && data.wedding && typeof data.wedding === "object") ? data.wedding : {};
       const people = Array.isArray(wed.people) ? wed.people : [];
-      const me = people.find(p => p && (p.code || "").toString().trim() === code);
+      const lc = name.toLowerCase();
+      const me = people.find(p => p && (p.name || "").toString().trim().toLowerCase() === lc && (p.pw || "").toString() !== "" && (p.pw || "").toString() === pw);
       if (!me) return j({ error: "not_found" }, 404);
-      const name = (me.name || "").toString().trim();
+      const pname = (me.name || "").toString().trim();
       const view = (me.view && typeof me.view === "object") ? me.view : { run: true, tasks: true, notes: false };
-      const out = { name };
+      const out = { name: pname };
       if (view.run !== false) {
         out.schedule = (Array.isArray(wed.schedule) ? wed.schedule : [])
-          .filter(r => r && (r.who || "").toString().trim() === name && (r.time || r.item || r.loc))
+          .filter(r => r && (r.who || "").toString().trim().toLowerCase() === lc && (r.time || r.item || r.loc))
           .map(r => ({ time: r.time || "", loc: r.loc || "", item: r.item || "" }));
       }
       if (view.tasks !== false) {
         out.tasks = (Array.isArray(wed.tasks) ? wed.tasks : [])
-          .filter(t => t && (t.who || "").toString().trim() === name && (t.text || "").toString().trim())
+          .filter(t => t && (t.who || "").toString().trim().toLowerCase() === lc && (t.text || "").toString().trim())
           .map(t => ({ text: t.text || "", status: t.status || "todo", note: t.note || "", due: t.due || "" }));
       }
       if (view.notes) out.notes = (typeof wed.notes === "string") ? wed.notes : "";
