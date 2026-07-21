@@ -70,6 +70,21 @@
   .done-text{text-decoration:line-through;color:var(--ink-soft);}
   .auto-task{font-size:.95rem;}
   .auto-badge{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sage-deep);border:1px solid var(--sage);border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:middle;white-space:nowrap;}
+  #tbl-wexp .f-doc{margin-top:6px;font-size:.8rem;}
+  .doc-attach{color:var(--sage-deep);cursor:pointer;border:1px dashed var(--sage);border-radius:4px;padding:2px 8px;display:inline-block;}
+  .doc-attach:hover{background:#f2f2f2;}
+  .doc-view{color:var(--rust-deep);text-decoration:underline;word-break:break-all;}
+  .doc-rm{background:none;border:0;color:#b5643f;cursor:pointer;font-weight:700;font-size:.95rem;}
+  .doc-status{color:var(--ink-soft);font-style:italic;}
+  .doc-status.err{color:#b5481f;}
+  .reg-editor{max-width:660px;}
+  .reg-lab{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--rust);margin:16px 0 5px;}
+  .reg-note{text-transform:none;letter-spacing:0;color:var(--ink-soft);font-size:.85em;}
+  .reg-editor textarea{font-family:inherit;font-size:.95rem;padding:.55rem .7rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;resize:vertical;}
+  .reg-link-row{display:flex;gap:8px;margin-bottom:7px;align-items:center;}
+  .reg-link-row input{font-family:inherit;font-size:.92rem;padding:.45rem .55rem;border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);}
+  .reg-link-row .rl-label{flex:0 0 200px;min-width:0;}
+  .reg-link-row .rl-url{flex:1;min-width:0;}
   th.center,td.center{text-align:center;}
   .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
   .rowdel:hover{color:#8a1f0f;}
@@ -277,6 +292,31 @@
       <div class="status" id="seat-msg" style="min-height:1em;text-align:left;margin-top:6px;"></div>
       <div class="tdetail" id="tdetail" style="display:none;"></div>
     </section>
+
+    <section class="event" id="ev-registry">
+      <div class="meta">
+        <div>
+          <h2>Gift Registry</h2>
+          <span class="count">shown to guests on the main site</span>
+        </div>
+        <div class="savebar"><span class="saved" id="regSaved"></span></div>
+      </div>
+      <p class="subnote">Whatever you fill in here appears in a &ldquo;Gifts&rdquo; section on your main wedding site for guests. Leave a field blank to hide it. Saves automatically.</p>
+      <div class="reg-editor">
+        <label class="reg-lab">A message about gifts</label>
+        <textarea id="reg-message" rows="2" placeholder="e.g. Your presence is the greatest gift — but if you'd like to give something, here are a few ideas."></textarea>
+
+        <label class="reg-lab">Registry links</label>
+        <div id="reg-links"></div>
+        <button class="btn addrow" id="reg-link-add">+ Add a registry link</button>
+
+        <label class="reg-lab">Wishing well (cash gifts)</label>
+        <textarea id="reg-well" rows="2" placeholder="e.g. We're saving for our honeymoon — a contribution to our wishing well would mean the world."></textarea>
+
+        <label class="reg-lab">Bank details for gifts <span class="reg-note">— note: this shows on the public site for anyone to see; many couples use a wishing-well service instead.</span></label>
+        <textarea id="reg-bank" rows="3" placeholder="e.g. Name: Juliana &amp; Marko&#10;BSB: 000-000&#10;Account: 0000 0000"></textarea>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -355,6 +395,7 @@
       ingest(await r.json());
       renderKitchen();
       loadWedding();
+      loadRegistry();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
@@ -447,7 +488,7 @@
     WED.expenses.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"><input type="text" class="f-contact" value="' + esc(row.contact || "") + '" placeholder="phone / email (optional)"></td>' +
+        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"><input type="text" class="f-contact" value="' + esc(row.contact || "") + '" placeholder="phone / email (optional)"><div class="f-doc"></div></td>' +
         '<td><input type="number" class="amt f-amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
         '<td><input type="number" class="amt f-dep" value="' + (row.deposit==null?"":esc(row.deposit)) + '" placeholder="0"></td>' +
         '<td class="f-bal"></td>' +
@@ -464,6 +505,7 @@
       }
       it.addEventListener("input", () => { row.item = it.value; wedMark(); });
       ct.addEventListener("input", () => { row.contact = ct.value; wedMark(); });
+      wireDocCell(tr.querySelector(".f-doc"), row);
       am.addEventListener("input", () => { row.amount = (am.value===""?null:num(am.value)); wedMark(); refreshBal(); updateWexp(); });
       dep.addEventListener("input", () => { row.deposit = (dep.value===""?null:num(dep.value)); wedMark(); refreshBal(); updateWexp(); });
       due.addEventListener("input", () => { row.due = due.value; wedMark(); refreshBal(); });
@@ -584,6 +626,34 @@
     downloadICS("wedding-payment-reminders.ics", buildICS(due.map(rowEvent)));
     expMsg("Downloaded " + due.length + " payment reminder" + (due.length===1?"":"s") + " — open the file to add them to your calendar.");
   }
+  /* ---- Vendor contract upload per supplier (stored password-protected on the backend) ---- */
+  function wireDocCell(cell, row){
+    if(!cell) return;
+    if(row.doc && row.doc.key){
+      cell.innerHTML = '📎 <a class="doc-view" target="_blank" rel="noopener"></a> <button class="doc-rm" title="Remove contract">&times;</button>';
+      const a = cell.querySelector(".doc-view");
+      a.textContent = row.doc.name || "View contract";
+      a.href = WORKER + "/doc/" + encodeURIComponent(row.doc.key) + "?pw=" + encodeURIComponent(PW);
+      cell.querySelector(".doc-rm").addEventListener("click", async () => {
+        const key = row.doc.key; row.doc = null; wedMark(); wireDocCell(cell, row);
+        try{ await fetch(WORKER + "/doc-delete", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, key }) }); }catch(_){}
+      });
+    } else {
+      cell.innerHTML = '<label class="doc-attach">📎 Attach contract<input type="file" accept=".pdf,image/*,.doc,.docx,.txt,.xls,.xlsx" style="display:none"></label>';
+      cell.querySelector("input").addEventListener("change", function(){ const f = this.files && this.files[0]; if(f) uploadContract(cell, row, f); });
+    }
+  }
+  async function uploadContract(cell, row, file){
+    if(file.size > 100*1024*1024){ cell.innerHTML = '<span class="doc-status err">File too big (max 100MB)</span>'; setTimeout(() => wireDocCell(cell, row), 2500); return; }
+    cell.innerHTML = '<span class="doc-status">Uploading…</span>';
+    try{
+      const fd = new FormData(); fd.append("pw", PW); fd.append("file", file);
+      const r = await fetch(WORKER + "/doc-upload", { method:"POST", body: fd });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok){ row.doc = { key: jj.key, name: jj.name || file.name }; wedMark(); wireDocCell(cell, row); }
+      else { cell.innerHTML = '<span class="doc-status err">' + esc((jj && jj.error) || "Upload failed") + '</span>'; setTimeout(() => wireDocCell(cell, row), 2500); }
+    } catch(e){ cell.innerHTML = '<span class="doc-status err">Upload failed — try again</span>'; setTimeout(() => wireDocCell(cell, row), 2500); }
+  }
   var PIE_COLORS = ['#C96A2B','#8A9A6B','#d99a5c','#6f7f52','#e0b07a','#a9531c','#b7c39a','#cf8a4e','#7c6f5a','#9db37a','#e6c9a8','#5f7a3a'];
   function renderPie(){
     var box = $("wexp-pie"); if(!box) return;
@@ -690,6 +760,50 @@
     });
     updateTodoCount();
   }
+
+  /* ---- Gift registry editor (its own public doc via /registry; auto-saves) ---- */
+  let REG = { message:"", links:[], well:"", bank:"" }, regDirty = false, regSaving = false, regTimer = null;
+  function regStatus(t, c){ const s = $("regSaved"); if(s){ s.textContent = t; s.style.color = c; } }
+  function regMark(){ regDirty = true; regStatus("Editing…", "var(--ink-soft)"); if(regTimer) clearTimeout(regTimer); regTimer = setTimeout(() => { if(regDirty && !regSaving) saveRegistry(); }, 1400); }
+  async function loadRegistry(){
+    try{
+      const r = await fetch(WORKER + "/registry?cb=" + Date.now());
+      const jj = await r.json().catch(() => ({}));
+      const d = (jj && jj.data && typeof jj.data === "object") ? jj.data : {};
+      REG = { message: d.message||"", links: Array.isArray(d.links)?d.links:[], well: d.well||"", bank: d.bank||"" };
+    } catch(e){ REG = { message:"", links:[], well:"", bank:"" }; }
+    regDirty = false; regStatus("", "var(--ink-soft)"); renderRegistry();
+  }
+  function renderRegistry(){
+    if($("reg-message")) $("reg-message").value = REG.message || "";
+    if($("reg-well")) $("reg-well").value = REG.well || "";
+    if($("reg-bank")) $("reg-bank").value = REG.bank || "";
+    const box = $("reg-links"); if(!box) return; box.innerHTML = "";
+    REG.links.forEach((ln, i) => {
+      const row = document.createElement("div"); row.className = "reg-link-row";
+      row.innerHTML = '<input type="text" class="rl-label" placeholder="Label (e.g. Myer Registry)" value="' + esc(ln.label||"") + '"><input type="text" class="rl-url" placeholder="https://…" value="' + esc(ln.url||"") + '"><button class="rowdel" title="Remove">&#10005;</button>';
+      row.querySelector(".rl-label").addEventListener("input", function(){ REG.links[i].label = this.value; regMark(); });
+      row.querySelector(".rl-url").addEventListener("input", function(){ REG.links[i].url = this.value; regMark(); });
+      row.querySelector(".rowdel").addEventListener("click", function(){ REG.links.splice(i,1); regMark(); renderRegistry(); });
+      box.appendChild(row);
+    });
+  }
+  async function saveRegistry(){
+    if(regSaving || !PW) return;
+    if(regTimer){ clearTimeout(regTimer); regTimer = null; }
+    regSaving = true; regDirty = false; regStatus("Saving…", "var(--ink-soft)");
+    try{
+      const r = await fetch(WORKER + "/registry", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: REG }) });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok) regStatus("Saved ✓", "var(--sage-deep)"); else { regDirty = true; regStatus((jj && jj.error) || "Couldn't save — will retry.", "#b5481f"); }
+    } catch(e){ regDirty = true; regStatus("Couldn't save — will retry.", "#b5481f"); }
+    regSaving = false;
+    if(regDirty){ if(regTimer) clearTimeout(regTimer); regTimer = setTimeout(() => { if(regDirty && !regSaving) saveRegistry(); }, 1200); }
+  }
+  $("reg-message").addEventListener("input", function(){ REG.message = this.value; regMark(); });
+  $("reg-well").addEventListener("input", function(){ REG.well = this.value; regMark(); });
+  $("reg-bank").addEventListener("input", function(){ REG.bank = this.value; regMark(); });
+  $("reg-link-add").addEventListener("click", function(){ REG.links.push({label:"",url:""}); regMark(); renderRegistry(); });
 
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
   $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
