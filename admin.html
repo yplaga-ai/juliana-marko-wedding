@@ -54,6 +54,20 @@
   .calbtn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 6px;}
   .calbtn:hover{filter:brightness(1.1);}
   .calbtn.dim{opacity:.3;cursor:default;}
+  #tbl-wexp .f-contact{margin-top:5px;font-size:.82rem;padding:.35rem .5rem;color:var(--ink-soft);}
+  .wexp-controls{display:flex;flex-wrap:wrap;gap:18px;margin:8px 0 4px;align-items:center;}
+  .wexp-controls label{font-size:.8rem;color:var(--ink-soft);display:flex;align-items:center;gap:7px;}
+  .wexp-controls input{font-family:inherit;font-size:.9rem;padding:.4rem .5rem;border:1px solid var(--sage);border-radius:4px;width:120px;background:#fff;color:var(--ink);}
+  .due-list{margin-top:14px;}
+  .due-list h4{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);margin:0 0 8px;}
+  .due-row{display:flex;align-items:center;gap:12px;padding:8px 12px;border:1px solid rgba(0,0,0,.08);border-radius:6px;background:#fff;margin-bottom:6px;font-size:.92rem;}
+  .due-row .due-amt{font-weight:600;color:var(--ink);}
+  .due-row .due-when{margin-left:auto;color:var(--ink-soft);font-size:.85rem;white-space:nowrap;}
+  .due-row.soon{border-color:var(--rust);background:rgba(201,106,43,.06);}
+  .due-row.over .due-when{color:#b5481f;font-weight:600;}
+  .due-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;}
+  #tbl-todo input[type=text]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  .done-text{text-decoration:line-through;color:var(--ink-soft);}
   th.center,td.center{text-align:center;}
   .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
   .rowdel:hover{color:#8a1f0f;}
@@ -174,6 +188,21 @@
       <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
     </section>
 
+    <section class="event" id="ev-todo">
+      <div class="meta">
+        <div>
+          <h2>Day-of Checklist</h2>
+          <span class="count" id="todo-count"></span>
+        </div>
+      </div>
+      <p class="subnote">Tasks and people to chase in the run-up and on the day. Tick them off as you go &mdash; saved with the &ldquo;Save wedding plan&rdquo; button above.</p>
+      <div class="tablewrap"><table id="tbl-todo">
+        <thead><tr><th style="width:56px" class="center">Done</th><th>Task</th><th style="width:40px"></th></tr></thead>
+        <tbody id="todo-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="todo-add">+ Add task</button>
+    </section>
+
     <section class="event" id="ev-wexp">
       <div class="meta">
         <div>
@@ -186,6 +215,12 @@
         <div class="scard"><div class="lab">Total</div><div class="val" id="wexp-total">A$0</div></div>
         <div class="scard"><div class="lab">Paid so far</div><div class="val" id="wexp-paid">A$0</div></div>
         <div class="scard"><div class="lab">Balance owing</div><div class="val" id="wexp-owing">A$0</div></div>
+        <div class="scard"><div class="lab">Per person</div><div class="val" id="wexp-pp">&mdash;</div></div>
+        <div class="scard"><div class="lab" id="wexp-budlab">Vs budget</div><div class="val" id="wexp-bud">&mdash;</div></div>
+      </div>
+      <div class="wexp-controls">
+        <label>Budget target A$ <input type="number" id="wexp-budget" min="0" placeholder="e.g. 30000"></label>
+        <label>Guest count <input type="number" id="wexp-heads" min="0" placeholder="from seating"> <span id="wexp-heads-note" class="seat-hint" style="margin:0"></span></label>
       </div>
       <div class="pie-wrap" id="wexp-pie"></div>
       <div class="tablewrap"><table id="tbl-wexp">
@@ -197,6 +232,7 @@
         <button class="btn" id="wexp-cal-all" title="Download calendar reminders for every balance with a due date">&#128197; Add all reminders to calendar</button>
         <span class="saved" id="wexp-msg" style="min-width:0;color:var(--ink-soft);"></span>
       </div>
+      <div class="due-list" id="wexp-due"></div>
     </section>
 
     <section class="event" id="ev-seat">
@@ -369,8 +405,19 @@
     if(!WED.seating || typeof WED.seating !== "object") WED.seating = { guests:[], tables:[] };
     if(!Array.isArray(WED.seating.guests)) WED.seating.guests = [];
     if(!Array.isArray(WED.seating.tables)) WED.seating.tables = [];
+    if(!Array.isArray(WED.todos)) WED.todos = defaultTodos();
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
-    renderSchedule(); renderWexp(); renderSeat();
+    renderSchedule(); renderWexp(); renderSeat(); renderTodos();
+  }
+  function defaultTodos(){
+    return [
+      {text:"Confirm final guest numbers with the venue", done:false},
+      {text:"Make final payments to suppliers", done:false},
+      {text:"Confirm arrival times with hair & makeup", done:false},
+      {text:"Confirm timings with the photographer & videographer", done:false},
+      {text:"Give the run sheet to the venue / coordinator", done:false},
+      {text:"Pack the emergency kit (safety pins, tissues, meds)", done:false}
+    ];
   }
   function renderSchedule(){
     const b = $("sched-body"); b.innerHTML = "";
@@ -393,14 +440,14 @@
     WED.expenses.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"></td>' +
+        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"><input type="text" class="f-contact" value="' + esc(row.contact || "") + '" placeholder="phone / email (optional)"></td>' +
         '<td><input type="number" class="amt f-amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
         '<td><input type="number" class="amt f-dep" value="' + (row.deposit==null?"":esc(row.deposit)) + '" placeholder="0"></td>' +
         '<td class="f-bal"></td>' +
         '<td><input type="date" class="f-due" value="' + esc(row.due || "") + '"></td>' +
         '<td class="center"><input type="checkbox" class="f-paid"' + (row.paid?" checked":"") + '></td>' +
         '<td style="white-space:nowrap"><button class="calbtn f-cal" title="Add a payment reminder to your calendar">&#128197;</button><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const it = tr.querySelector('.f-item'), am = tr.querySelector('.f-amt'), dep = tr.querySelector('.f-dep'),
+      const it = tr.querySelector('.f-item'), ct = tr.querySelector('.f-contact'), am = tr.querySelector('.f-amt'), dep = tr.querySelector('.f-dep'),
             due = tr.querySelector('.f-due'), pd = tr.querySelector('.f-paid'), bal = tr.querySelector('.f-bal'), cal = tr.querySelector('.f-cal');
       function refreshBal(){
         const v = rowBalance(row);
@@ -409,6 +456,7 @@
         cal.classList.toggle("dim", !(row.due && v > 0));
       }
       it.addEventListener("input", () => { row.item = it.value; wedMark(); });
+      ct.addEventListener("input", () => { row.contact = ct.value; wedMark(); });
       am.addEventListener("input", () => { row.amount = (am.value===""?null:num(am.value)); wedMark(); refreshBal(); updateWexp(); });
       dep.addEventListener("input", () => { row.deposit = (dep.value===""?null:num(dep.value)); wedMark(); refreshBal(); updateWexp(); });
       due.addEventListener("input", () => { row.due = due.value; wedMark(); refreshBal(); });
@@ -420,6 +468,7 @@
     });
     updateWexp();
   }
+  function headCount(){ if(WED.headcount && WED.headcount > 0) return WED.headcount; return allGuestNames().length; }
   function updateWexp(){
     let total = 0, paidSoFar = 0;
     WED.expenses.forEach(e => {
@@ -431,7 +480,49 @@
     $("wexp-paid").textContent  = "A$" + paidSoFar.toLocaleString();
     $("wexp-owing").textContent = "A$" + Math.max(0, total - paidSoFar).toLocaleString();
     $("wexp-count").textContent = WED.expenses.length + (WED.expenses.length===1 ? " item" : " items");
-    renderPie();
+    // Per person
+    const heads = headCount();
+    $("wexp-pp").textContent = heads > 0 ? "A$" + Math.round(total/heads).toLocaleString() : "—";
+    const hn = $("wexp-heads-note"); if(hn) hn.textContent = heads > 0 ? ("÷ " + heads + " guest" + (heads===1?"":"s")) : "set a guest count";
+    const hi = $("wexp-heads"); const seatN = allGuestNames().length;
+    if(hi){ if(document.activeElement !== hi) hi.value = WED.headcount || ""; hi.placeholder = seatN ? (seatN + " from seating") : "e.g. 120"; }
+    // Budget vs actual
+    const bud = num(WED.budget), budVal = $("wexp-bud"), budLab = $("wexp-budlab");
+    if(bud > 0){
+      const diff = bud - total;
+      budVal.textContent = diff >= 0 ? ("A$" + diff.toLocaleString() + " left") : ("A$" + Math.abs(diff).toLocaleString() + " over");
+      budVal.style.color = diff >= 0 ? "var(--sage-deep)" : "#b5481f";
+      budLab.textContent = diff >= 0 ? "Under budget" : "Over budget";
+    } else { budVal.textContent = "—"; budVal.style.color = "var(--ink)"; budLab.textContent = "Vs budget"; }
+    const bi = $("wexp-budget"); if(bi && document.activeElement !== bi) bi.value = WED.budget || "";
+    renderPie(); renderDue();
+  }
+  function daysBetween(a, b){
+    const da = new Date(a + "T00:00:00"), db = new Date(b + "T00:00:00");
+    if(isNaN(da) || isNaN(db)) return null;
+    return Math.round((db - da) / 86400000);
+  }
+  function niceDate(d){ const dt = new Date(d + "T00:00:00"); if(isNaN(dt)) return d; return dt.toLocaleDateString("en-AU", { day:"numeric", month:"short", year:"numeric" }); }
+  function renderDue(){
+    const box = $("wexp-due"); if(!box) return;
+    const items = WED.expenses
+      .filter(e => e.due && rowBalance(e) > 0)
+      .map(e => ({ item: e.item || "Supplier", bal: rowBalance(e), due: e.due }))
+      .sort((a,b) => a.due < b.due ? -1 : (a.due > b.due ? 1 : 0));
+    if(!items.length){ box.innerHTML = '<h4>Payments coming up</h4><div class="due-empty">No outstanding balances with a due date yet — add a “Balance due” date to a supplier above.</div>'; return; }
+    const today = new Date().toISOString().slice(0,10);
+    let html = '<h4>Payments coming up</h4>';
+    items.forEach(x => {
+      const days = daysBetween(today, x.due);
+      const over = days != null && days < 0, soon = days != null && days >= 0 && days <= 14;
+      let when;
+      if(days == null) when = niceDate(x.due);
+      else if(days < 0) when = "overdue " + (-days) + "d · " + niceDate(x.due);
+      else if(days === 0) when = "due today · " + niceDate(x.due);
+      else when = "in " + days + "d · " + niceDate(x.due);
+      html += '<div class="due-row' + (over?" over":(soon?" soon":"")) + '"><span>' + esc(x.item) + '</span><span class="due-amt">A$' + x.bal.toLocaleString() + '</span><span class="due-when">' + esc(when) + '</span></div>';
+    });
+    box.innerHTML = html;
   }
   /* ---- Calendar payment reminders (.ics, works with Apple / Google / Outlook) ---- */
   function icsEsc(s){ return String(s==null?"":s).replace(/([,;\\])/g, "\\$1").replace(/\r?\n/g, "\\n"); }
@@ -546,9 +637,32 @@
     } catch(e){ $("wedSaved").textContent = "Couldn't save — try again."; $("wedSaved").style.color = "#b5481f"; }
     $("wedSave").disabled = false;
   }
+  /* ---- Day-of checklist ---- */
+  function updateTodoCount(){ const done = WED.todos.filter(t => t.done).length; const el = $("todo-count"); if(el) el.textContent = done + " / " + WED.todos.length + " done"; }
+  function renderTodos(){
+    const b = $("todo-body"); if(!b) return; b.innerHTML = "";
+    WED.todos.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="center"><input type="checkbox" class="f-td-done"' + (row.done?" checked":"") + '></td>' +
+        '<td><input type="text" class="f-td-text" value="' + esc(row.text||"") + '" placeholder="e.g. Confirm cake delivery time"></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const cb = tr.querySelector(".f-td-done"), tx = tr.querySelector(".f-td-text");
+      if(row.done) tx.classList.add("done-text");
+      cb.addEventListener("change", () => { row.done = cb.checked; tx.classList.toggle("done-text", cb.checked); wedMark(); updateTodoCount(); });
+      tx.addEventListener("input", () => { row.text = tx.value; wedMark(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.todos.indexOf(row); if(k>=0) WED.todos.splice(k,1); wedMark(); renderTodos(); });
+      b.appendChild(tr);
+    });
+    updateTodoCount();
+  }
+
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
-  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
+  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
   $("wexp-cal-all").addEventListener("click", addAllReminders);
+  $("wexp-budget").addEventListener("input", function(){ WED.budget = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
+  $("wexp-heads").addEventListener("input", function(){ WED.headcount = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
+  $("todo-add").addEventListener("click", () => { WED.todos.push({text:"",done:false}); wedMark(); renderTodos(); });
   $("wedSave").addEventListener("click", saveWedding);
   $("sched-print").addEventListener("click", printRunSheet);
   window.addEventListener("beforeunload", e => { if(wedDirty){ e.preventDefault(); e.returnValue = ""; } });
