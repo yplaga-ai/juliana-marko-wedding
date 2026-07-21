@@ -68,7 +68,7 @@
   .due-row.over .due-when{color:#b5481f;font-weight:600;}
   .due-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;}
   #tbl-todo input[type=text]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
-  #tbl-tasks input[type=text],#tbl-tasks input[type=date],#tbl-tasks select,#tbl-people input[type=text],#tbl-people textarea,#tbl-people select{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;}
+  #tbl-tasks input[type=text],#tbl-tasks input[type=date],#tbl-tasks select,#tbl-sched select,#tbl-people input[type=text],#tbl-people textarea,#tbl-people select{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;}
   #tbl-people textarea{resize:vertical;min-height:38px;font-size:.9rem;}
   .st-sel.st-todo{color:var(--ink-soft);} .st-sel.st-wip{color:#C96A2B;font-weight:600;} .st-sel.st-done{color:var(--sage-deep);font-weight:600;}
   .pview{display:flex;flex-direction:column;gap:3px;font-size:.72rem;text-align:left;}
@@ -230,6 +230,21 @@
       <div class="tablewrap" id="table-wedrsvp"></div>
     </section>
 
+    <section class="event" id="ev-people">
+      <div class="meta">
+        <div>
+          <h2>People &amp; Access</h2>
+          <span class="count" id="people-count"></span>
+        </div>
+      </div>
+      <p class="subnote"><strong>Start here.</strong> Add everyone helping on the day &mdash; bride, groom, maid of honour, best man, parents, coordinator, photographer, family. Whoever you add here becomes a pick-able name in the <strong>Who</strong> dropdowns on the Run Sheet and Task Board below. Add a private note and print that person&rsquo;s pack (their schedule + tasks + notes). To give someone their own live view, <strong>set a password</strong> (type your own or hit Suggest, and change it anytime), tick what they&rsquo;re allowed to see, then <strong>Copy link</strong> and send them the link &mdash; tell them their password separately. They open the link and log in with their name + password. Saves automatically.</p>
+      <div class="tablewrap"><table id="tbl-people">
+        <thead><tr><th style="width:150px">Name</th><th>Private note</th><th style="width:150px" class="center">Can see</th><th style="width:180px">Password &amp; link</th><th style="width:96px"></th></tr></thead>
+        <tbody id="people-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="people-add">+ Add a person</button>
+    </section>
+
     <section class="event" id="ev-sched">
       <div class="meta">
         <div>
@@ -244,28 +259,13 @@
           <button class="btn primary" id="wedSave">Save now</button>
         </div>
       </div>
-      <p class="subnote">Your timeline for the day. Add the time, <strong>who it's for</strong> (Bride, Groom, Photographer, Everyone&hellip;), an optional <strong>location</strong>, and what's happening. <strong>Print</strong> prints the group sheet, or pick a person to print just theirs; <strong>Everyone's own sheets</strong> prints a booklet with one page per person. <strong>Everything saves automatically.</strong></p>
+      <p class="subnote">Your timeline for the day. Add the time, <strong>pick who it's for</strong> from your People list (or &ldquo;Everyone&rdquo;), an optional <strong>location</strong>, and what's happening. Add people in <strong>People &amp; Access</strong> above and they appear in this dropdown. <strong>Print</strong> prints the group sheet, or pick a person to print just theirs; <strong>Everyone's own sheets</strong> prints a booklet with one page per person. <strong>Everything saves automatically.</strong></p>
       <div class="tablewrap"><table id="tbl-sched">
         <thead><tr><th style="width:110px">Time</th><th style="width:120px">Who</th><th style="width:140px">Location</th><th>What</th><th style="width:40px"></th></tr></thead>
         <tbody id="sched-body"></tbody>
       </table></div>
       <datalist id="who-list"></datalist>
       <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
-    </section>
-
-    <section class="event" id="ev-people">
-      <div class="meta">
-        <div>
-          <h2>People &amp; Access</h2>
-          <span class="count" id="people-count"></span>
-        </div>
-      </div>
-      <p class="subnote">The people helping on the day &mdash; bride, groom, coordinator, photographer, family. Names here fill the &ldquo;Who&rdquo; pickers on the run sheet and task board. Add a private note and print that person&rsquo;s pack (their schedule + tasks + notes). To give someone their own live view, <strong>set a password</strong> (type your own or hit Suggest, and change it anytime), tick what they&rsquo;re allowed to see, then <strong>Copy link</strong> and send them the link &mdash; tell them their password separately. They open the link and log in with their name + password. Saves automatically.</p>
-      <div class="tablewrap"><table id="tbl-people">
-        <thead><tr><th style="width:150px">Name</th><th>Private note</th><th style="width:150px" class="center">Can see</th><th style="width:180px">Password &amp; link</th><th style="width:96px"></th></tr></thead>
-        <tbody id="people-body"></tbody>
-      </table></div>
-      <button class="btn addrow" id="people-add">+ Add a person</button>
     </section>
 
     <section class="event" id="ev-tasks">
@@ -652,8 +652,15 @@
         {item:"Celebrant", amount:null, paid:false},
         {item:"Dress", amount:null, paid:false},
         {item:"Music / DJ", amount:null, paid:false}
-      ]
+      ],
+      people: defaultPeople()
     };
+  }
+  function defaultPeople(){
+    return ["Bride","Groom","Maid of Honour","Best Man","Bridesmaids","Groomsmen",
+            "Mother of the Bride","Father of the Bride","Mother of the Groom","Father of the Groom",
+            "Celebrant","Photographer","Videographer","Coordinator"]
+      .map(function(n){ return { name:n, note:"", pw:"", view:{run:true,tasks:true,notes:false} }; });
   }
   async function loadWedding(){
     try{
@@ -703,20 +710,34 @@
       if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">' + esc(pair[1]) + '</option>' + list.map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join(""); sel.value = list.indexOf(cur) >= 0 ? cur : ""; }
     });
   }
+  // Rebuild the run sheet + task board "Who" dropdowns from the current People roster.
+  function syncWho(){ if($("sched-body")) renderSchedule(); if($("tasks-body")) renderTasks(); }
+  // A "Who" dropdown driven by the People & Access roster (+ Everyone, + the row's current value if it's a one-off).
+  function whoSelectHTML(current, cls){
+    current = (current || "");
+    const opts = ['<option value="">— who? —</option>', '<option value="Everyone"' + (current === "Everyone" ? " selected" : "") + '>Everyone</option>'];
+    const seen = { "Everyone": 1 };
+    (WED.people || []).forEach(p => {
+      const n = (p.name || "").trim();
+      if(!n || seen[n]) return; seen[n] = 1;
+      opts.push('<option value="' + esc(n) + '"' + (current === n ? " selected" : "") + '>' + esc(n) + '</option>');
+    });
+    if(current && !seen[current]){ opts.push('<option value="' + esc(current) + '" selected>' + esc(current) + '</option>'); }
+    return '<select class="' + cls + '">' + opts.join("") + '</select>';
+  }
   function renderSchedule(){
     const b = $("sched-body"); b.innerHTML = "";
     WED.schedule.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
         '<td><input type="text" class="s-time" value="' + esc(row.time || "") + '" placeholder="e.g. 8:00 am"></td>' +
-        '<td><input type="text" class="s-who" list="who-list" value="' + esc(row.who || "") + '" placeholder="e.g. Bride"></td>' +
+        '<td>' + whoSelectHTML(row.who, "s-who") + '</td>' +
         '<td><input type="text" class="s-loc" value="' + esc(row.loc || "") + '" placeholder="e.g. Home"></td>' +
         '<td><input type="text" class="s-item" value="' + esc(row.item || "") + '" placeholder="e.g. Makeup artist"></td>' +
         '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
       const ti = tr.querySelector(".s-time"), wh = tr.querySelector(".s-who"), lo = tr.querySelector(".s-loc"), it = tr.querySelector(".s-item");
       ti.addEventListener("input", () => { WED.schedule[i].time = ti.value; wedMark(); });
-      wh.addEventListener("input", () => { WED.schedule[i].who = wh.value; wedMark(); });
-      wh.addEventListener("change", refreshSchedWho);
+      wh.addEventListener("change", () => { WED.schedule[i].who = wh.value; wedMark(); });
       lo.addEventListener("input", () => { WED.schedule[i].loc = lo.value; wedMark(); });
       it.addEventListener("input", () => { WED.schedule[i].item = it.value; wedMark(); });
       tr.querySelector(".rowdel").addEventListener("click", () => { WED.schedule.splice(i,1); wedMark(); renderSchedule(); });
@@ -1019,15 +1040,14 @@
       const tr = document.createElement("tr");
       tr.innerHTML =
         '<td><input type="text" class="tk-text" value="' + esc(tk.text||"") + '" placeholder="e.g. Pick up the cake"><input type="text" class="tk-note" value="' + esc(tk.note||"") + '" placeholder="note (optional)" style="margin-top:5px;font-size:.85rem;"></td>' +
-        '<td><input type="text" class="tk-who" list="who-list" value="' + esc(tk.who||"") + '" placeholder="Assign to…"></td>' +
+        '<td>' + whoSelectHTML(tk.who, "tk-who") + '</td>' +
         '<td><select class="tk-status st-sel st-' + st + '"><option value="todo"' + (st==="todo"?" selected":"") + '>To do</option><option value="wip"' + (st==="wip"?" selected":"") + '>In progress</option><option value="done"' + (st==="done"?" selected":"") + '>Done</option></select></td>' +
         '<td><input type="date" class="tk-due" value="' + esc(tk.due||"") + '"></td>' +
         '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
       const tx = tr.querySelector(".tk-text"), nt = tr.querySelector(".tk-note"), wh = tr.querySelector(".tk-who"), stsel = tr.querySelector(".tk-status"), du = tr.querySelector(".tk-due");
       tx.addEventListener("input", () => { tk.text = tx.value; wedMark(); });
       nt.addEventListener("input", () => { tk.note = nt.value; wedMark(); });
-      wh.addEventListener("input", () => { tk.who = wh.value; wedMark(); });
-      wh.addEventListener("change", refreshSchedWho);
+      wh.addEventListener("change", () => { tk.who = wh.value; wedMark(); });
       stsel.addEventListener("change", () => { tk.status = stsel.value; stsel.className = "tk-status st-sel st-" + stsel.value; wedMark(); updateTasksCount(); });
       du.addEventListener("input", () => { tk.due = du.value; wedMark(); });
       tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.tasks.indexOf(tk); if(k>=0) WED.tasks.splice(k,1); wedMark(); renderTasks(); refreshSchedWho(); });
@@ -1056,7 +1076,7 @@
         '<td style="white-space:nowrap"><button class="btn mini pp-pack" title="Print this person\'s schedule + tasks + notes">Print pack</button><button class="rowdel" title="Remove">&#10005;</button></td>';
       const nm = tr.querySelector(".pp-name"), nt = tr.querySelector(".pp-note"), pwi = tr.querySelector(".pp-pw");
       nm.addEventListener("input", () => { p.name = nm.value; wedMark(); });
-      nm.addEventListener("change", refreshSchedWho);
+      nm.addEventListener("change", syncWho);   // new/renamed person → refresh the run sheet + task Who dropdowns
       nt.addEventListener("input", () => { p.note = nt.value; wedMark(); });
       pwi.addEventListener("input", () => { p.pw = pwi.value; wedMark(); });
       tr.querySelector(".pv-run").addEventListener("change", function(){ p.view.run = this.checked; wedMark(); });
@@ -1071,7 +1091,7 @@
           .catch(() => { prompt("Copy this person's login link (tell them their password separately):", link); });
       });
       tr.querySelector(".pp-pack").addEventListener("click", () => { printPersonPack(p.name); });
-      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.people.indexOf(p); if(k>=0) WED.people.splice(k,1); wedMark(); renderPeople(); refreshSchedWho(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.people.indexOf(p); if(k>=0) WED.people.splice(k,1); wedMark(); renderPeople(); syncWho(); });
       b.appendChild(tr);
     });
     if(!WED.people.length){ b.innerHTML = '<tr><td colspan="5" class="empty" style="padding:14px">No people yet — add the bride, groom, coordinator, key vendors…</td></tr>'; }
