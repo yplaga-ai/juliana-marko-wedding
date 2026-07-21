@@ -58,6 +58,21 @@
 
   .sech{text-align:center;color:var(--rust);letter-spacing:.18em;text-transform:uppercase;font-size:.75rem;margin:34px 0 4px;}
 
+  .wx{max-width:460px;margin:14px auto 0;}
+  .wx-grid{display:flex;gap:8px;justify-content:center;}
+  .wx-card{flex:1;background:#fff;border:1px solid rgba(201,123,63,.28);border-radius:10px;padding:12px 6px 10px;text-align:center;box-shadow:0 6px 18px rgba(65,63,58,.05);}
+  .wx-day{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);}
+  .wx-ico{font-size:1.7rem;line-height:1;margin:6px 0 3px;}
+  .wx-hi{font-weight:600;}
+  .wx-lo{color:var(--ink-soft);font-size:.85rem;}
+  .wx-note{text-align:center;font-size:.76rem;color:var(--ink-soft);margin:9px 0 0;}
+
+  .budget{max-width:450px;margin:14px auto 0;text-align:left;}
+  .bud-row{display:flex;justify-content:space-between;gap:14px;align-items:baseline;padding:10px 2px;border-bottom:1px dashed rgba(201,123,63,.28);font-size:.98rem;}
+  .bud-amt{color:var(--rust);white-space:nowrap;font-weight:600;text-align:right;}
+  .bud-amt small{display:block;color:var(--ink-soft);font-weight:400;font-size:.78rem;}
+  .bud-total{border-bottom:0;border-top:2px solid rgba(201,123,63,.4);margin-top:5px;padding-top:12px;font-weight:600;}
+
   footer{text-align:center;padding:40px 22px 54px;}
   footer .script{font-size:1.7rem;}
   footer .caps{color:var(--ink-soft);margin-top:6px;}
@@ -86,6 +101,14 @@
       <div class="caps">Where we're staying</div>
       <p><a class="link" href="https://www.booking.com/hotel/au/cousin-gilbert.en-gb.html" target="_blank" rel="noopener">Cousin Gilbert</a>, Daylesford</p>
       <p class="soft">Check in Fri 11th &nbsp;&bull;&nbsp; Check out Mon 14th</p>
+    </div>
+
+    <div class="block">
+      <div class="caps">Daylesford forecast</div>
+      <div class="wx">
+        <div class="wx-grid" id="wxGrid"><div class="wx-note">Loading forecast&hellip;</div></div>
+        <p class="wx-note" id="wxNote">4-day outlook &bull; updates as the weekend nears</p>
+      </div>
     </div>
 
     <hr class="rule" />
@@ -148,12 +171,66 @@
       <p>What to pack, dress code &amp; the kitty &mdash; <span class="tba">TBA</span></p>
     </div>
 
+    <hr class="rule" />
+
+    <div class="sech">Approximate Budget</div>
+    <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 0;max-width:460px">A rough guide so everyone can plan. We're treating the bride &mdash; so her share of each cost is split between the rest of us. Approximate; final numbers to come.</p>
+    <div class="budget">
+      <div class="bud-row"><span>The Mineral Spa &middot; Girls Day Out</span><span class="bud-amt">$250 pp<small>$225 + $25 bride share</small></span></div>
+      <div class="bud-row"><span>Accommodation &middot; Cousin Gilbert &middot; 3 nights</span><span class="bud-amt tba">TBA</span></div>
+      <div class="bud-row"><span>Winery tour &amp; lunch &middot; Mount Monument</span><span class="bud-amt tba">TBA</span></div>
+      <div class="bud-row"><span>Friday dinner &middot; Bistro Terroir</span><span class="bud-amt tba">TBA</span></div>
+      <div class="bud-row"><span>Saturday breakfast</span><span class="bud-amt tba">TBA</span></div>
+      <div class="bud-row"><span>Party night &amp; games</span><span class="bud-amt tba">TBA</span></div>
+      <div class="bud-row bud-total"><span>Estimated per person so far</span><span class="bud-amt">$250<small>more to be added</small></span></div>
+    </div>
+    <p class="wx-note">Bride share = her cost &divide; 9 of us. Drinks &amp; extras are your own.</p>
+
   </div>
 
   <footer>
     <div class="script">Juliana &amp; Marko</div>
     <div class="caps">17 . 10 . 2026</div>
   </footer>
+
+  <script>
+  (function(){
+    const grid = document.getElementById('wxGrid');
+    if(!grid) return;
+    function ico(c){
+      if(c===0) return '☀️';
+      if(c===1||c===2) return '🌤️';
+      if(c===3) return '☁️';
+      if(c===45||c===48) return '🌫️';
+      if(c>=51&&c<=57) return '🌦️';
+      if(c>=61&&c<=67) return '🌧️';
+      if(c>=71&&c<=77) return '🌨️';
+      if(c>=80&&c<=82) return '🌦️';
+      if(c>=85&&c<=86) return '🌨️';
+      if(c>=95) return '⛈️';
+      return '🌡️';
+    }
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=-37.3417&longitude=144.1417'
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Australia%2FMelbourne&forecast_days=4';
+    fetch(url).then(r => r.json()).then(d => {
+      const dd = d && d.daily;
+      if(!dd || !dd.time || !dd.time.length){ throw new Error('no data'); }
+      let html = '';
+      for(let i=0;i<dd.time.length;i++){
+        const dt = new Date(dd.time[i] + 'T00:00:00');
+        const hi = Math.round(dd.temperature_2m_max[i]);
+        const lo = Math.round(dd.temperature_2m_min[i]);
+        html += '<div class="wx-card"><div class="wx-day">' + days[dt.getDay()] + '</div>'
+          + '<div class="wx-ico">' + ico(dd.weather_code[i]) + '</div>'
+          + '<div class="wx-hi">' + hi + '°</div><div class="wx-lo">' + lo + '°</div></div>';
+      }
+      grid.innerHTML = html;
+    }).catch(() => {
+      grid.innerHTML = '<div class="wx-note">Forecast unavailable right now — check back closer to the weekend.</div>';
+    });
+  })();
+  </script>
 
 </body>
 </html>

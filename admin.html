@@ -286,10 +286,11 @@
     $("count-hens").textContent = items.length + (items.length === 1 ? " reply" : " replies");
     const box = $("table-hens");
     if(!items.length){ box.innerHTML = '<div class="empty">No Hens RSVPs yet.</div>'; return; }
-    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Booking details / notes</th><th>Received</th></tr></thead><tbody>';
+    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Leaving</th><th>Booking details / notes</th><th>Received</th></tr></thead><tbody>';
     for(const it of items){
       h += '<tr><td>' + esc(it.name) + '</td>' +
            '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
+           '<td>' + esc(it.departure || "—") + '</td>' +
            '<td class="notes">' + esc(it.notes || "") + '</td>' +
            '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
     }
@@ -304,11 +305,11 @@
   function downloadCSV(ev){
     const items = ALL[ev] || [];
     const isHens = (ev === "hens");
-    const head = isHens ? ["Name","Email","Booking details / notes","Received"] : ["Name","Email","Received"];
+    const head = isHens ? ["Name","Email","Leaving","Booking details / notes","Received"] : ["Name","Email","Received"];
     const rows = [head.map(csvCell).join(",")];
     for(const it of items){
       const row = isHens
-        ? [it.name, it.email, it.notes || "", fmt(it.ts)]
+        ? [it.name, it.email, it.departure || "", it.notes || "", fmt(it.ts)]
         : [it.name, it.email, fmt(it.ts)];
       rows.push(row.map(csvCell).join(","));
     }
