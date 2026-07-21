@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Your Wedding Day Plan — Juliana & Marko</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Great+Vibes&family=Sacramento&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#413F3A; --ink-soft:#6f6a60; --rust:#C96A2B; --rust-deep:#a9531c;
+    --sage:#c7cdb8; --sage-deep:#6f7f52; --paper:#faf6ef; --card:#ffffff; --rule:#e5ded0;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Cormorant Garamond",Georgia,serif;background:var(--paper);color:var(--ink);
+       -webkit-font-smoothing:antialiased;line-height:1.5;}
+  .wrap{max-width:640px;margin:0 auto;padding:34px 20px 60px;}
+  header{text-align:center;margin-bottom:26px;}
+  .names{font-family:"Great Vibes",cursive;font-size:2.7rem;color:var(--ink);margin:0;}
+  .date{text-transform:uppercase;letter-spacing:.25em;font-size:.72rem;color:var(--ink-soft);margin-top:4px;}
+  .hi{font-family:"Sacramento",cursive;font-size:2.2rem;color:var(--rust);text-align:center;margin:10px 0 2px;}
+  .subhead{text-align:center;text-transform:uppercase;letter-spacing:.2em;font-size:.7rem;color:var(--ink-soft);margin-bottom:22px;}
+  .card{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:18px 18px 8px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.03);}
+  h2{font-size:1.35rem;color:var(--rust);margin:2px 0 10px;font-weight:600;}
+  table{border-collapse:collapse;width:100%;font-size:1.05rem;}
+  td{padding:10px 6px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  tr:last-child td{border-bottom:0;}
+  td.t{color:var(--rust);font-weight:600;white-space:nowrap;width:92px;}
+  td.l{color:var(--sage-deep);white-space:nowrap;width:110px;font-size:.95rem;}
+  .task{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:11px 4px;border-bottom:1px solid var(--rule);}
+  .task:last-child{border-bottom:0;}
+  .task .txt{flex:1;}
+  .task .note{display:block;font-size:.88rem;color:var(--ink-soft);margin-top:2px;}
+  .pill{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;padding:3px 9px;border-radius:20px;white-space:nowrap;border:1px solid var(--rule);}
+  .pill.todo{color:var(--ink-soft);} .pill.wip{color:var(--rust-deep);border-color:#e6c9a8;background:#fbf1e6;} .pill.done{color:var(--sage-deep);border-color:#cdd7bd;background:#f1f4ea;}
+  .due{font-size:.82rem;color:var(--ink-soft);margin-top:3px;}
+  .notes{white-space:pre-wrap;font-size:1.02rem;}
+  .empty{color:var(--ink-soft);padding:8px 4px 14px;}
+  .gate{max-width:360px;margin:40px auto;text-align:center;}
+  .gate input{font-family:inherit;font-size:1.1rem;text-align:center;letter-spacing:.14em;text-transform:uppercase;
+    padding:.7rem .8rem;border:1px solid var(--sage);border-radius:6px;width:100%;background:#fff;color:var(--ink);}
+  .gate button{margin-top:12px;width:100%;padding:.75rem;border:0;border-radius:6px;cursor:pointer;background:var(--rust);color:#fff;
+    text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;}
+  .gate button:hover{background:var(--rust-deep);}
+  .msg{min-height:1.3em;margin-top:12px;font-size:.9rem;color:#b5481f;}
+  .foot{text-align:center;margin-top:30px;font-size:.72rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.2em;}
+  .print-btn{display:inline-block;margin-top:6px;background:none;border:1px solid var(--sage);color:var(--ink-soft);
+    border-radius:20px;padding:6px 16px;font-family:inherit;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;cursor:pointer;}
+  @media print{ body{background:#fff;} .card{box-shadow:none;border-color:#eee;} .print-btn,.foot{display:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="names">Juliana &amp; Marko</h1>
+    <div class="date">17 . 10 . 2026</div>
+  </header>
+
+  <div id="gate" class="gate" style="display:none">
+    <p>Enter your personal access code to see your plan for the day.</p>
+    <input id="code-in" type="text" placeholder="XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button id="code-go">View my plan</button>
+    <div class="msg" id="gate-msg"></div>
+  </div>
+
+  <div id="content" style="display:none">
+    <div class="hi" id="hi"></div>
+    <div class="subhead">Your plan for the day</div>
+    <div id="sched-card" class="card" style="display:none">
+      <h2>Your Run Sheet</h2>
+      <div id="sched"></div>
+    </div>
+    <div id="tasks-card" class="card" style="display:none">
+      <h2>Your Tasks</h2>
+      <div id="tasks"></div>
+    </div>
+    <div id="notes-card" class="card" style="display:none">
+      <h2>Notes</h2>
+      <div id="notes" class="notes"></div>
+    </div>
+    <div style="text-align:center"><button class="print-btn" onclick="window.print()">Print this</button></div>
+  </div>
+
+  <div class="foot">With love, Juliana &amp; Marko</div>
+</div>
+
+<script>
+  var WORKER = "https://juliana-marko-photos.xanivarcloud.workers.dev";
+  function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  var STATUS = { todo:{lab:"To do",cls:"todo"}, wip:{lab:"In progress",cls:"wip"}, done:{lab:"Done",cls:"done"} };
+  function niceDate(d){ if(!d) return ""; var x=new Date(d+"T00:00:00"); if(isNaN(x)) return d;
+    try{ return x.toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}); }catch(e){ return d; } }
+
+  function getCode(){
+    var m = location.search.match(/[?&]code=([^&]+)/);
+    return m ? decodeURIComponent(m[1]).trim() : "";
+  }
+  function showGate(msg){
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('gate').style.display = '';
+    document.getElementById('gate-msg').textContent = msg || "";
+  }
+  function render(d){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('content').style.display = '';
+    document.getElementById('hi').textContent = d.name ? ("Hi " + d.name) : "Hi there";
+
+    // Schedule
+    var sc = d.schedule || [];
+    if(sc.length){
+      var rows = sc.map(function(r){
+        return '<tr><td class="t">' + esc(r.time||"") + '</td>' +
+               (r.loc ? '<td class="l">' + esc(r.loc) + '</td>' : '<td class="l"></td>') +
+               '<td>' + esc(r.item||"") + '</td></tr>';
+      }).join("");
+      document.getElementById('sched').innerHTML = '<table>' + rows + '</table>';
+      document.getElementById('sched-card').style.display = '';
+    } else if('schedule' in d){
+      document.getElementById('sched').innerHTML = '<div class="empty">Nothing scheduled for you yet.</div>';
+      document.getElementById('sched-card').style.display = '';
+    }
+
+    // Tasks
+    var tk = d.tasks || [];
+    if(tk.length){
+      var html = tk.map(function(t){
+        var st = STATUS[t.status] || STATUS.todo;
+        return '<div class="task"><div class="txt">' + esc(t.text||"") +
+               (t.note ? '<span class="note">' + esc(t.note) + '</span>' : "") +
+               (t.due ? '<span class="due">Due ' + esc(niceDate(t.due)) + '</span>' : "") +
+               '</div><span class="pill ' + st.cls + '">' + st.lab + '</span></div>';
+      }).join("");
+      document.getElementById('tasks').innerHTML = html;
+      document.getElementById('tasks-card').style.display = '';
+    } else if('tasks' in d){
+      document.getElementById('tasks').innerHTML = '<div class="empty">No tasks assigned to you yet.</div>';
+      document.getElementById('tasks-card').style.display = '';
+    }
+
+    // Shared notes
+    if(typeof d.notes === "string" && d.notes.trim()){
+      document.getElementById('notes').textContent = d.notes;
+      document.getElementById('notes-card').style.display = '';
+    }
+  }
+
+  function load(code){
+    if(!code){ showGate(""); return; }
+    fetch(WORKER + "/crew?code=" + encodeURIComponent(code))
+      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, status:r.status, j:j }; }); })
+      .then(function(res){
+        if(res.ok && res.j && res.j.data){ render(res.j.data); }
+        else if(res.status === 404){ showGate("We couldn't find that code — please check it with the couple."); }
+        else { showGate("Something went wrong — please try again."); }
+      })
+      .catch(function(){ showGate("Network error — please try again."); });
+  }
+
+  document.getElementById('code-go').addEventListener('click', function(){
+    var v = (document.getElementById('code-in').value || "").trim();
+    if(!v){ document.getElementById('gate-msg').textContent = "Please enter your code."; return; }
+    var url = location.pathname + "?code=" + encodeURIComponent(v);
+    history.replaceState(null, "", url);
+    load(v);
+  });
+  document.getElementById('code-in').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('code-go').click(); } });
+
+  load(getCode());
+</script>
+</body>
+</html>

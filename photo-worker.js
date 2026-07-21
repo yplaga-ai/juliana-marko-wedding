@@ -169,6 +169,37 @@ export default {
       }
     }
 
+    // --- Crew self-view (public, per-person access code) ---
+    // Returns ONLY the matching person's slice of the wedding plan (their schedule rows + their tasks,
+    // and the shared notes if the admin allowed it). Never any hens data; never another person's items;
+    // never the admin's private per-person note or anyone's access code.
+    if (request.method === "GET" && url.pathname === "/crew") {
+      const code = (url.searchParams.get("code") || "").trim();
+      if (!code) return j({ error: "Missing code" }, 400);
+      const obj = await env.PHOTOS.get("admin/hens-tracker.json");
+      let data = null;
+      if (obj) { try { data = JSON.parse(await obj.text()); } catch (_) {} }
+      const wed = (data && data.wedding && typeof data.wedding === "object") ? data.wedding : {};
+      const people = Array.isArray(wed.people) ? wed.people : [];
+      const me = people.find(p => p && (p.code || "").toString().trim() === code);
+      if (!me) return j({ error: "not_found" }, 404);
+      const name = (me.name || "").toString().trim();
+      const view = (me.view && typeof me.view === "object") ? me.view : { run: true, tasks: true, notes: false };
+      const out = { name };
+      if (view.run !== false) {
+        out.schedule = (Array.isArray(wed.schedule) ? wed.schedule : [])
+          .filter(r => r && (r.who || "").toString().trim() === name && (r.time || r.item || r.loc))
+          .map(r => ({ time: r.time || "", loc: r.loc || "", item: r.item || "" }));
+      }
+      if (view.tasks !== false) {
+        out.tasks = (Array.isArray(wed.tasks) ? wed.tasks : [])
+          .filter(t => t && (t.who || "").toString().trim() === name && (t.text || "").toString().trim())
+          .map(t => ({ text: t.text || "", status: t.status || "todo", note: t.note || "", due: t.due || "" }));
+      }
+      if (view.notes) out.notes = (typeof wed.notes === "string") ? wed.notes : "";
+      return j({ ok: true, data: out }, 200);
+    }
+
     // --- Well wish (public submit: note and/or video/photo, recorded or uploaded) ---
     if (request.method === "POST" && url.pathname === "/wish") {
       try {

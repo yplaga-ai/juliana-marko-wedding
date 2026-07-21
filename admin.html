@@ -68,6 +68,15 @@
   .due-row.over .due-when{color:#b5481f;font-weight:600;}
   .due-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;}
   #tbl-todo input[type=text]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  #tbl-tasks input[type=text],#tbl-tasks input[type=date],#tbl-tasks select,#tbl-people input[type=text],#tbl-people textarea,#tbl-people select{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;}
+  #tbl-people textarea{resize:vertical;min-height:38px;font-size:.9rem;}
+  .st-sel.st-todo{color:var(--ink-soft);} .st-sel.st-wip{color:#C96A2B;font-weight:600;} .st-sel.st-done{color:var(--sage-deep);font-weight:600;}
+  .pview{display:flex;flex-direction:column;gap:3px;font-size:.72rem;text-align:left;}
+  .pview label{display:flex;align-items:center;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0;}
+  .pview input{width:auto;margin:0;}
+  .pcode{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--ink);word-break:break-all;}
+  .pcode-row{display:flex;flex-direction:column;gap:4px;}
+  .btn.mini{font-size:.66rem;padding:.32rem .5rem;margin:0;}
   .done-text{text-decoration:line-through;color:var(--ink-soft);}
   .auto-task{font-size:.95rem;}
   .auto-badge{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sage-deep);border:1px solid var(--sage);border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:middle;white-space:nowrap;}
@@ -229,18 +238,52 @@
         </div>
         <div class="savebar" style="flex-wrap:wrap;gap:8px;">
           <span class="saved" id="wedSaved"></span>
-          <select id="sched-who" class="who-sel" title="Whose schedule to print"><option value="">Everyone</option></select>
-          <button class="btn" id="sched-print">Print run sheet</button>
+          <select id="sched-who" class="who-sel" title="Whose schedule to print"><option value="">Everyone (group)</option></select>
+          <button class="btn" id="sched-print">Print</button>
+          <button class="btn" id="sched-print-all" title="Print one page per person">Everyone's own sheets</button>
           <button class="btn primary" id="wedSave">Save now</button>
         </div>
       </div>
-      <p class="subnote">Your timeline for the day. Add the time, <strong>who it's for</strong> (Bride, Groom, Photographer, Everyone&hellip;), and what's happening. Print the master schedule, or pick a person above to print just theirs. <strong>Everything saves automatically.</strong></p>
+      <p class="subnote">Your timeline for the day. Add the time, <strong>who it's for</strong> (Bride, Groom, Photographer, Everyone&hellip;), an optional <strong>location</strong>, and what's happening. <strong>Print</strong> prints the group sheet, or pick a person to print just theirs; <strong>Everyone's own sheets</strong> prints a booklet with one page per person. <strong>Everything saves automatically.</strong></p>
       <div class="tablewrap"><table id="tbl-sched">
-        <thead><tr><th style="width:120px">Time</th><th style="width:130px">Who</th><th>What</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th style="width:110px">Time</th><th style="width:120px">Who</th><th style="width:140px">Location</th><th>What</th><th style="width:40px"></th></tr></thead>
         <tbody id="sched-body"></tbody>
       </table></div>
       <datalist id="who-list"></datalist>
       <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
+    </section>
+
+    <section class="event" id="ev-people">
+      <div class="meta">
+        <div>
+          <h2>People &amp; Access</h2>
+          <span class="count" id="people-count"></span>
+        </div>
+      </div>
+      <p class="subnote">The people helping on the day &mdash; bride, groom, coordinator, photographer, family. Names here fill the &ldquo;Who&rdquo; pickers on the run sheet and task board. Add a private note, print that person&rsquo;s pack (their schedule + tasks + notes), and &mdash; once you generate an access code &mdash; choose what they can see if you share their personal link. Saves automatically.</p>
+      <div class="tablewrap"><table id="tbl-people">
+        <thead><tr><th style="width:150px">Name</th><th>Private note</th><th style="width:150px" class="center">Can see</th><th style="width:170px">Personal access</th><th style="width:96px"></th></tr></thead>
+        <tbody id="people-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="people-add">+ Add a person</button>
+    </section>
+
+    <section class="event" id="ev-tasks">
+      <div class="meta">
+        <div>
+          <h2>Task Board (WIP)</h2>
+          <span class="count" id="tasks-count"></span>
+        </div>
+        <div class="savebar" style="flex-wrap:wrap;gap:8px;">
+          <label class="seat-hint" style="margin:0">Show <select id="tasks-filter" class="who-sel"><option value="">everyone</option></select></label>
+        </div>
+      </div>
+      <p class="subnote">Who&rsquo;s doing what, and where it&rsquo;s up to. Assign a task to a person and move it To&nbsp;do &rarr; In&nbsp;progress &rarr; Done. Filter by person above. Each person only sees their own tasks on their personal link. Saves automatically.</p>
+      <div class="tablewrap"><table id="tbl-tasks">
+        <thead><tr><th>Task</th><th style="width:120px">Who</th><th style="width:130px">Status</th><th style="width:140px">Due</th><th style="width:40px"></th></tr></thead>
+        <tbody id="tasks-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="tasks-add">+ Add a task</button>
     </section>
 
     <section class="event" id="ev-todo">
@@ -256,6 +299,19 @@
         <tbody id="todo-body"></tbody>
       </table></div>
       <button class="btn addrow" id="todo-add">+ Add task</button>
+    </section>
+
+    <section class="event" id="ev-notes">
+      <div class="meta">
+        <div>
+          <h2>Notes</h2>
+          <span class="count">a scratchpad for anything</span>
+        </div>
+      </div>
+      <p class="subnote">A free space for reminders, ideas, contacts, anything that doesn&rsquo;t fit elsewhere. Private to this admin. Saves automatically.</p>
+      <div class="reg-editor">
+        <textarea id="wed-notes" rows="6" placeholder="e.g. Parking code for the venue is 1234. Ask florist about ceremony arch. Uncle Tom is doing the speeches order…"></textarea>
+      </div>
     </section>
 
     <section class="event" id="ev-wexp">
@@ -614,9 +670,12 @@
     if(!Array.isArray(WED.seating.tables)) WED.seating.tables = [];
     if(typeof WED.seating.publish !== "boolean") WED.seating.publish = false;
     if(!Array.isArray(WED.todos)) WED.todos = defaultTodos();
+    if(!Array.isArray(WED.tasks)) WED.tasks = [];
+    if(!Array.isArray(WED.people)) WED.people = [];
+    if(typeof WED.notes !== "string") WED.notes = "";
     seatingReady = false;
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
-    renderSchedule(); renderWexp(); renderSeat(); renderTodos();
+    renderSchedule(); renderWexp(); renderSeat(); renderTodos(); renderPeople(); renderTasks(); renderNotes();
     seatingReady = true;
   }
   function defaultTodos(){
@@ -629,10 +688,20 @@
       {text:"Pack the emergency kit (safety pins, tissues, meds)", done:false}
     ];
   }
-  function whoList(){ const s = new Set(); WED.schedule.forEach(r => { if((r.who||"").trim()) s.add(r.who.trim()); }); return Array.from(s); }
+  function whoList(){
+    const s = new Set();
+    (WED.people||[]).forEach(p => { if((p.name||"").trim()) s.add(p.name.trim()); });
+    (WED.schedule||[]).forEach(r => { if((r.who||"").trim()) s.add(r.who.trim()); });
+    (WED.tasks||[]).forEach(tk => { if((tk.who||"").trim()) s.add(tk.who.trim()); });
+    return Array.from(s);
+  }
   function refreshSchedWho(){
-    const dl = $("who-list"); if(dl) dl.innerHTML = whoList().map(w => '<option value="' + esc(w) + '">').join("");
-    const sel = $("sched-who"); if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">Everyone</option>' + whoList().map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join(""); sel.value = whoList().indexOf(cur) >= 0 ? cur : ""; }
+    const list = whoList();
+    const dl = $("who-list"); if(dl) dl.innerHTML = list.map(w => '<option value="' + esc(w) + '">').join("");
+    [["sched-who","Everyone (group)"], ["tasks-filter","everyone"]].forEach(pair => {
+      const sel = $(pair[0]);
+      if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">' + esc(pair[1]) + '</option>' + list.map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join(""); sel.value = list.indexOf(cur) >= 0 ? cur : ""; }
+    });
   }
   function renderSchedule(){
     const b = $("sched-body"); b.innerHTML = "";
@@ -641,12 +710,14 @@
       tr.innerHTML =
         '<td><input type="text" class="s-time" value="' + esc(row.time || "") + '" placeholder="e.g. 8:00 am"></td>' +
         '<td><input type="text" class="s-who" list="who-list" value="' + esc(row.who || "") + '" placeholder="e.g. Bride"></td>' +
+        '<td><input type="text" class="s-loc" value="' + esc(row.loc || "") + '" placeholder="e.g. Home"></td>' +
         '<td><input type="text" class="s-item" value="' + esc(row.item || "") + '" placeholder="e.g. Makeup artist"></td>' +
         '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const ti = tr.querySelector(".s-time"), wh = tr.querySelector(".s-who"), it = tr.querySelector(".s-item");
+      const ti = tr.querySelector(".s-time"), wh = tr.querySelector(".s-who"), lo = tr.querySelector(".s-loc"), it = tr.querySelector(".s-item");
       ti.addEventListener("input", () => { WED.schedule[i].time = ti.value; wedMark(); });
       wh.addEventListener("input", () => { WED.schedule[i].who = wh.value; wedMark(); });
       wh.addEventListener("change", refreshSchedWho);
+      lo.addEventListener("input", () => { WED.schedule[i].loc = lo.value; wedMark(); });
       it.addEventListener("input", () => { WED.schedule[i].item = it.value; wedMark(); });
       tr.querySelector(".rowdel").addEventListener("click", () => { WED.schedule.splice(i,1); wedMark(); renderSchedule(); });
       b.appendChild(tr);
@@ -659,7 +730,7 @@
     WED.expenses.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"><input type="text" class="f-contact" value="' + esc(row.contact || "") + '" placeholder="phone / email (optional)"><div class="f-doc"></div></td>' +
+        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"><input type="text" class="f-contact" value="' + esc(row.contact || "") + '" placeholder="phone / email (optional)"><input type="text" class="f-note" value="' + esc(row.note || "") + '" placeholder="note (optional)" style="margin-top:5px;font-size:.9rem;"><div class="f-doc"></div></td>' +
         '<td><input type="number" class="amt f-amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
         '<td><input type="number" class="amt f-dep" value="' + (row.deposit==null?"":esc(row.deposit)) + '" placeholder="0"></td>' +
         '<td class="f-bal"></td>' +
@@ -676,6 +747,7 @@
       }
       it.addEventListener("input", () => { row.item = it.value; wedMark(); });
       ct.addEventListener("input", () => { row.contact = ct.value; wedMark(); });
+      const ntE = tr.querySelector(".f-note"); if(ntE) ntE.addEventListener("input", () => { row.note = ntE.value; wedMark(); });
       wireDocCell(tr.querySelector(".f-doc"), row);
       am.addEventListener("input", () => { row.amount = (am.value===""?null:num(am.value)); wedMark(); refreshBal(); updateWexp(); });
       dep.addEventListener("input", () => { row.deposit = (dep.value===""?null:num(dep.value)); wedMark(); refreshBal(); updateWexp(); });
@@ -855,32 +927,159 @@
       '<text x="80" y="95" text-anchor="middle" class="pie-tot-val">A$' + total.toLocaleString() + '</text></svg>' +
       '<div class="pie-legend">' + legend + '</div></div>';
   }
-  function printRunSheet(){
-    var person = ($("sched-who") && $("sched-who").value || "").trim();
-    var rows = "";
-    WED.schedule.forEach(function(r){
-      if(!(r.time || r.item || r.who)) return;
-      if(person && (r.who||"").trim() !== person) return;
-      if(person){
-        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
-      } else {
-        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td class="w">' + esc(r.who||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
-      }
-    });
+  /* ---- Printing: group run sheet, one person, everyone's individual sheets, or a full person "pack" ---- */
+  function printDoc(bodyHtml){
     var w = window.open("", "_blank");
-    if(!w){ alert("Please allow pop-ups so the run sheet can open to print."); return; }
-    var subtitle = person ? (esc(person) + "'s Schedule &bull; 17 October 2026") : "Wedding Day Run Sheet &bull; 17 October 2026";
-    var html = '<!doctype html><html><head><meta charset="utf-8"><title>' + (person?esc(person)+" — Run Sheet":"Wedding Day Run Sheet") + '</title>' +
-      '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">' +
-      '<style>body{font-family:"Cormorant Garamond",Georgia,serif;color:#413F3A;max-width:660px;margin:40px auto;padding:0 24px;}' +
+    if(!w){ alert("Please allow pop-ups so the printout can open."); return; }
+    var css = 'body{font-family:"Cormorant Garamond",Georgia,serif;color:#413F3A;max-width:680px;margin:40px auto;padding:0 24px;}' +
       'h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:3rem;text-align:center;margin:0;}' +
       '.sub{text-align:center;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;color:#6f6a60;margin:4px 0 26px;}' +
-      'table{border-collapse:collapse;width:100%;font-size:1.05rem;}td{padding:10px 6px;border-bottom:1px solid #e5ded0;vertical-align:top;}' +
-      'td.t{color:#C96A2B;font-weight:600;white-space:nowrap;width:110px;}td.w{color:#6f7f52;white-space:nowrap;width:130px;}@media print{body{margin:0;}}</style></head><body>' +
-      '<h1>Juliana &amp; Marko</h1><div class="sub">' + subtitle + '</div>' +
-      '<table>' + (rows || '<tr><td>Nothing on the run sheet yet.</td></tr>') + '</table>' +
-      '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt></body></html>';
+      'h2{font-size:1.3rem;color:#C96A2B;border-bottom:1px solid #e5ded0;padding-bottom:4px;margin:26px 0 8px;}' +
+      'table{border-collapse:collapse;width:100%;font-size:1.02rem;margin-bottom:8px;}td{padding:9px 6px;border-bottom:1px solid #e5ded0;vertical-align:top;}' +
+      'td.t{color:#C96A2B;font-weight:600;white-space:nowrap;width:96px;}td.w{color:#6f7f52;white-space:nowrap;width:120px;}td.l{color:#6f6a60;white-space:nowrap;width:130px;}' +
+      '.notes{white-space:pre-wrap;font-size:1rem;line-height:1.5;border:1px solid #e5ded0;border-radius:6px;padding:10px 12px;}' +
+      '.person-page{page-break-after:always;} .person-page:last-child{page-break-after:auto;}' +
+      '.st{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:#6f6a60;}' +
+      '@media print{body{margin:0;}}';
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Juliana &amp; Marko</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">' +
+      '<style>' + css + '</style></head><body>' + bodyHtml +
+      '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},600);};</scr'+'ipt></body></html>';
     w.document.write(html); w.document.close();
+  }
+  function schedHasContent(r){ return !!(r.time || r.item || r.who || r.loc); }
+  function scheduleTable(person){
+    var rows = "";
+    WED.schedule.forEach(function(r){
+      if(!schedHasContent(r)) return;
+      if(person && (r.who||"").trim() !== person) return;
+      var loc = r.loc ? '<td class="l">' + esc(r.loc) + '</td>' : '<td class="l"></td>';
+      if(person){
+        rows += '<tr><td class="t">' + esc(r.time||"") + '</td>' + loc + '<td>' + esc(r.item||"") + '</td></tr>';
+      } else {
+        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td class="w">' + esc(r.who||"") + '</td>' + loc + '<td>' + esc(r.item||"") + '</td></tr>';
+      }
+    });
+    return rows ? ('<table>' + rows + '</table>') : '<p>Nothing on the run sheet yet.</p>';
+  }
+  var STATUS_LABEL = { todo:"To do", wip:"In progress", done:"Done" };
+  function tasksTable(person){
+    var rows = "";
+    (WED.tasks||[]).forEach(function(tk){
+      if(!(tk.text||"").trim()) return;
+      if(person && (tk.who||"").trim() !== person) return;
+      var meta = [];
+      if(!person && (tk.who||"").trim()) meta.push(esc(tk.who));
+      meta.push('<span class="st">' + esc(STATUS_LABEL[tk.status]||"To do") + '</span>');
+      if(tk.due) meta.push("due " + esc(niceDate(tk.due)));
+      rows += '<tr><td>' + esc(tk.text) + (tk.note?('<br><span class="st">'+esc(tk.note)+'</span>'):"") + '</td><td class="l">' + meta.join(" &bull; ") + '</td></tr>';
+    });
+    return rows ? ('<table>' + rows + '</table>') : '<p>No tasks yet.</p>';
+  }
+  function printRunSheet(personArg){
+    var person = (typeof personArg === "string") ? personArg : (($("sched-who") && $("sched-who").value || "").trim());
+    var subtitle = person ? (esc(person) + "'s Schedule &bull; 17 October 2026") : "Wedding Day Run Sheet &bull; 17 October 2026";
+    printDoc('<h1>Juliana &amp; Marko</h1><div class="sub">' + subtitle + '</div>' + scheduleTable(person));
+  }
+  function printAllIndividual(){
+    var people = whoList().filter(function(w){ return w && w.toLowerCase() !== "everyone"; });
+    if(!people.length){ alert("Add some people (or names in the Who column) first."); return; }
+    var pages = people.map(function(p){
+      return '<div class="person-page"><h1>Juliana &amp; Marko</h1><div class="sub">' + esc(p) + "'s Schedule &bull; 17 October 2026</div>" + scheduleTable(p) + '</div>';
+    }).join("");
+    printDoc(pages);
+  }
+  function printPersonPack(name){
+    name = (name||"").trim(); if(!name){ alert("Give this person a name first."); return; }
+    var person = (WED.people||[]).filter(function(p){ return (p.name||"").trim() === name; })[0] || {};
+    var body = '<h1>Juliana &amp; Marko</h1><div class="sub">' + esc(name) + "'s Pack &bull; 17 October 2026</div>";
+    body += '<h2>Run Sheet</h2>' + scheduleTable(name);
+    body += '<h2>Tasks</h2>' + tasksTable(name);
+    if((person.note||"").trim()){ body += '<h2>Notes</h2><div class="notes">' + esc(person.note) + '</div>'; }
+    printDoc(body);
+  }
+
+  /* ---- Notes (general plan scratchpad) ---- */
+  function renderNotes(){ const t = $("wed-notes"); if(t) t.value = WED.notes || ""; }
+
+  /* ---- Task board (WIP) ---- */
+  function updateTasksCount(){
+    const total = (WED.tasks||[]).length;
+    const done = (WED.tasks||[]).filter(t => t.status === "done").length;
+    const el = $("tasks-count"); if(el) el.textContent = total ? (done + " / " + total + " done") : "";
+  }
+  function renderTasks(){
+    const b = $("tasks-body"); if(!b || !WED || !Array.isArray(WED.tasks)) return; b.innerHTML = "";
+    const filter = ($("tasks-filter") && $("tasks-filter").value || "").trim();
+    let shown = 0;
+    WED.tasks.forEach(tk => {
+      if(filter && (tk.who||"").trim() !== filter) return;
+      shown++;
+      const st = (tk.status === "wip" || tk.status === "done") ? tk.status : "todo";
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" class="tk-text" value="' + esc(tk.text||"") + '" placeholder="e.g. Pick up the cake"><input type="text" class="tk-note" value="' + esc(tk.note||"") + '" placeholder="note (optional)" style="margin-top:5px;font-size:.85rem;"></td>' +
+        '<td><input type="text" class="tk-who" list="who-list" value="' + esc(tk.who||"") + '" placeholder="Assign to…"></td>' +
+        '<td><select class="tk-status st-sel st-' + st + '"><option value="todo"' + (st==="todo"?" selected":"") + '>To do</option><option value="wip"' + (st==="wip"?" selected":"") + '>In progress</option><option value="done"' + (st==="done"?" selected":"") + '>Done</option></select></td>' +
+        '<td><input type="date" class="tk-due" value="' + esc(tk.due||"") + '"></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const tx = tr.querySelector(".tk-text"), nt = tr.querySelector(".tk-note"), wh = tr.querySelector(".tk-who"), stsel = tr.querySelector(".tk-status"), du = tr.querySelector(".tk-due");
+      tx.addEventListener("input", () => { tk.text = tx.value; wedMark(); });
+      nt.addEventListener("input", () => { tk.note = nt.value; wedMark(); });
+      wh.addEventListener("input", () => { tk.who = wh.value; wedMark(); });
+      wh.addEventListener("change", refreshSchedWho);
+      stsel.addEventListener("change", () => { tk.status = stsel.value; stsel.className = "tk-status st-sel st-" + stsel.value; wedMark(); updateTasksCount(); });
+      du.addEventListener("input", () => { tk.due = du.value; wedMark(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.tasks.indexOf(tk); if(k>=0) WED.tasks.splice(k,1); wedMark(); renderTasks(); refreshSchedWho(); });
+      b.appendChild(tr);
+    });
+    if(!shown){ b.innerHTML = '<tr><td colspan="5" class="empty" style="padding:14px">' + (WED.tasks.length ? "No tasks for this person." : "No tasks yet — add one below.") + '</td></tr>'; }
+    updateTasksCount();
+  }
+
+  /* ---- People & Access ---- */
+  function genCode(){ const cs = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; let s = ""; for(let i=0;i<8;i++){ s += cs[Math.floor(Math.random()*cs.length)]; if(i===3) s += "-"; } return s; }
+  function renderPeople(){
+    const b = $("people-body"); if(!b || !WED || !Array.isArray(WED.people)) return; b.innerHTML = "";
+    WED.people.forEach(p => {
+      if(!p.view || typeof p.view !== "object") p.view = { run:true, tasks:true, notes:false };
+      const hasCode = !!(p.code||"").trim();
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" class="pp-name" value="' + esc(p.name||"") + '" placeholder="e.g. Sarah (coordinator)"></td>' +
+        '<td><textarea class="pp-note" rows="2" placeholder="Private note about this person…">' + esc(p.note||"") + '</textarea></td>' +
+        '<td class="center"><div class="pview">' +
+          '<label><input type="checkbox" class="pv-run"' + (p.view.run !== false ? " checked" : "") + '> Run sheet</label>' +
+          '<label><input type="checkbox" class="pv-tasks"' + (p.view.tasks !== false ? " checked" : "") + '> Their tasks</label>' +
+          '<label><input type="checkbox" class="pv-notes"' + (p.view.notes ? " checked" : "") + '> Shared notes</label>' +
+        '</div></td>' +
+        '<td><div class="pcode-row">' + (hasCode
+            ? ('<span class="pcode">' + esc(p.code) + '</span><button class="btn mini pp-copy">Copy link</button><button class="btn mini pp-newcode">New code</button>')
+            : '<button class="btn mini pp-gencode">Generate access code</button>') + '</div></td>' +
+        '<td style="white-space:nowrap"><button class="btn mini pp-pack" title="Print this person\'s schedule + tasks + notes">Print pack</button><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const nm = tr.querySelector(".pp-name"), nt = tr.querySelector(".pp-note");
+      nm.addEventListener("input", () => { p.name = nm.value; wedMark(); });
+      nm.addEventListener("change", refreshSchedWho);
+      nt.addEventListener("input", () => { p.note = nt.value; wedMark(); });
+      tr.querySelector(".pv-run").addEventListener("change", function(){ p.view.run = this.checked; wedMark(); });
+      tr.querySelector(".pv-tasks").addEventListener("change", function(){ p.view.tasks = this.checked; wedMark(); });
+      tr.querySelector(".pv-notes").addEventListener("change", function(){ p.view.notes = this.checked; wedMark(); });
+      const gen = tr.querySelector(".pp-gencode"); if(gen) gen.addEventListener("click", () => { p.code = genCode(); wedMark(); renderPeople(); });
+      const nc = tr.querySelector(".pp-newcode"); if(nc) nc.addEventListener("click", () => { p.code = genCode(); wedMark(); renderPeople(); });
+      const cp = tr.querySelector(".pp-copy"); if(cp) cp.addEventListener("click", function(){
+        const link = location.origin + "/crew?code=" + encodeURIComponent(p.code);
+        const btn = this;
+        (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(link) : Promise.reject())
+          .then(() => { btn.textContent = "Copied ✓"; setTimeout(() => btn.textContent = "Copy link", 1500); })
+          .catch(() => { prompt("Copy this personal link:", link); });
+      });
+      tr.querySelector(".pp-pack").addEventListener("click", () => { printPersonPack(p.name); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.people.indexOf(p); if(k>=0) WED.people.splice(k,1); wedMark(); renderPeople(); refreshSchedWho(); });
+      b.appendChild(tr);
+    });
+    if(!WED.people.length){ b.innerHTML = '<tr><td colspan="5" class="empty" style="padding:14px">No people yet — add the bride, groom, coordinator, key vendors…</td></tr>'; }
+    const el = $("people-count"); if(el){ const n = WED.people.length; el.textContent = n ? (n + (n===1 ? " person" : " people")) : ""; }
+    refreshSchedWho();
   }
   async function saveWedding(){
     if(wedSaving) return;
@@ -1066,14 +1265,19 @@
   $("rc-meal-add").addEventListener("click", function(){ SITE.rsvp.mealOptions.push(""); siteMark(); renderRsvpCfg(); });
   $("csv-wedrsvp").addEventListener("click", downloadWeddingCSV);
 
-  $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",who:"",item:""}); wedMark(); renderSchedule(); });
-  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
+  $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",who:"",loc:"",item:""}); wedMark(); renderSchedule(); });
+  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false,note:""}); wedMark(); renderWexp(); });
   $("wexp-cal-all").addEventListener("click", addAllReminders);
   $("wexp-budget").addEventListener("input", function(){ WED.budget = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
   $("wexp-heads").addEventListener("input", function(){ WED.headcount = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
   $("todo-add").addEventListener("click", () => { WED.todos.push({text:"",done:false}); wedMark(); renderTodos(); });
+  $("people-add").addEventListener("click", () => { WED.people.push({name:"",note:"",code:"",view:{run:true,tasks:true,notes:false}}); wedMark(); renderPeople(); });
+  $("tasks-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:""}); wedMark(); renderTasks(); });
+  $("tasks-filter").addEventListener("change", renderTasks);
+  $("wed-notes").addEventListener("input", function(){ WED.notes = this.value; wedMark(); });
   $("wedSave").addEventListener("click", saveWedding);
-  $("sched-print").addEventListener("click", printRunSheet);
+  $("sched-print").addEventListener("click", () => printRunSheet());
+  $("sched-print-all").addEventListener("click", printAllIndividual);
   window.addEventListener("beforeunload", e => { if(wedDirty){ e.preventDefault(); e.returnValue = ""; } });
 
   function csvCell(s){ s=(s==null?"":String(s)); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }

@@ -5,6 +5,7 @@
     { "source": "/MOHadmin", "destination": "/MOHadmin.html" },
     { "source": "/hens", "destination": "/hens.html" },
     { "source": "/hens-itinerary", "destination": "/hens-itinerary.html" },
+    { "source": "/crew", "destination": "/crew.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
