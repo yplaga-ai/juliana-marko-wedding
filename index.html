@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Sacramento&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --cream:#FCF9F2;
-    --cream-2:#F6F0E4;
+    --cream:#ffffff;
+    --cream-2:#f4f4f4;
     --ink:#413F3A;
     --ink-soft:#6f6a60;
     --sage:#8A9A6B;
@@ -44,7 +44,7 @@
     position:sticky;top:0;z-index:50;
     display:flex;justify-content:center;gap:2.2rem;
     padding:.9rem 1rem;
-    background:rgba(252,249,242,.9);
+    background:rgba(255,255,255,.9);
     backdrop-filter:blur(6px);
     border-bottom:1px solid rgba(201,106,43,.25);
     flex-wrap:wrap;
@@ -133,7 +133,7 @@
   .drop p{margin:.4rem 0 0;font-size:.85rem;color:var(--ink-soft);}
   .thumbs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;}
   .thumb{position:relative;width:66px;height:66px;border-radius:4px;overflow:hidden;border:1px solid #eee;
-         display:flex;align-items:center;justify-content:center;background:#f4efe5;font-size:1.4rem;}
+         display:flex;align-items:center;justify-content:center;background:#f2f2f2;font-size:1.4rem;}
   .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
   .thumb .tbadge{position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;
          background:rgba(0,0,0,.45);color:#fff;font-size:.7rem;display:flex;align-items:center;justify-content:center;}
@@ -207,7 +207,7 @@
   .wish-choice{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rust);margin-bottom:10px;text-align:center;}
   .wish-btns,.wish-stage-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
   .wish-mini{font-family:inherit;font-size:.78rem;padding:.5rem .85rem;border-radius:4px;cursor:pointer;border:1px solid var(--sage);background:#fff;color:var(--ink);}
-  .wish-mini:hover{background:#f3efe4;}
+  .wish-mini:hover{background:#f2f2f2;}
   .wish-mini.ghost{border-color:rgba(0,0,0,.15);color:var(--ink-soft);}
   .wish-mini:disabled{opacity:.55;cursor:default;}
   .wish-stage{margin-top:14px;text-align:center;}
@@ -284,8 +284,8 @@
 
 <!-- HERO -->
 <section class="hero" id="home">
-  <span class="floral fl-tl bg-f2"></span>
-  <span class="floral fl-tr bg-f2"></span>
+  <span class="floral fl-tl bg-f2" style="transform:scaleX(-1)"></span>
+  <span class="floral fl-tr bg-f2" style="transform:none"></span>
   <div class="wrap">
     
     <div class="couple">Juliana <span class="amp">&amp;</span> Marko</div>

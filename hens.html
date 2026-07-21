@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
-    --cream:#FCF9F2;
+    --cream:#ffffff;
     --ink:#413F3A;
     --ink-soft:#6f6a60;
     --sage:#8A9A6B;
@@ -143,7 +143,7 @@
   .gal-btn:hover{border-color:var(--rust);color:var(--rust);}
   .gal-tip{text-align:center;font-size:.76rem;color:var(--ink-soft);margin:6px auto 14px;max-width:470px;}
   .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px;}
-  .gal-tile{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eee6d8;cursor:pointer;}
+  .gal-tile{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#eeeeee;cursor:pointer;}
   .gal-tile img,.gal-tile video{width:100%;height:100%;object-fit:cover;display:block;}
   .gal-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.5rem;text-shadow:0 1px 5px rgba(0,0,0,.55);pointer-events:none;}
   .gal-save{position:absolute;right:6px;bottom:6px;background:rgba(255,255,255,.92);color:var(--rust);border:0;border-radius:5px;padding:.32rem .6rem;font-size:.72rem;font-weight:700;cursor:pointer;}
@@ -163,7 +163,7 @@
   .brekky-opt span{display:flex;flex-direction:column;}
   .brekky-opt b{font-size:1rem;color:var(--ink);font-weight:600;}
   .brekky-opt small{font-size:.85rem;color:var(--ink-soft);margin-top:1px;}
-  .brekky-opt.sel{border-color:var(--rust);background:#fdf6ee;}
+  .brekky-opt.sel{border-color:var(--rust);background:#f6f6f6;}
   .brekky button{margin-top:6px;width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
   .brekky button:hover{background:var(--rust-deep);}
   .brekky button:disabled{opacity:.65;cursor:default;}
@@ -203,8 +203,8 @@
   <div class="backlink"><a href="/">&larr; Juliana &amp; Marko</a></div>
 
   <header class="hero">
-    <span class="floral fl-tl bg-f2"></span>
-    <span class="floral fl-tr bg-f2"></span>
+    <span class="floral fl-tl bg-f2" style="transform:scaleX(-1)"></span>
+    <span class="floral fl-tr bg-f2" style="transform:none"></span>
     <div class="pre">Girls Only</div>
     <div class="who">The Hens</div>
     <div class="sub">Daylesford</div>
