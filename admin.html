@@ -85,6 +85,10 @@
   .reg-link-row input{font-family:inherit;font-size:.92rem;padding:.45rem .55rem;border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);}
   .reg-link-row .rl-label{flex:0 0 200px;min-width:0;}
   .reg-link-row .rl-url{flex:1;min-width:0;}
+  .faq-row{display:flex;gap:8px;align-items:flex-start;border:1px solid rgba(0,0,0,.1);border-radius:6px;padding:10px;margin-bottom:8px;}
+  .faq-row .fq-main{flex:1;min-width:0;}
+  .faq-row input,.faq-row textarea{font-family:inherit;font-size:.92rem;padding:.45rem .55rem;border:1px solid var(--sage);border-radius:4px;width:100%;box-sizing:border-box;background:#fff;color:var(--ink);}
+  .faq-row textarea{margin-top:6px;resize:vertical;}
   th.center,td.center{text-align:center;}
   .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
   .rowdel:hover{color:#8a1f0f;}
@@ -317,6 +321,28 @@
         <textarea id="reg-bank" rows="3" placeholder="e.g. Name: Juliana &amp; Marko&#10;BSB: 000-000&#10;Account: 0000 0000"></textarea>
       </div>
     </section>
+
+    <section class="event" id="ev-site">
+      <div class="meta">
+        <div>
+          <h2>Details &amp; FAQ</h2>
+          <span class="count">the &ldquo;Good to Know&rdquo; section on your main site</span>
+        </div>
+        <div class="savebar"><span class="saved" id="siteSaved"></span></div>
+      </div>
+      <p class="subnote">Optional info for guests &mdash; Getting There, Where to Stay, and FAQs. It appears in a &ldquo;Good to Know&rdquo; section (and a &ldquo;Details&rdquo; nav link) on your main site. Leave everything blank to keep it hidden. Saves automatically.</p>
+      <div class="reg-editor">
+        <label class="reg-lab">Getting there (travel, parking, directions)</label>
+        <textarea id="site-travel" rows="3" placeholder="e.g. Potters Receptions, Warrandyte. Free on-site parking. ~40 min from the CBD."></textarea>
+
+        <label class="reg-lab">Where to stay</label>
+        <textarea id="site-accom" rows="3" placeholder="e.g. Quest Doncaster (~10 min) · a few options a short drive away…"></textarea>
+
+        <label class="reg-lab">FAQs</label>
+        <div id="site-faqs"></div>
+        <button class="btn addrow" id="site-faq-add">+ Add a question</button>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -396,6 +422,7 @@
       renderKitchen();
       loadWedding();
       loadRegistry();
+      loadSite();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
@@ -804,6 +831,48 @@
   $("reg-well").addEventListener("input", function(){ REG.well = this.value; regMark(); });
   $("reg-bank").addEventListener("input", function(){ REG.bank = this.value; regMark(); });
   $("reg-link-add").addEventListener("click", function(){ REG.links.push({label:"",url:""}); regMark(); renderRegistry(); });
+
+  /* ---- Site config editor (Details & FAQ → public /site doc; auto-saves) ---- */
+  let SITE = { travel:"", accommodation:"", faq:[] }, siteDirty = false, siteSaving = false, siteTimer = null;
+  function siteStatus(t, c){ const s = $("siteSaved"); if(s){ s.textContent = t; s.style.color = c; } }
+  function siteMark(){ siteDirty = true; siteStatus("Editing…", "var(--ink-soft)"); if(siteTimer) clearTimeout(siteTimer); siteTimer = setTimeout(() => { if(siteDirty && !siteSaving) saveSite(); }, 1400); }
+  async function loadSite(){
+    try{
+      const r = await fetch(WORKER + "/site?cb=" + Date.now());
+      const jj = await r.json().catch(() => ({}));
+      const d = (jj && jj.data && typeof jj.data === "object") ? jj.data : {};
+      SITE = { travel: d.travel||"", accommodation: d.accommodation||"", faq: Array.isArray(d.faq)?d.faq:[] };
+    } catch(e){ SITE = { travel:"", accommodation:"", faq:[] }; }
+    siteDirty = false; siteStatus("", "var(--ink-soft)"); renderSite();
+  }
+  function renderSite(){
+    if($("site-travel")) $("site-travel").value = SITE.travel || "";
+    if($("site-accom")) $("site-accom").value = SITE.accommodation || "";
+    const box = $("site-faqs"); if(!box) return; box.innerHTML = "";
+    SITE.faq.forEach((f, i) => {
+      const row = document.createElement("div"); row.className = "faq-row";
+      row.innerHTML = '<div class="fq-main"><input type="text" class="fq-q" placeholder="Question (e.g. Is there parking?)" value="' + esc(f.q||"") + '"><textarea class="fq-a" rows="2" placeholder="Answer">' + esc(f.a||"") + '</textarea></div><button class="rowdel" title="Remove">&#10005;</button>';
+      row.querySelector(".fq-q").addEventListener("input", function(){ SITE.faq[i].q = this.value; siteMark(); });
+      row.querySelector(".fq-a").addEventListener("input", function(){ SITE.faq[i].a = this.value; siteMark(); });
+      row.querySelector(".rowdel").addEventListener("click", function(){ SITE.faq.splice(i,1); siteMark(); renderSite(); });
+      box.appendChild(row);
+    });
+  }
+  async function saveSite(){
+    if(siteSaving || !PW) return;
+    if(siteTimer){ clearTimeout(siteTimer); siteTimer = null; }
+    siteSaving = true; siteDirty = false; siteStatus("Saving…", "var(--ink-soft)");
+    try{
+      const r = await fetch(WORKER + "/site", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: SITE }) });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok) siteStatus("Saved ✓", "var(--sage-deep)"); else { siteDirty = true; siteStatus((jj && jj.error) || "Couldn't save — will retry.", "#b5481f"); }
+    } catch(e){ siteDirty = true; siteStatus("Couldn't save — will retry.", "#b5481f"); }
+    siteSaving = false;
+    if(siteDirty){ if(siteTimer) clearTimeout(siteTimer); siteTimer = setTimeout(() => { if(siteDirty && !siteSaving) saveSite(); }, 1200); }
+  }
+  $("site-travel").addEventListener("input", function(){ SITE.travel = this.value; siteMark(); });
+  $("site-accom").addEventListener("input", function(){ SITE.accommodation = this.value; siteMark(); });
+  $("site-faq-add").addEventListener("click", function(){ SITE.faq.push({q:"",a:""}); siteMark(); renderSite(); });
 
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
   $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
