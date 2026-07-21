@@ -45,6 +45,20 @@
   a.email:hover{text-decoration:underline;}
   .empty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
   .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
+  /* Wedding-day planner */
+  .subnote{font-size:.85rem;color:var(--ink-soft);margin:0 0 10px;}
+  #tbl-sched input[type=text], #tbl-wexp input[type=text], #tbl-wexp input[type=number]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  #tbl-wexp input.amt{text-align:right;}
+  th.center,td.center{text-align:center;}
+  .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
+  .rowdel:hover{color:#8a1f0f;}
+  .addrow{margin:10px 0 2px;}
+  .savebar{display:flex;gap:10px;align-items:center;}
+  .saved{font-size:.82rem;min-width:104px;text-align:right;}
+  .summary{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
+  .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
+  .scard .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);}
+  .scard .val{font-family:"Cormorant Garamond",serif;font-size:1.4rem;font-weight:600;margin-top:2px;color:var(--ink);}
 </style>
 </head>
 <body>
@@ -79,6 +93,45 @@
         <button class="btn" id="csv-kitchen">Download CSV</button>
       </div>
       <div class="tablewrap" id="table-kitchen"></div>
+    </section>
+
+    <section class="event" id="ev-sched">
+      <div class="meta">
+        <div>
+          <h2>Wedding Day &mdash; Run Sheet</h2>
+          <span class="count">makeup, hair, photographer &amp; more</span>
+        </div>
+        <div class="savebar">
+          <span class="saved" id="wedSaved"></span>
+          <button class="btn primary" id="wedSave">Save wedding plan</button>
+        </div>
+      </div>
+      <p class="subnote">Your timeline for the day. Pop the time next to each thing, add or remove rows, then hit save. One save covers your run sheet <em>and</em> expenses below.</p>
+      <div class="tablewrap"><table id="tbl-sched">
+        <thead><tr><th style="width:130px">Time</th><th>What</th><th style="width:40px"></th></tr></thead>
+        <tbody id="sched-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
+    </section>
+
+    <section class="event" id="ev-wexp">
+      <div class="meta">
+        <div>
+          <h2>Wedding Day &mdash; Suppliers &amp; Expenses</h2>
+          <span class="count" id="wexp-count"></span>
+        </div>
+      </div>
+      <p class="subnote">What the day is costing. Tick &ldquo;Paid&rdquo; once a supplier's settled. The &ldquo;Save wedding plan&rdquo; button above saves this too.</p>
+      <div class="summary">
+        <div class="scard"><div class="lab">Total</div><div class="val" id="wexp-total">A$0</div></div>
+        <div class="scard"><div class="lab">Paid</div><div class="val" id="wexp-paid">A$0</div></div>
+        <div class="scard"><div class="lab">Still owing</div><div class="val" id="wexp-owing">A$0</div></div>
+      </div>
+      <div class="tablewrap"><table id="tbl-wexp">
+        <thead><tr><th>Supplier / item</th><th style="width:140px">Amount (A$)</th><th style="width:64px" class="center">Paid</th><th style="width:40px"></th></tr></thead>
+        <tbody id="wexp-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="wexp-add">+ Add supplier / expense</button>
     </section>
   </div>
 </div>
@@ -149,11 +202,115 @@
       $("app").style.display = "block";
       ingest(await r.json());
       renderKitchen();
+      loadWedding();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
     $("go").disabled = false;
   }
+
+  /* ---- Wedding-day planner (run sheet + expenses). Stored in the shared tracker doc
+         under a "wedding" key via /hens-tracker; read-modify-write preserves everything else. ---- */
+  let WDOC = null;      // full tracker doc as loaded
+  let WED = null;       // { schedule:[{time,item}], expenses:[{item,amount,paid}] }
+  let wedDirty = false;
+  function num(v){ v = parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,"")); return isNaN(v)?0:v; }
+  function wedMark(){ wedDirty = true; const s = $("wedSaved"); if(s){ s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; } }
+  function defaultWED(){
+    return {
+      schedule: [
+        {time:"", item:"Makeup artist arrives"},
+        {time:"", item:"Hair"},
+        {time:"", item:"Photographer arrives"},
+        {time:"", item:"Videographer arrives"},
+        {time:"", item:"Bridesmaids ready"},
+        {time:"", item:"Into the dress"},
+        {time:"", item:"Cars arrive"},
+        {time:"", item:"Leave for ceremony"}
+      ],
+      expenses: [
+        {item:"Venue", amount:null, paid:false},
+        {item:"Catering", amount:null, paid:false},
+        {item:"Photographer", amount:null, paid:false},
+        {item:"Videographer", amount:null, paid:false},
+        {item:"Florist", amount:null, paid:false},
+        {item:"Hair & makeup", amount:null, paid:false},
+        {item:"Cake", amount:null, paid:false},
+        {item:"Celebrant", amount:null, paid:false},
+        {item:"Dress", amount:null, paid:false},
+        {item:"Music / DJ", amount:null, paid:false}
+      ]
+    };
+  }
+  async function loadWedding(){
+    try{
+      const r = await fetch(WORKER + "/hens-tracker?pw=" + encodeURIComponent(PW));
+      const jj = await r.json().catch(() => ({}));
+      WDOC = (jj && jj.data && typeof jj.data === "object") ? jj.data : {};
+    } catch(e){ WDOC = {}; }
+    const w = WDOC.wedding;
+    WED = (w && typeof w === "object") ? w : defaultWED();
+    if(!Array.isArray(WED.schedule)) WED.schedule = defaultWED().schedule;
+    if(!Array.isArray(WED.expenses)) WED.expenses = defaultWED().expenses;
+    wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
+    renderSchedule(); renderWexp();
+  }
+  function renderSchedule(){
+    const b = $("sched-body"); b.innerHTML = "";
+    WED.schedule.forEach((row, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" value="' + esc(row.time || "") + '" placeholder="e.g. 8:00 am"></td>' +
+        '<td><input type="text" value="' + esc(row.item || "") + '" placeholder="e.g. Makeup artist"></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const inps = tr.querySelectorAll("input");
+      inps[0].addEventListener("input", () => { WED.schedule[i].time = inps[0].value; wedMark(); });
+      inps[1].addEventListener("input", () => { WED.schedule[i].item = inps[1].value; wedMark(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { WED.schedule.splice(i,1); wedMark(); renderSchedule(); });
+      b.appendChild(tr);
+    });
+  }
+  function renderWexp(){
+    const b = $("wexp-body"); b.innerHTML = "";
+    WED.expenses.forEach((row, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" value="' + esc(row.item || "") + '" placeholder="Supplier / item"></td>' +
+        '<td><input type="number" class="amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
+        '<td class="center"><input type="checkbox"' + (row.paid?" checked":"") + '></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const it = tr.querySelector('input[type=text]'), am = tr.querySelector('input.amt'), pd = tr.querySelector('input[type=checkbox]');
+      it.addEventListener("input", () => { WED.expenses[i].item = it.value; wedMark(); });
+      am.addEventListener("input", () => { WED.expenses[i].amount = (am.value===""?null:num(am.value)); wedMark(); updateWexp(); });
+      pd.addEventListener("change", () => { WED.expenses[i].paid = pd.checked; wedMark(); updateWexp(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { WED.expenses.splice(i,1); wedMark(); renderWexp(); });
+      b.appendChild(tr);
+    });
+    updateWexp();
+  }
+  function updateWexp(){
+    const total = WED.expenses.reduce((s,e) => s + num(e.amount), 0);
+    const paid  = WED.expenses.reduce((s,e) => s + (e.paid ? num(e.amount) : 0), 0);
+    $("wexp-total").textContent = "A$" + total.toLocaleString();
+    $("wexp-paid").textContent  = "A$" + paid.toLocaleString();
+    $("wexp-owing").textContent = "A$" + (total - paid).toLocaleString();
+    $("wexp-count").textContent = WED.expenses.length + (WED.expenses.length===1 ? " item" : " items");
+  }
+  async function saveWedding(){
+    $("wedSave").disabled = true; $("wedSaved").textContent = "Saving…"; $("wedSaved").style.color = "var(--ink-soft)";
+    try{
+      const payload = Object.assign({}, WDOC || {}, { wedding: WED });
+      const r = await fetch(WORKER + "/hens-tracker", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: payload }) });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok){ WDOC = payload; wedDirty = false; $("wedSaved").textContent = "Saved ✓"; $("wedSaved").style.color = "var(--sage-deep)"; }
+      else { $("wedSaved").textContent = (jj && jj.error) || "Couldn't save — try again."; $("wedSaved").style.color = "#b5481f"; }
+    } catch(e){ $("wedSaved").textContent = "Couldn't save — try again."; $("wedSaved").style.color = "#b5481f"; }
+    $("wedSave").disabled = false;
+  }
+  $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
+  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",amount:null,paid:false}); wedMark(); renderWexp(); });
+  $("wedSave").addEventListener("click", saveWedding);
+  window.addEventListener("beforeunload", e => { if(wedDirty){ e.preventDefault(); e.returnValue = ""; } });
 
   function csvCell(s){ s=(s==null?"":String(s)); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
   function downloadCSV(){
