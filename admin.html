@@ -290,11 +290,22 @@
     for(const it of items){
       h += '<tr><td>' + esc(it.name) + '</td>' +
            '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
-           '<td>' + esc(it.departure || "—") + '</td>' +
-           '<td class="notes">' + esc(it.notes || "") + '</td>' +
+           '<td>' + esc(depOf(it) || "—") + '</td>' +
+           '<td class="notes">' + esc(notesOf(it)) + '</td>' +
            '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
     }
     box.innerHTML = h + '</tbody></table>';
+  }
+
+  // Departure: prefer a stored field; otherwise parse a leading "Leaving: …" line from notes.
+  function depOf(it){
+    if(it.departure) return it.departure;
+    const m = (it.notes || "").match(/^Leaving:\s*(.+)$/m);
+    return m ? m[1].trim() : "";
+  }
+  function notesOf(it){
+    if(it.departure) return it.notes || "";
+    return (it.notes || "").replace(/^Leaving:.*(?:\r?\n)?/m, "").trim();
   }
 
   function csvCell(s){
@@ -309,7 +320,7 @@
     const rows = [head.map(csvCell).join(",")];
     for(const it of items){
       const row = isHens
-        ? [it.name, it.email, it.departure || "", it.notes || "", fmt(it.ts)]
+        ? [it.name, it.email, depOf(it), notesOf(it), fmt(it.ts)]
         : [it.name, it.email, fmt(it.ts)];
       rows.push(row.map(csvCell).join(","));
     }

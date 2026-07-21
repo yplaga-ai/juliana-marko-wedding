@@ -447,15 +447,17 @@
     e.preventDefault();
     const msg = form.querySelector('.rsvp-msg');
     const sbtn = form.querySelector('button[type="submit"]');
+    const dep = (form.querySelector('[name="departure"]').value || '').trim();
+    const userNotes = (form.querySelector('[name="notes"]').value || '').trim();
     const data = {
       event: 'hens',
       name: (form.querySelector('[name="name"]').value || '').trim(),
       email: (form.querySelector('[name="email"]').value || '').trim(),
-      departure: (form.querySelector('[name="departure"]').value || '').trim(),
-      notes: (form.querySelector('[name="notes"]').value || '').trim()
+      departure: dep,
+      notes: (dep ? ('Leaving: ' + dep + (userNotes ? '\n' + userNotes : '')) : userNotes)
     };
     if(!data.name || !data.email){ msg.className='rsvp-msg bad'; msg.textContent='Please enter your name and email.'; return; }
-    if(!data.departure){ msg.className='rsvp-msg bad'; msg.textContent='Please let us know when you’re leaving.'; return; }
+    if(!dep){ msg.className='rsvp-msg bad'; msg.textContent='Please let us know when you’re leaving.'; return; }
     const label = sbtn.textContent; sbtn.disabled = true; sbtn.textContent = 'Sending…';
     msg.className='rsvp-msg'; msg.textContent='';
     fetch(WORKER_URL + '/rsvp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
