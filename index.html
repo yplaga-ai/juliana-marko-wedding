@@ -254,6 +254,18 @@
     .sec h2.flourish{font-size:2.3rem;}
     nav{gap:1.1rem;}
   }
+
+  /* ---- language switcher + share ---- */
+  .langbar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:20px 0 2px;}
+  .langpick{display:inline-flex;border:1px solid rgba(201,106,43,.45);border-radius:999px;overflow:hidden;}
+  .langbtn{font-family:inherit;font-size:.72rem;letter-spacing:.14em;padding:.42rem .85rem;border:0;background:transparent;color:var(--ink-soft);cursor:pointer;text-transform:uppercase;transition:.15s;}
+  .langbtn+.langbtn{border-left:1px solid rgba(201,106,43,.25);}
+  .langbtn:hover{color:var(--rust);}
+  .langbtn.active{background:var(--rust);color:#fff;}
+  .sharebtn{display:inline-flex;align-items:center;gap:8px;font-family:inherit;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;padding:.45rem 1.05rem;border:1px solid var(--rust);border-radius:999px;background:#fff;color:var(--rust);cursor:pointer;transition:.15s;}
+  .sharebtn:hover{background:var(--rust);color:#fff;}
+  .sharebtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+  .share-msg{text-align:center;font-size:.72rem;color:var(--sage-deep);min-height:1em;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -261,13 +273,13 @@
 <!-- floral art embedded inline as images -->
 
 <nav>
-  <a href="#home">Home</a>
-  <a href="#plan">The Plan</a>
-  <a href="#photos">Photos</a>
-  <a href="#wishes">Well Wishes</a>
-  <a href="#kitchen">Kitchen Tea</a>
-  <a href="/hens">Hens</a>
-  <a href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
+  <a href="#home" data-i18n="nav.home">Home</a>
+  <a href="#plan" data-i18n="nav.plan">The Plan</a>
+  <a href="#photos" data-i18n="nav.photos">Photos</a>
+  <a href="#wishes" data-i18n="nav.wishes">Well Wishes</a>
+  <a href="#kitchen" data-i18n="nav.kitchen">Kitchen Tea</a>
+  <a href="/hens" data-i18n="nav.hens">Hens</a>
+  <a href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener" data-i18n="nav.rsvp">RSVP</a>
 </nav>
 
 <!-- HERO -->
@@ -277,12 +289,23 @@
   <div class="wrap">
     
     <div class="couple">Juliana <span class="amp">&amp;</span> Marko</div>
-    <div class="caps date">17 October 2026</div>
+    <div class="caps date" data-i18n="hero.date">17 October 2026</div>
     <div class="place caps">Potters Receptions &nbsp;&bull;&nbsp; Warrandyte</div>
 
+    <div class="langbar">
+      <div class="langpick" role="group" aria-label="Language">
+        <button type="button" class="langbtn" data-lang="en">EN</button>
+        <button type="button" class="langbtn" data-lang="hr">HR</button>
+        <button type="button" class="langbtn" data-lang="es">ES</button>
+      </div>
+      <button type="button" class="sharebtn" id="shareBtn"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg><span data-i18n="share.btn">Share</span></button>
+    </div>
+    <div class="share-msg" id="shareMsg"></div>
+
+
     <div class="cta-row">
-      <a class="cta cta-fill" href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener">RSVP</a>
-      <a class="cta" href="#photos">Share &amp; Celebrate</a>
+      <a class="cta cta-fill" href="https://withjoy.com/juliana-and-marko" target="_blank" rel="noopener" data-i18n="cta.rsvp">RSVP</a>
+      <a class="cta" href="#photos" data-i18n="cta.share">Share &amp; Celebrate</a>
     </div>
   </div>
 </section>
@@ -292,33 +315,33 @@
 <!-- TIMELINE -->
 <section class="sec" id="plan">
   <div class="wrap">
-    <h2 class="flourish">So what's the plan?</h2>
-    <p class="sub caps">the day at a glance</p>
+    <h2 class="flourish" data-i18n="plan.h">So what's the plan?</h2>
+    <p class="sub caps" data-i18n="plan.sub">the day at a glance</p>
       <span class="floral-center"></span>
     <div class="timeline">
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M12 3h0M9 3h6"/></svg></div>
-        <div class="t">3:30 pm</div><div class="l">Arrive</div>
+        <div class="t">3:30 pm</div><div class="l" data-i18n="tl.arrive">Arrive</div>
       </div>
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><circle cx="9" cy="14" r="5"/><circle cx="15" cy="14" r="5"/></svg></div>
-        <div class="t">4:00 pm</div><div class="l">Ceremony</div>
+        <div class="t">4:00 pm</div><div class="l" data-i18n="tl.ceremony">Ceremony</div>
       </div>
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-2h5L16 7"/></svg></div>
-        <div class="t">5:00 pm</div><div class="l">Photos &amp; Bar</div>
+        <div class="t">5:00 pm</div><div class="l" data-i18n="tl.photos">Photos &amp; Bar</div>
       </div>
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><path d="M7 3h10l-1 7a4 4 0 01-8 0z"/><path d="M12 10v8M8 21h8"/></svg></div>
-        <div class="t">5:30 pm</div><div class="l">Canapés</div>
+        <div class="t">5:30 pm</div><div class="l" data-i18n="tl.canapes">Canapés</div>
       </div>
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></div>
-        <div class="t">6:00 pm</div><div class="l">Reception</div>
+        <div class="t">6:00 pm</div><div class="l" data-i18n="tl.reception">Reception</div>
       </div>
       <div class="stop">
         <div class="badge"><svg viewBox="0 0 24 24"><path d="M3 16l2-6a3 3 0 013-2h8a3 3 0 013 2l2 6"/><path d="M3 16h18v2H3z"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/></svg></div>
-        <div class="t">11:00 pm</div><div class="l">Carriages</div>
+        <div class="t">11:00 pm</div><div class="l" data-i18n="tl.carriages">Carriages</div>
       </div>
     </div>
   </div>
@@ -331,21 +354,21 @@
   <span class="floral fl-bl bg-f1"></span>
   <span class="floral fl-tr bg-f2"></span>
   <div class="wrap">
-    <h2 class="flourish">Share your photos</h2>
-    <p class="sub caps">help us relive every moment</p>
+    <h2 class="flourish" data-i18n="ph.h">Share your photos</h2>
+    <p class="sub caps" data-i18n="ph.sub">help us relive every moment</p>
     <div class="card">
       <div class="qr-box"><img id="qrimg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAIAAAAI7H7bAAAFT0lEQVR4nO3dQY5cNRRAUYLYFRPEwhET1lUMmGIih2s9OzlniFq/Pp2+slRPtr98Pp+fgP/n5+kXgO+BkCAgJAgICQJCgoCQICAkCAgJAkKCgJAgICQICAkCQoKAkCAgJAgICQJCgoCQICAkCAgJAkKCgJAgICQI/FI96Pfffq0eddQff/71r/999f5TP7/y+ufeZvf3sGJFgoCQICAkCAgJAkKCgJAgICQIZHOklep7+l27c4zqPXc/d3c+c3puU82dVl75e9hlRYKAkCAgJAgICQJCgoCQICAkCByfI61U3+tPzX9WpvYF7To979p129/DLisSBIQEASFBQEgQEBIEhAQBIUFgbI70itvOnTs9p+LbWJEgICQICAkCQoKAkCAgJAgICQLmSF8xde7cbfMlc6r/ZkWCgJAgICQICAkCQoKAkCAgJAiMzZHMH/6xO/+ZOh/v9L/X638PViQICAkCQoKAkCAgJAgICQJCgsDxOVJ1782U286Rq97n9M+vvP73sGJFgoCQICAkCAgJAkKCgJAgICQIZHOk1/eTVOfR3fb8Kbe9z2lWJAgICQJCgoCQICAkCAgJAkKCwNi5drftS5mae0zdU3R6rrVy+vlT+8esSBAQEgSEBAEhQUBIEBASBIQEgbFz7W47n21las5T2X2fqfuaVl7Z12RFgoCQICAkCAgJAkKCgJAgICQIfPl8PiMffHr+cNv8amXq3qHbfs8r5kjwAxESBIQEASFBQEgQEBIEhASBsTnSrtvmTqefs/v8V5z+fU7tB7MiQUBIEBASBIQEASFBQEgQEBIEsnPtqvnGbftwbptfnd7nM/WcXbedH2hFgoCQICAkCAgJAkKCgJAgICQIZHOkqe/vXzlHblc1X6qef9ucatfpuZMVCQJCgoCQICAkCAgJAkKCgJAgcPxcu9P7lF65b+e2e4Ru28c1tZ+tYkWCgJAgICQICAkCQoKAkCAgJAiMzZGm7re57R6k2+ZFldf/fXdZkSAgJAgICQJCgoCQICAkCAgJAsfnSCuv71O67T6o03OSqXngK/vNrEgQEBIEhAQBIUFASBAQEgSEBIHsfqSp+3xWXrmv6XWv3LPkfiR4gJAgICQICAkCQoKAkCAgJAhkc6Rdt82ddk2dw1bt/5ma50xxrh08QEgQEBIEhAQBIUFASBAQEgSyc+1uuwdp19Q5dbum5mO33bO04n4keJiQICAkCAgJAkKCgJAgICQIjO1Hsr/o237+lbncac61g++QkCAgJAgICQJCgoCQICAkCGRzpNPzitv2+bzyPqfnJ6fnb6+cm2dFgoCQICAkCAgJAkKCgJAgICQIZHOkV77vPz332HXbOXLV507tj5raf2VFgoCQICAkCAgJAkKCgJAgICQIHD/X7ke776g6b22lmju9ck7g1HmDu6xIEBASBIQEASFBQEgQEBIEhASBsfuRpuY8ldvmVNW5drfNo3Y/134keJiQICAkCAgJAkKCgJAgICQIjM2RXlHNK6rnnJ7/TM2jTp/vd3q+ZEWCgJAgICQICAkCQoKAkCAgJAiYI31FNVc5PW85ff7e6XnX6/cyWZEgICQICAkCQoKAkCAgJAgICQJjc6Sp88dWTs9JTv//3na+3MrUOX6nWZEgICQICAkCQoKAkCAgJAgICQLH50hT3+tXTp9rd9or77ly27xuxYoEASFBQEgQEBIEhAQBIUFASBD48vl8pt8BnmdFgoCQICAkCAgJAkKCgJAgICQICAkCQoKAkCAgJAgICQJCgoCQICAkCAgJAkKCgJAgICQICAkCQoKAkCAgJAj8DUKfRAeXLE/cAAAAAElFTkSuQmCC" width="180" height="180" alt="Scan to upload your photos"/></div>
-      <div class="qr-caption">Scan to upload your snaps</div>
+      <div class="qr-caption" data-i18n="ph.qrcap">Scan to upload your snaps</div>
 
       <div class="drop" id="drop">
         <div class="up-icon">&#128247;</div>
-        <p><strong>Tap to add photos</strong> from this device</p>
-        <p style="font-size:.75rem">or scan the code above on your phone</p>
+        <p data-i18n-html="ph.tap"><strong>Tap to add photos</strong> from this device</p>
+        <p style="font-size:.75rem" data-i18n="ph.tap2">or scan the code above on your phone</p>
       </div>
       <input type="file" id="fileInput" accept="image/*,video/*" multiple style="display:none" />
       <p id="upStatus" class="up-status"></p>
       <div class="thumbs" id="thumbs"></div>
-      <p style="font-size:.72rem;color:var(--ink-soft);margin-top:18px">
+      <p style="font-size:.72rem;color:var(--ink-soft);margin-top:18px" data-i18n="ph.note">
         Everything you share drops straight into Juliana &amp; Marko's private album.
       </p>
     </div>
@@ -359,23 +382,23 @@
   <span class="floral fl-bl bg-f3"></span>
   <span class="floral fl-tr bg-f4"></span>
   <div class="wrap">
-    <h2 class="flourish">Well Wishes</h2>
-    <p class="sub caps">a little message for the newlyweds</p>
+    <h2 class="flourish" data-i18n="wi.h">Well Wishes</h2>
+    <p class="sub caps" data-i18n="wi.sub">a little message for the newlyweds</p>
     <div class="card" style="max-width:560px;margin:0 auto;text-align:center">
-      <p style="margin-top:0">Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana &amp; Marko something to keep &mdash; write a note, record a video, or both.</p>
+      <p style="margin-top:0" data-i18n="wi.body">Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana &amp; Marko something to keep &mdash; write a note, record a video, or both.</p>
 
       <div class="wish-form">
-        <label class="wish-label">Your name</label>
-        <input type="text" id="wishName" autocomplete="name" placeholder="Who's this from?" />
+        <label class="wish-label" data-i18n="wi.name">Your name</label>
+        <input type="text" id="wishName" autocomplete="name" placeholder="Who's this from?" data-i18n-ph="wi.name.ph" />
 
-        <label class="wish-label">Your message <span class="opt">(optional)</span></label>
-        <textarea id="wishMsg" placeholder="A few words for the happy couple&hellip;"></textarea>
+        <label class="wish-label" data-i18n-html="wi.msglabel">Your message <span class="opt">(optional)</span></label>
+        <textarea id="wishMsg" placeholder="A few words for the happy couple&hellip;" data-i18n-ph="wi.msg.ph"></textarea>
 
         <div class="wish-media">
-          <div class="wish-choice">Add a video or photo <span class="opt">(optional)</span></div>
+          <div class="wish-choice" data-i18n-html="wi.addmedia">Add a video or photo <span class="opt">(optional)</span></div>
           <div class="wish-btns">
-            <button type="button" id="wishRecStart" class="wish-mini">&#127909; Record a video</button>
-            <button type="button" id="wishUpBtn" class="wish-mini">&#128228; Upload instead</button>
+            <button type="button" id="wishRecStart" class="wish-mini" data-i18n-html="wi.rec">&#127909; Record a video</button>
+            <button type="button" id="wishUpBtn" class="wish-mini" data-i18n-html="wi.upload">&#128228; Upload instead</button>
           </div>
           <input type="file" id="wishFile" accept="image/*,video/*" style="display:none" />
 
@@ -391,7 +414,7 @@
           <div id="wishAttached" class="wish-attached" style="display:none"></div>
         </div>
 
-        <button type="button" id="wishSend" class="wish-send">Send your wishes</button>
+        <button type="button" id="wishSend" class="wish-send" data-i18n="wi.send">Send your wishes</button>
         <div id="wishBar" class="wish-bar" style="display:none"><div id="wishBarFill"></div></div>
         <p id="wishStatus" class="rsvp-msg"></p>
       </div>
@@ -406,28 +429,28 @@
   <span class="floral fl-tl bg-f2"></span>
   <span class="floral fl-br bg-f1"></span>
   <div class="wrap">
-    <h2 class="flourish">Kitchen Tea</h2>
-    <p class="sub caps">a morning of tea &amp; treats for the bride</p>
+    <h2 class="flourish" data-i18n="ki.h">Kitchen Tea</h2>
+    <p class="sub caps" data-i18n="ki.sub">a morning of tea &amp; treats for the bride</p>
     <div class="card" style="text-align:center">
-      <p style="margin-top:0">Join us to shower Juliana with love, laughter and a well-stocked kitchen.</p>
+      <p style="margin-top:0" data-i18n="ki.body">Join us to shower Juliana with love, laughter and a well-stocked kitchen.</p>
       <div style="margin:22px 0;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">Date &amp; Time</div>
-        <p style="margin:.2rem 0 0">Sunday, 27 September 2026 &nbsp;&bull;&nbsp; 11:00 am</p>
+        <div class="caps" style="color:var(--rust);font-size:.85rem" data-i18n="ki.datetime">Date &amp; Time</div>
+        <p style="margin:.2rem 0 0" data-i18n-html="ki.datetime.val">Sunday, 27 September 2026 &nbsp;&bull;&nbsp; 11:00 am</p>
       </div>
       <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
       <div style="margin:22px 0;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">Where</div>
-        <p style="margin:.2rem 0 0"><em>Venue to be confirmed</em></p>
+        <div class="caps" style="color:var(--rust);font-size:.85rem" data-i18n="ki.where">Where</div>
+        <p style="margin:.2rem 0 0" data-i18n-html="ki.where.val"><em>Venue to be confirmed</em></p>
       </div>
       <hr class="rule" style="opacity:.3;margin:6px auto;max-width:120px" />
       <div style="margin:22px 0 6px;">
-        <div class="caps" style="color:var(--rust);font-size:.85rem">RSVP</div>
+        <div class="caps" style="color:var(--rust);font-size:.85rem" data-i18n="ki.rsvp">RSVP</div>
         <form class="rsvp-form" data-event="kitchen">
-          <label>Name</label>
+          <label data-i18n="form.name">Name</label>
           <input type="text" name="name" autocomplete="name" required />
-          <label>Email</label>
+          <label data-i18n="form.email">Email</label>
           <input type="email" name="email" autocomplete="email" required />
-          <button type="submit">Send RSVP</button>
+          <button type="submit" data-i18n="form.sendrsvp">Send RSVP</button>
           <p class="rsvp-msg"></p>
         </form>
       </div>
@@ -446,6 +469,35 @@
 </footer>
 
 <script>
+
+  /* ---- i18n: EN / HR (Croatian) / ES (Colombian Spanish) ---- */
+  const I18N = {"nav.home": {"en": "Home", "hr": "Početna", "es": "Inicio"}, "nav.plan": {"en": "The Plan", "hr": "Raspored", "es": "El plan"}, "nav.photos": {"en": "Photos", "hr": "Fotografije", "es": "Fotos"}, "nav.wishes": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "nav.kitchen": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "nav.hens": {"en": "Hens", "hr": "Djevojačka", "es": "Despedida"}, "nav.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar"}, "hero.date": {"en": "17 October 2026", "hr": "17. listopada 2026.", "es": "17 de octubre de 2026"}, "cta.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "cta.share": {"en": "Share & Celebrate", "hr": "Podijeli i slavi", "es": "Comparte y celebra"}, "plan.h": {"en": "So what's the plan?", "hr": "Kakav je plan?", "es": "¿Cuál es el plan?"}, "plan.sub": {"en": "the day at a glance", "hr": "dan ukratko", "es": "el día de un vistazo"}, "tl.arrive": {"en": "Arrive", "hr": "Dolazak", "es": "Llegada"}, "tl.ceremony": {"en": "Ceremony", "hr": "Ceremonija", "es": "Ceremonia"}, "tl.photos": {"en": "Photos & Bar", "hr": "Fotografije i bar", "es": "Fotos y bar"}, "tl.canapes": {"en": "Canapés", "hr": "Kanapei", "es": "Canapés"}, "tl.reception": {"en": "Reception", "hr": "Domjenak", "es": "Recepción"}, "tl.carriages": {"en": "Carriages", "hr": "Odlazak", "es": "Fin de fiesta"}, "ph.h": {"en": "Share your photos", "hr": "Podijelite svoje fotografije", "es": "Comparte tus fotos"}, "ph.sub": {"en": "help us relive every moment", "hr": "pomozite nam proživjeti svaki trenutak", "es": "ayúdanos a revivir cada momento"}, "ph.qrcap": {"en": "Scan to upload your snaps", "hr": "Skenirajte za prijenos fotografija", "es": "Escanea para subir tus fotos"}, "ph.tap": {"en": "<strong>Tap to add photos</strong> from this device", "hr": "<strong>Dodirnite za dodavanje fotografija</strong> s ovog uređaja", "es": "<strong>Toca para añadir fotos</strong> desde este dispositivo"}, "ph.tap2": {"en": "or scan the code above on your phone", "hr": "ili skenirajte gornji kôd na svom telefonu", "es": "o escanea el código de arriba con tu teléfono"}, "ph.note": {"en": "Everything you share drops straight into Juliana & Marko's private album.", "hr": "Sve što podijelite ide ravno u privatni album Juliane i Marka.", "es": "Todo lo que compartas va directo al álbum privado de Juliana y Marko."}, "wi.h": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "wi.sub": {"en": "a little message for the newlyweds", "hr": "poruka za mladence", "es": "un mensaje para los novios"}, "wi.body": {"en": "Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana & Marko something to keep — write a note, record a video, or both.", "hr": "Bilo da plešete s nama na dan vjenčanja ili slavite iz daljine, ostavite Juliani i Marku uspomenu — napišite poruku, snimite video, ili oboje.", "es": "Ya sea que bailes con nosotros ese día o celebres desde lejos, déjales a Juliana y Marko un recuerdo — escribe una nota, graba un video, o ambos."}, "wi.name": {"en": "Your name", "hr": "Vaše ime", "es": "Tu nombre"}, "wi.name.ph": {"en": "Who's this from?", "hr": "Od koga je?", "es": "¿De parte de quién?"}, "wi.msglabel": {"en": "Your message <span class=\"opt\">(optional)</span>", "hr": "Vaša poruka <span class=\"opt\">(neobavezno)</span>", "es": "Tu mensaje <span class=\"opt\">(opcional)</span>"}, "wi.msg.ph": {"en": "A few words for the happy couple…", "hr": "Nekoliko riječi za sretni par…", "es": "Unas palabras para la feliz pareja…"}, "wi.addmedia": {"en": "Add a video or photo <span class=\"opt\">(optional)</span>", "hr": "Dodajte video ili fotografiju <span class=\"opt\">(neobavezno)</span>", "es": "Añade un video o foto <span class=\"opt\">(opcional)</span>"}, "wi.rec": {"en": "🎥 Record a video", "hr": "🎥 Snimi video", "es": "🎥 Graba un video"}, "wi.upload": {"en": "📤 Upload instead", "hr": "📤 Učitaj umjesto toga", "es": "📤 Subir en su lugar"}, "wi.send": {"en": "Send your wishes", "hr": "Pošalji čestitku", "es": "Envía tus deseos"}, "ki.h": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "ki.sub": {"en": "a morning of tea & treats for the bride", "hr": "jutro čaja i slastica za mladenku", "es": "una mañana de té y dulces para la novia"}, "ki.body": {"en": "Join us to shower Juliana with love, laughter and a well-stocked kitchen.", "hr": "Pridružite nam se i obasipajte Julianu ljubavlju, smijehom i dobro opremljenom kuhinjom.", "es": "Acompáñanos a colmar a Juliana de amor, risas y una cocina bien surtida."}, "ki.datetime": {"en": "Date & Time", "hr": "Datum i vrijeme", "es": "Fecha y hora"}, "ki.datetime.val": {"en": "Sunday, 27 September 2026 &nbsp;&bull;&nbsp; 11:00 am", "hr": "Nedjelja, 27. rujna 2026. &nbsp;&bull;&nbsp; 11:00", "es": "Domingo, 27 de septiembre de 2026 &nbsp;&bull;&nbsp; 11:00 a. m."}, "ki.where": {"en": "Where", "hr": "Gdje", "es": "Dónde"}, "ki.where.val": {"en": "<em>Venue to be confirmed</em>", "hr": "<em>Lokacija se još potvrđuje</em>", "es": "<em>Lugar por confirmar</em>"}, "ki.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "form.name": {"en": "Name", "hr": "Ime", "es": "Nombre"}, "form.email": {"en": "Email", "hr": "E-pošta", "es": "Correo"}, "form.sendrsvp": {"en": "Send RSVP", "hr": "Pošalji potvrdu", "es": "Enviar confirmación"}, "share.btn": {"en": "Share", "hr": "Podijeli", "es": "Compartir"}, "share.text": {"en": "Join us to celebrate Juliana & Marko's wedding — 17 October 2026.", "hr": "Pridružite nam se u slavlju vjenčanja Juliane i Marka — 17. listopada 2026.", "es": "Acompáñanos a celebrar la boda de Juliana y Marko — 17 de octubre de 2026."}, "share.copied": {"en": "Link copied!", "hr": "Poveznica kopirana!", "es": "¡Enlace copiado!"}, "msg.sending": {"en": "Sending…", "hr": "Šaljem…", "es": "Enviando…"}, "msg.err": {"en": "Something went wrong — please try again.", "hr": "Nešto je pošlo po zlu — pokušajte ponovno.", "es": "Algo salió mal — inténtalo de nuevo."}, "msg.neterr": {"en": "Network error — please try again.", "hr": "Pogreška mreže — pokušajte ponovno.", "es": "Error de red — inténtalo de nuevo."}, "msg.rsvp.need": {"en": "Please enter your name and email.", "hr": "Unesite svoje ime i e-poštu.", "es": "Ingresa tu nombre y correo."}, "msg.rsvp.ok": {"en": "Thank you! Your RSVP has been received.", "hr": "Hvala! Vaša potvrda je zaprimljena.", "es": "¡Gracias! Recibimos tu confirmación."}, "msg.wish.name": {"en": "Please add your name.", "hr": "Dodajte svoje ime.", "es": "Añade tu nombre."}, "msg.wish.need": {"en": "Leave a message, a video, or a photo.", "hr": "Ostavite poruku, video ili fotografiju.", "es": "Deja un mensaje, un video o una foto."}, "msg.wish.ok": {"en": "Thank you — your message is on its way to Juliana & Marko. 🤍", "hr": "Hvala — vaša poruka je na putu do Juliane i Marka. 🤍", "es": "Gracias — tu mensaje va camino a Juliana y Marko. 🤍"}};
+  const LANGS = ['en','hr','es'];
+  let CURRENT_LANG = 'en';
+  function t(k){ var e=I18N[k]; return (e && (e[CURRENT_LANG]||e.en)) || ''; }
+  function applyLang(lang){
+    if(LANGS.indexOf(lang)<0) lang='en';
+    CURRENT_LANG = lang;
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ var v=t(el.getAttribute('data-i18n')); if(v) el.textContent=v; });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el){ var v=t(el.getAttribute('data-i18n-html')); if(v) el.innerHTML=v; });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function(el){ var v=t(el.getAttribute('data-i18n-ph')); if(v) el.setAttribute('placeholder', v); });
+    document.querySelectorAll('.langbtn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lang')===lang); });
+    try{ var u=new URL(location.href); u.searchParams.set('lang', lang); history.replaceState(null,'',u); }catch(e){}
+  }
+  document.querySelectorAll('.langbtn').forEach(function(b){ b.addEventListener('click', function(){ applyLang(b.getAttribute('data-lang')); }); });
+  (function(){ var p=new URLSearchParams(location.search); applyLang(p.get('lang')||'en'); })();
+  (function(){
+    var btn=document.getElementById('shareBtn'), msgEl=document.getElementById('shareMsg');
+    if(!btn) return;
+    btn.addEventListener('click', async function(){
+      var url = location.origin + location.pathname + '?lang=' + CURRENT_LANG;
+      var payload = { title: 'Juliana & Marko', text: t('share.text'), url: url };
+      if(navigator.share){ try{ await navigator.share(payload); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+      try{ await navigator.clipboard.writeText(url); msgEl.textContent=t('share.copied'); setTimeout(function(){ msgEl.textContent=''; },2500); }
+      catch(e){ msgEl.textContent=url; }
+    });
+  })();
   /* ---- Real photo upload to Cloudflare R2 (via Worker) ---- */
   const WORKER_URL = "https://juliana-marko-photos.xanivarcloud.workers.dev";
   const drop = document.getElementById('drop');
@@ -507,16 +559,16 @@
         email: (form.querySelector('[name="email"]').value || '').trim(),
         notes: notesEl ? notesEl.value.trim() : ''
       };
-      if(!data.name || !data.email){ msg.className='rsvp-msg bad'; msg.textContent='Please enter your name and email.'; return; }
-      var label = sbtn.textContent; sbtn.disabled = true; sbtn.textContent = 'Sending…';
+      if(!data.name || !data.email){ msg.className='rsvp-msg bad'; msg.textContent=t('msg.rsvp.need'); return; }
+      var label = sbtn.textContent; sbtn.disabled = true; sbtn.textContent = t('msg.sending');
       msg.className='rsvp-msg'; msg.textContent='';
       fetch(WORKER_URL + '/rsvp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
         .then(function(r){ return r.json().catch(function(){return {};}).then(function(jj){ return {ok:r.ok, j:jj}; }); })
         .then(function(res){
-          if(res.ok){ form.reset(); msg.className='rsvp-msg ok'; msg.textContent='Thank you! Your RSVP has been received.'; sbtn.style.display='none'; }
-          else { msg.className='rsvp-msg bad'; msg.textContent=(res.j && res.j.error) || 'Something went wrong — please try again.'; sbtn.disabled=false; sbtn.textContent=label; }
+          if(res.ok){ form.reset(); msg.className='rsvp-msg ok'; msg.textContent=t('msg.rsvp.ok'); sbtn.style.display='none'; }
+          else { msg.className='rsvp-msg bad'; msg.textContent=(res.j && res.j.error) || t('msg.err'); sbtn.disabled=false; sbtn.textContent=label; }
         })
-        .catch(function(){ msg.className='rsvp-msg bad'; msg.textContent='Network error — please try again.'; sbtn.disabled=false; sbtn.textContent=label; });
+        .catch(function(){ msg.className='rsvp-msg bad'; msg.textContent=t('msg.neterr'); sbtn.disabled=false; sbtn.textContent=label; });
     });
   });
 
@@ -617,9 +669,9 @@
 
     sendBtn.addEventListener('click', function(){
       var name=(nameEl.value||'').trim(), message=(msgEl.value||'').trim();
-      if(!name){ status('Please add your name.', true); nameEl.focus(); return; }
-      if(!message && !mediaBlob){ status('Leave a message, a video, or a photo.', true); return; }
-      sendBtn.disabled=true; var label=sendBtn.textContent; sendBtn.textContent='Sending…'; status('');
+      if(!name){ status(t('msg.wish.name'), true); nameEl.focus(); return; }
+      if(!message && !mediaBlob){ status(t('msg.wish.need'), true); return; }
+      sendBtn.disabled=true; var label=sendBtn.textContent; sendBtn.textContent=t('msg.sending'); status('');
       var fd=new FormData();
       fd.append('name', name); fd.append('message', message);
       if(mediaBlob){ fd.append('file', mediaBlob, mediaName||'well-wish'); }
@@ -633,13 +685,13 @@
         if(xhr.status>=200 && xhr.status<300 && res.ok){
           nameEl.value=''; msgEl.value=''; mediaBlob=null; mediaMime=''; mediaName='';
           attached.innerHTML=''; attached.style.display='none'; sendBtn.style.display='none';
-          status('Thank you — your message is on its way to Juliana & Marko. 🤍');
+          status(t('msg.wish.ok'));
         } else {
-          status((res && res.error) || 'Something went wrong — please try again.', true);
+          status((res && res.error) || t('msg.err'), true);
           sendBtn.disabled=false; sendBtn.textContent=label;
         }
       };
-      xhr.onerror=function(){ bar.style.display='none'; status('Network error — please try again.', true); sendBtn.disabled=false; sendBtn.textContent=label; };
+      xhr.onerror=function(){ bar.style.display='none'; status(t('msg.neterr'), true); sendBtn.disabled=false; sendBtn.textContent=label; };
       xhr.send(fd);
     });
   })();
