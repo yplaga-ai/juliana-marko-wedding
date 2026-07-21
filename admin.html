@@ -68,6 +68,8 @@
   .due-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;}
   #tbl-todo input[type=text]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
   .done-text{text-decoration:line-through;color:var(--ink-soft);}
+  .auto-task{font-size:.95rem;}
+  .auto-badge{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sage-deep);border:1px solid var(--sage);border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:middle;white-space:nowrap;}
   th.center,td.center{text-align:center;}
   .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
   .rowdel:hover{color:#8a1f0f;}
@@ -177,10 +179,10 @@
         <div class="savebar">
           <span class="saved" id="wedSaved"></span>
           <button class="btn" id="sched-print">Print run sheet</button>
-          <button class="btn primary" id="wedSave">Save wedding plan</button>
+          <button class="btn primary" id="wedSave">Save now</button>
         </div>
       </div>
-      <p class="subnote">Your timeline for the day. Pop the time next to each thing, add or remove rows, then hit save. One save covers your run sheet <em>and</em> expenses below.</p>
+      <p class="subnote">Your timeline for the day. Pop the time next to each thing, add or remove rows. <strong>Everything on this page saves automatically as you go</strong> &mdash; the run sheet, expenses, seating and checklist all together. (&ldquo;Save now&rdquo; forces an immediate save if you like.)</p>
       <div class="tablewrap"><table id="tbl-sched">
         <thead><tr><th style="width:130px">Time</th><th>What</th><th style="width:40px"></th></tr></thead>
         <tbody id="sched-body"></tbody>
@@ -195,7 +197,7 @@
           <span class="count" id="todo-count"></span>
         </div>
       </div>
-      <p class="subnote">Tasks and people to chase in the run-up and on the day. Tick them off as you go &mdash; saved with the &ldquo;Save wedding plan&rdquo; button above.</p>
+      <p class="subnote">Payment tasks are pulled in automatically from your suppliers (tick one to mark it paid). Add your own tasks and people to chase below. Everything saves automatically.</p>
       <div class="tablewrap"><table id="tbl-todo">
         <thead><tr><th style="width:56px" class="center">Done</th><th>Task</th><th style="width:40px"></th></tr></thead>
         <tbody id="todo-body"></tbody>
@@ -363,9 +365,14 @@
          under a "wedding" key via /hens-tracker; read-modify-write preserves everything else. ---- */
   let WDOC = null;      // full tracker doc as loaded
   let WED = null;       // { schedule:[{time,item}], expenses:[{item,amount,paid}] }
-  let wedDirty = false;
+  let wedDirty = false, wedSaving = false, autosaveTimer = null;
   function num(v){ v = parseFloat(String(v==null?"":v).replace(/[^0-9.\-]/g,"")); return isNaN(v)?0:v; }
-  function wedMark(){ wedDirty = true; const s = $("wedSaved"); if(s){ s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; } }
+  function wedStatus(text, color){ const s = $("wedSaved"); if(s){ s.textContent = text; s.style.color = color; } }
+  function wedMark(){
+    wedDirty = true; wedStatus("Editing…", "var(--ink-soft)");
+    if(autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => { if(wedDirty && !wedSaving) saveWedding(); }, 1400);
+  }
   function defaultWED(){
     return {
       schedule: [
@@ -496,6 +503,7 @@
     } else { budVal.textContent = "—"; budVal.style.color = "var(--ink)"; budLab.textContent = "Vs budget"; }
     const bi = $("wexp-budget"); if(bi && document.activeElement !== bi) bi.value = WED.budget || "";
     renderPie(); renderDue();
+    if(WED && Array.isArray(WED.todos)) renderTodos();   // keep auto payment tasks in sync
   }
   function daysBetween(a, b){
     const da = new Date(a + "T00:00:00"), db = new Date(b + "T00:00:00");
@@ -627,20 +635,46 @@
     w.document.write(html); w.document.close();
   }
   async function saveWedding(){
-    $("wedSave").disabled = true; $("wedSaved").textContent = "Saving…"; $("wedSaved").style.color = "var(--ink-soft)";
+    if(wedSaving) return;
+    if(!PW) return;                 // not logged in yet
+    if(autosaveTimer){ clearTimeout(autosaveTimer); autosaveTimer = null; }
+    wedSaving = true;
+    wedDirty = false;               // capture-point: edits after here re-arm dirty
+    $("wedSave").disabled = true; wedStatus("Saving…", "var(--ink-soft)");
     try{
       const payload = Object.assign({}, WDOC || {}, { wedding: WED });
       const r = await fetch(WORKER + "/hens-tracker", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: payload }) });
       const jj = await r.json().catch(() => ({}));
-      if(r.ok && jj.ok){ WDOC = payload; wedDirty = false; $("wedSaved").textContent = "Saved ✓"; $("wedSaved").style.color = "var(--sage-deep)"; }
-      else { $("wedSaved").textContent = (jj && jj.error) || "Couldn't save — try again."; $("wedSaved").style.color = "#b5481f"; }
-    } catch(e){ $("wedSaved").textContent = "Couldn't save — try again."; $("wedSaved").style.color = "#b5481f"; }
-    $("wedSave").disabled = false;
+      if(r.ok && jj.ok){ WDOC = payload; wedStatus("All changes saved ✓", "var(--sage-deep)"); }
+      else { wedDirty = true; wedStatus((jj && jj.error) || "Couldn't save — will retry.", "#b5481f"); }
+    } catch(e){ wedDirty = true; wedStatus("Couldn't save — will retry.", "#b5481f"); }
+    wedSaving = false; $("wedSave").disabled = false;
+    // If more edits landed while saving (or a save failed), schedule another pass.
+    if(wedDirty){ if(autosaveTimer) clearTimeout(autosaveTimer); autosaveTimer = setTimeout(() => { if(wedDirty && !wedSaving) saveWedding(); }, 1200); }
   }
-  /* ---- Day-of checklist ---- */
-  function updateTodoCount(){ const done = WED.todos.filter(t => t.done).length; const el = $("todo-count"); if(el) el.textContent = done + " / " + WED.todos.length + " done"; }
+  /* ---- Day-of checklist (auto payment tasks from suppliers + your own tasks) ---- */
+  function autoPayTasks(){ return WED.expenses.filter(e => num(e.amount) > 0 && (e.item||"").trim()); }
+  function updateTodoCount(){
+    const pays = autoPayTasks();
+    const done = pays.filter(e => e.paid).length + WED.todos.filter(t => t.done).length;
+    const total = pays.length + WED.todos.length;
+    const el = $("todo-count"); if(el) el.textContent = done + " / " + total + " done";
+  }
   function renderTodos(){
-    const b = $("todo-body"); if(!b) return; b.innerHTML = "";
+    const b = $("todo-body"); if(!b || !WED || !Array.isArray(WED.todos)) return; b.innerHTML = "";
+    // Auto-generated payment tasks, pulled from your suppliers. Tick one to mark it paid.
+    autoPayTasks().forEach(e => {
+      const bal = rowBalance(e);
+      const label = "Pay " + e.item + " — " + (e.paid ? "paid ✓" : ("A$" + bal.toLocaleString() + (e.due ? (" (due " + niceDate(e.due) + ")") : "")));
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td class="center"><input type="checkbox"' + (e.paid?" checked":"") + '></td>' +
+        '<td><span class="auto-task' + (e.paid?" done-text":"") + '">' + esc(label) + '</span> <span class="auto-badge" title="Pulled in from your suppliers">from suppliers</span></td>' +
+        '<td></td>';
+      tr.querySelector("input").addEventListener("change", function(){ e.paid = this.checked; wedMark(); renderWexp(); renderTodos(); });
+      b.appendChild(tr);
+    });
+    // Your own tasks
     WED.todos.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML =
