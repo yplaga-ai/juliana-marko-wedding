@@ -194,6 +194,15 @@
   .rsvp-msg{min-height:1.2em;margin:12px 0 0;font-size:.85rem;text-align:center;}
   .rsvp-msg.ok{color:var(--sage-deep);}
   .rsvp-msg.bad{color:#b5481f;}
+  .rsvp-form select{
+    font-family:inherit;font-size:1rem;padding:.65rem .85rem;width:100%;box-sizing:border-box;
+    border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);
+  }
+  .rn-attend{display:flex;gap:10px;margin:16px 0 4px;flex-wrap:wrap;}
+  .rn-att-opt{flex:1 1 140px;display:flex;align-items:center;gap:8px;margin:0!important;
+    font-size:.85rem;letter-spacing:0;text-transform:none;color:var(--ink);
+    padding:.6rem .7rem;border:1px solid var(--sage);border-radius:4px;background:#fff;cursor:pointer;}
+  .rn-att-opt input{width:auto!important;margin:0;}
 
   /* ---------- WELL WISHES ---------- */
   .wish-form{max-width:400px;margin:10px auto 0;text-align:left;}
@@ -377,6 +386,60 @@
 
 <hr class="rule" />
 
+<!-- NATIVE RSVP (config-driven; shown only when the couple enables it in /admin.
+     Off for Juliana & Marko, who collect RSVPs via WithJoy. Built for reuse by other events.) -->
+<section class="sec" id="rsvp-native" style="display:none">
+  <span class="floral fl-tl bg-f1"></span>
+  <span class="floral fl-br bg-f2"></span>
+  <div class="wrap">
+    <h2 class="flourish" data-i18n="rn.h">RSVP</h2>
+    <p class="sub caps" data-i18n="rn.sub">we hope you can join us</p>
+    <div class="card" style="text-align:center">
+      <p id="rnMessage" style="margin-top:0;display:none"></p>
+      <p id="rnDeadline" class="caps" style="color:var(--rust);font-size:.8rem;display:none"></p>
+      <form class="rsvp-form" id="rnForm" autocomplete="on">
+        <label data-i18n="form.name">Name</label>
+        <input type="text" name="name" autocomplete="name" required />
+
+        <div class="rn-attend" role="group" aria-label="Will you attend?">
+          <label class="rn-att-opt"><input type="radio" name="attending" value="yes" checked /> <span data-i18n="rn.yes">Joyfully accepts</span></label>
+          <label class="rn-att-opt"><input type="radio" name="attending" value="no" /> <span data-i18n="rn.no">Regretfully declines</span></label>
+        </div>
+
+        <div id="rnAttendingFields">
+          <label data-i18n="form.email">Email</label>
+          <input type="email" name="email" autocomplete="email" />
+
+          <div id="rnPartyWrap" style="display:none">
+            <label data-i18n="rn.party">Number in your party (including you)</label>
+            <input type="number" name="party" min="1" max="20" step="1" value="1" inputmode="numeric" />
+          </div>
+
+          <div id="rnMealWrap" style="display:none">
+            <label data-i18n="rn.meal">Meal preference</label>
+            <select name="meal"></select>
+          </div>
+
+          <div id="rnDietWrap" style="display:none">
+            <label data-i18n-html="form.dietary">Dietary requirements <span class="opt">(optional)</span></label>
+            <textarea name="dietary" rows="2" data-i18n-ph="form.dietary.ph" placeholder="Allergies, vegetarian, gluten-free, etc."></textarea>
+          </div>
+        </div>
+
+        <div id="rnMsgWrap" style="display:none">
+          <label data-i18n-html="rn.msglabel">A note for the couple <span class="opt">(optional)</span></label>
+          <textarea name="message" rows="2" data-i18n-ph="rn.msg.ph" placeholder="A few words…"></textarea>
+        </div>
+
+        <button type="submit" data-i18n="form.sendrsvp">Send RSVP</button>
+        <p class="rsvp-msg"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
 <!-- FIND YOUR SEAT (config-driven; shown only if the couple publishes seating) -->
 <section class="sec" id="findseat" style="display:none">
   <div class="wrap">
@@ -545,7 +608,7 @@
 <script>
 
   /* ---- i18n: EN / HR (Croatian) / ES (Colombian Spanish) ---- */
-  const I18N = {"nav.home": {"en": "Home", "hr": "Početna", "es": "Inicio"}, "nav.plan": {"en": "The Plan", "hr": "Raspored", "es": "El plan"}, "nav.photos": {"en": "Photos", "hr": "Fotografije", "es": "Fotos"}, "nav.wishes": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "nav.kitchen": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "nav.hens": {"en": "Hens", "hr": "Djevojačka", "es": "Despedida"}, "nav.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar"}, "hero.date": {"en": "17 October 2026", "hr": "17. listopada 2026.", "es": "17 de octubre de 2026"}, "cta.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "cta.share": {"en": "Share & Celebrate", "hr": "Podijeli i slavi", "es": "Comparte y celebra"}, "plan.h": {"en": "So what's the plan?", "hr": "Kakav je plan?", "es": "¿Cuál es el plan?"}, "plan.sub": {"en": "the day at a glance", "hr": "dan ukratko", "es": "el día de un vistazo"}, "tl.arrive": {"en": "Arrive", "hr": "Dolazak", "es": "Llegada"}, "tl.ceremony": {"en": "Ceremony", "hr": "Ceremonija", "es": "Ceremonia"}, "tl.photos": {"en": "Photos & Bar", "hr": "Fotografije i bar", "es": "Fotos y bar"}, "tl.canapes": {"en": "Canapés", "hr": "Kanapei", "es": "Canapés"}, "tl.reception": {"en": "Reception", "hr": "Domjenak", "es": "Recepción"}, "tl.carriages": {"en": "Carriages", "hr": "Odlazak", "es": "Fin de fiesta"}, "ph.h": {"en": "Share your photos", "hr": "Podijelite svoje fotografije", "es": "Comparte tus fotos"}, "ph.sub": {"en": "help us relive every moment", "hr": "pomozite nam proživjeti svaki trenutak", "es": "ayúdanos a revivir cada momento"}, "ph.qrcap": {"en": "Scan to upload your snaps", "hr": "Skenirajte za prijenos fotografija", "es": "Escanea para subir tus fotos"}, "ph.tap": {"en": "<strong>Tap to add photos</strong> from this device", "hr": "<strong>Dodirnite za dodavanje fotografija</strong> s ovog uređaja", "es": "<strong>Toca para añadir fotos</strong> desde este dispositivo"}, "ph.tap2": {"en": "or scan the code above on your phone", "hr": "ili skenirajte gornji kôd na svom telefonu", "es": "o escanea el código de arriba con tu teléfono"}, "ph.note": {"en": "Everything you share drops straight into Juliana & Marko's private album.", "hr": "Sve što podijelite ide ravno u privatni album Juliane i Marka.", "es": "Todo lo que compartas va directo al álbum privado de Juliana y Marko."}, "wi.h": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "wi.sub": {"en": "a little message for the newlyweds", "hr": "poruka za mladence", "es": "un mensaje para los novios"}, "wi.body": {"en": "Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana & Marko something to keep — write a note, record a video, or both.", "hr": "Bilo da plešete s nama na dan vjenčanja ili slavite iz daljine, ostavite Juliani i Marku uspomenu — napišite poruku, snimite video, ili oboje.", "es": "Ya sea que bailes con nosotros ese día o celebres desde lejos, déjales a Juliana y Marko un recuerdo — escribe una nota, graba un video, o ambos."}, "wi.name": {"en": "Your name", "hr": "Vaše ime", "es": "Tu nombre"}, "wi.name.ph": {"en": "Who's this from?", "hr": "Od koga je?", "es": "¿De parte de quién?"}, "wi.msglabel": {"en": "Your message <span class=\"opt\">(optional)</span>", "hr": "Vaša poruka <span class=\"opt\">(neobavezno)</span>", "es": "Tu mensaje <span class=\"opt\">(opcional)</span>"}, "wi.msg.ph": {"en": "A few words for the happy couple…", "hr": "Nekoliko riječi za sretni par…", "es": "Unas palabras para la feliz pareja…"}, "wi.addmedia": {"en": "Add a video or photo <span class=\"opt\">(optional)</span>", "hr": "Dodajte video ili fotografiju <span class=\"opt\">(neobavezno)</span>", "es": "Añade un video o foto <span class=\"opt\">(opcional)</span>"}, "wi.rec": {"en": "🎥 Record a video", "hr": "🎥 Snimi video", "es": "🎥 Graba un video"}, "wi.upload": {"en": "📤 Upload instead", "hr": "📤 Učitaj umjesto toga", "es": "📤 Subir en su lugar"}, "wi.send": {"en": "Send your wishes", "hr": "Pošalji čestitku", "es": "Envía tus deseos"}, "ki.h": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "ki.sub": {"en": "a morning of tea & treats for the bride", "hr": "jutro čaja i slastica za mladenku", "es": "una mañana de té y dulces para la novia"}, "ki.body": {"en": "Join us to shower Juliana with love, laughter and a well-stocked kitchen.", "hr": "Pridružite nam se i obasipajte Julianu ljubavlju, smijehom i dobro opremljenom kuhinjom.", "es": "Acompáñanos a colmar a Juliana de amor, risas y una cocina bien surtida."}, "ki.datetime": {"en": "Date & Time", "hr": "Datum i vrijeme", "es": "Fecha y hora"}, "ki.datetime.val": {"en": "Sunday, 27 September 2026 &nbsp;&bull;&nbsp; 11:00 am", "hr": "Nedjelja, 27. rujna 2026. &nbsp;&bull;&nbsp; 11:00", "es": "Domingo, 27 de septiembre de 2026 &nbsp;&bull;&nbsp; 11:00 a. m."}, "ki.where": {"en": "Where", "hr": "Gdje", "es": "Dónde"}, "ki.where.val": {"en": "<em>Venue to be confirmed</em>", "hr": "<em>Lokacija se još potvrđuje</em>", "es": "<em>Lugar por confirmar</em>"}, "ki.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "form.name": {"en": "Name", "hr": "Ime", "es": "Nombre"}, "form.email": {"en": "Email", "hr": "E-pošta", "es": "Correo"}, "form.sendrsvp": {"en": "Send RSVP", "hr": "Pošalji potvrdu", "es": "Enviar confirmación"}, "form.dietary": {"en": "Dietary requirements <span class=\"opt\">(optional)</span>", "hr": "Prehrambene potrebe <span class=\"opt\">(neobavezno)</span>", "es": "Requisitos alimentarios <span class=\"opt\">(opcional)</span>"}, "form.dietary.ph": {"en": "Allergies, vegetarian, gluten-free, etc.", "hr": "Alergije, vegetarijanac, bez glutena itd.", "es": "Alergias, vegetariano, sin gluten, etc."}, "nav.gifts": {"en": "Gifts", "hr": "Darovi", "es": "Regalos"}, "nav.info": {"en": "Details", "hr": "Detalji", "es": "Detalles"}, "cta.cal": {"en": "Add to Calendar", "hr": "Dodaj u kalendar", "es": "Añadir al calendario"}, "info.h": {"en": "Good to Know", "hr": "Dobro je znati", "es": "Información útil"}, "info.sub": {"en": "details for the day", "hr": "detalji za taj dan", "es": "detalles para el día"}, "info.faqh": {"en": "FAQ", "hr": "Česta pitanja", "es": "Preguntas frecuentes"}, "info.travelh": {"en": "Getting There", "hr": "Kako doći", "es": "Cómo llegar"}, "info.accomh": {"en": "Where to Stay", "hr": "Gdje odsjesti", "es": "Dónde alojarse"}, "fs.h": {"en": "Find Your Seat", "hr": "Pronađite svoje mjesto", "es": "Encuentra tu asiento"}, "fs.sub": {"en": "type your name to find your table", "hr": "upišite svoje ime za pronalazak stola", "es": "escribe tu nombre para encontrar tu mesa"}, "fs.ph": {"en": "Your name", "hr": "Vaše ime", "es": "Tu nombre"}, "fs.btn": {"en": "Find my table", "hr": "Pronađi moj stol", "es": "Encontrar mi mesa"}, "fs.none": {"en": "We couldn't find that name — please check with the couple.", "hr": "Nismo pronašli to ime — provjerite s parom.", "es": "No encontramos ese nombre — consulta con la pareja."}, "fs.found": {"en": "You're at {table} 🎉", "hr": "Vi ste za stolom {table} 🎉", "es": "Estás en {table} 🎉"}, "gi.h": {"en": "With Love", "hr": "S ljubavlju", "es": "Con cariño"}, "gi.sub": {"en": "a note on gifts", "hr": "o darovima", "es": "una nota sobre los regalos"}, "gi.well": {"en": "Wishing Well", "hr": "Kasica želja", "es": "Buzón de deseos"}, "gi.bank": {"en": "Bank Details", "hr": "Bankovni podaci", "es": "Datos bancarios"}, "share.btn": {"en": "Share", "hr": "Podijeli", "es": "Compartir"}, "share.text": {"en": "Join us to celebrate Juliana & Marko's wedding — 17 October 2026.", "hr": "Pridružite nam se u slavlju vjenčanja Juliane i Marka — 17. listopada 2026.", "es": "Acompáñanos a celebrar la boda de Juliana y Marko — 17 de octubre de 2026."}, "share.copied": {"en": "Link copied!", "hr": "Poveznica kopirana!", "es": "¡Enlace copiado!"}, "msg.sending": {"en": "Sending…", "hr": "Šaljem…", "es": "Enviando…"}, "msg.err": {"en": "Something went wrong — please try again.", "hr": "Nešto je pošlo po zlu — pokušajte ponovno.", "es": "Algo salió mal — inténtalo de nuevo."}, "msg.neterr": {"en": "Network error — please try again.", "hr": "Pogreška mreže — pokušajte ponovno.", "es": "Error de red — inténtalo de nuevo."}, "msg.rsvp.need": {"en": "Please enter your name and email.", "hr": "Unesite svoje ime i e-poštu.", "es": "Ingresa tu nombre y correo."}, "msg.rsvp.ok": {"en": "Thank you! Your RSVP has been received.", "hr": "Hvala! Vaša potvrda je zaprimljena.", "es": "¡Gracias! Recibimos tu confirmación."}, "msg.wish.name": {"en": "Please add your name.", "hr": "Dodajte svoje ime.", "es": "Añade tu nombre."}, "msg.wish.need": {"en": "Leave a message, a video, or a photo.", "hr": "Ostavite poruku, video ili fotografiju.", "es": "Deja un mensaje, un video o una foto."}, "msg.wish.ok": {"en": "Thank you — your message is on its way to Juliana & Marko. 🤍", "hr": "Hvala — vaša poruka je na putu do Juliane i Marka. 🤍", "es": "Gracias — tu mensaje va camino a Juliana y Marko. 🤍"}};
+  const I18N = {"nav.home": {"en": "Home", "hr": "Početna", "es": "Inicio"}, "nav.plan": {"en": "The Plan", "hr": "Raspored", "es": "El plan"}, "nav.photos": {"en": "Photos", "hr": "Fotografije", "es": "Fotos"}, "nav.wishes": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "nav.kitchen": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "nav.hens": {"en": "Hens", "hr": "Djevojačka", "es": "Despedida"}, "nav.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar"}, "hero.date": {"en": "17 October 2026", "hr": "17. listopada 2026.", "es": "17 de octubre de 2026"}, "cta.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "cta.share": {"en": "Share & Celebrate", "hr": "Podijeli i slavi", "es": "Comparte y celebra"}, "plan.h": {"en": "So what's the plan?", "hr": "Kakav je plan?", "es": "¿Cuál es el plan?"}, "plan.sub": {"en": "the day at a glance", "hr": "dan ukratko", "es": "el día de un vistazo"}, "tl.arrive": {"en": "Arrive", "hr": "Dolazak", "es": "Llegada"}, "tl.ceremony": {"en": "Ceremony", "hr": "Ceremonija", "es": "Ceremonia"}, "tl.photos": {"en": "Photos & Bar", "hr": "Fotografije i bar", "es": "Fotos y bar"}, "tl.canapes": {"en": "Canapés", "hr": "Kanapei", "es": "Canapés"}, "tl.reception": {"en": "Reception", "hr": "Domjenak", "es": "Recepción"}, "tl.carriages": {"en": "Carriages", "hr": "Odlazak", "es": "Fin de fiesta"}, "ph.h": {"en": "Share your photos", "hr": "Podijelite svoje fotografije", "es": "Comparte tus fotos"}, "ph.sub": {"en": "help us relive every moment", "hr": "pomozite nam proživjeti svaki trenutak", "es": "ayúdanos a revivir cada momento"}, "ph.qrcap": {"en": "Scan to upload your snaps", "hr": "Skenirajte za prijenos fotografija", "es": "Escanea para subir tus fotos"}, "ph.tap": {"en": "<strong>Tap to add photos</strong> from this device", "hr": "<strong>Dodirnite za dodavanje fotografija</strong> s ovog uređaja", "es": "<strong>Toca para añadir fotos</strong> desde este dispositivo"}, "ph.tap2": {"en": "or scan the code above on your phone", "hr": "ili skenirajte gornji kôd na svom telefonu", "es": "o escanea el código de arriba con tu teléfono"}, "ph.note": {"en": "Everything you share drops straight into Juliana & Marko's private album.", "hr": "Sve što podijelite ide ravno u privatni album Juliane i Marka.", "es": "Todo lo que compartas va directo al álbum privado de Juliana y Marko."}, "wi.h": {"en": "Well Wishes", "hr": "Čestitke", "es": "Buenos deseos"}, "wi.sub": {"en": "a little message for the newlyweds", "hr": "poruka za mladence", "es": "un mensaje para los novios"}, "wi.body": {"en": "Whether you'll be dancing with us on the day or celebrating from afar, leave Juliana & Marko something to keep — write a note, record a video, or both.", "hr": "Bilo da plešete s nama na dan vjenčanja ili slavite iz daljine, ostavite Juliani i Marku uspomenu — napišite poruku, snimite video, ili oboje.", "es": "Ya sea que bailes con nosotros ese día o celebres desde lejos, déjales a Juliana y Marko un recuerdo — escribe una nota, graba un video, o ambos."}, "wi.name": {"en": "Your name", "hr": "Vaše ime", "es": "Tu nombre"}, "wi.name.ph": {"en": "Who's this from?", "hr": "Od koga je?", "es": "¿De parte de quién?"}, "wi.msglabel": {"en": "Your message <span class=\"opt\">(optional)</span>", "hr": "Vaša poruka <span class=\"opt\">(neobavezno)</span>", "es": "Tu mensaje <span class=\"opt\">(opcional)</span>"}, "wi.msg.ph": {"en": "A few words for the happy couple…", "hr": "Nekoliko riječi za sretni par…", "es": "Unas palabras para la feliz pareja…"}, "wi.addmedia": {"en": "Add a video or photo <span class=\"opt\">(optional)</span>", "hr": "Dodajte video ili fotografiju <span class=\"opt\">(neobavezno)</span>", "es": "Añade un video o foto <span class=\"opt\">(opcional)</span>"}, "wi.rec": {"en": "🎥 Record a video", "hr": "🎥 Snimi video", "es": "🎥 Graba un video"}, "wi.upload": {"en": "📤 Upload instead", "hr": "📤 Učitaj umjesto toga", "es": "📤 Subir en su lugar"}, "wi.send": {"en": "Send your wishes", "hr": "Pošalji čestitku", "es": "Envía tus deseos"}, "ki.h": {"en": "Kitchen Tea", "hr": "Kuhinjski čaj", "es": "Té de cocina"}, "ki.sub": {"en": "a morning of tea & treats for the bride", "hr": "jutro čaja i slastica za mladenku", "es": "una mañana de té y dulces para la novia"}, "ki.body": {"en": "Join us to shower Juliana with love, laughter and a well-stocked kitchen.", "hr": "Pridružite nam se i obasipajte Julianu ljubavlju, smijehom i dobro opremljenom kuhinjom.", "es": "Acompáñanos a colmar a Juliana de amor, risas y una cocina bien surtida."}, "ki.datetime": {"en": "Date & Time", "hr": "Datum i vrijeme", "es": "Fecha y hora"}, "ki.datetime.val": {"en": "Sunday, 27 September 2026 &nbsp;&bull;&nbsp; 11:00 am", "hr": "Nedjelja, 27. rujna 2026. &nbsp;&bull;&nbsp; 11:00", "es": "Domingo, 27 de septiembre de 2026 &nbsp;&bull;&nbsp; 11:00 a. m."}, "ki.where": {"en": "Where", "hr": "Gdje", "es": "Dónde"}, "ki.where.val": {"en": "<em>Venue to be confirmed</em>", "hr": "<em>Lokacija se još potvrđuje</em>", "es": "<em>Lugar por confirmar</em>"}, "ki.rsvp": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "form.name": {"en": "Name", "hr": "Ime", "es": "Nombre"}, "form.email": {"en": "Email", "hr": "E-pošta", "es": "Correo"}, "form.sendrsvp": {"en": "Send RSVP", "hr": "Pošalji potvrdu", "es": "Enviar confirmación"}, "form.dietary": {"en": "Dietary requirements <span class=\"opt\">(optional)</span>", "hr": "Prehrambene potrebe <span class=\"opt\">(neobavezno)</span>", "es": "Requisitos alimentarios <span class=\"opt\">(opcional)</span>"}, "form.dietary.ph": {"en": "Allergies, vegetarian, gluten-free, etc.", "hr": "Alergije, vegetarijanac, bez glutena itd.", "es": "Alergias, vegetariano, sin gluten, etc."}, "nav.gifts": {"en": "Gifts", "hr": "Darovi", "es": "Regalos"}, "nav.info": {"en": "Details", "hr": "Detalji", "es": "Detalles"}, "cta.cal": {"en": "Add to Calendar", "hr": "Dodaj u kalendar", "es": "Añadir al calendario"}, "info.h": {"en": "Good to Know", "hr": "Dobro je znati", "es": "Información útil"}, "info.sub": {"en": "details for the day", "hr": "detalji za taj dan", "es": "detalles para el día"}, "info.faqh": {"en": "FAQ", "hr": "Česta pitanja", "es": "Preguntas frecuentes"}, "info.travelh": {"en": "Getting There", "hr": "Kako doći", "es": "Cómo llegar"}, "info.accomh": {"en": "Where to Stay", "hr": "Gdje odsjesti", "es": "Dónde alojarse"}, "fs.h": {"en": "Find Your Seat", "hr": "Pronađite svoje mjesto", "es": "Encuentra tu asiento"}, "fs.sub": {"en": "type your name to find your table", "hr": "upišite svoje ime za pronalazak stola", "es": "escribe tu nombre para encontrar tu mesa"}, "fs.ph": {"en": "Your name", "hr": "Vaše ime", "es": "Tu nombre"}, "fs.btn": {"en": "Find my table", "hr": "Pronađi moj stol", "es": "Encontrar mi mesa"}, "fs.none": {"en": "We couldn't find that name — please check with the couple.", "hr": "Nismo pronašli to ime — provjerite s parom.", "es": "No encontramos ese nombre — consulta con la pareja."}, "fs.found": {"en": "You're at {table} 🎉", "hr": "Vi ste za stolom {table} 🎉", "es": "Estás en {table} 🎉"}, "gi.h": {"en": "With Love", "hr": "S ljubavlju", "es": "Con cariño"}, "gi.sub": {"en": "a note on gifts", "hr": "o darovima", "es": "una nota sobre los regalos"}, "gi.well": {"en": "Wishing Well", "hr": "Kasica želja", "es": "Buzón de deseos"}, "gi.bank": {"en": "Bank Details", "hr": "Bankovni podaci", "es": "Datos bancarios"}, "share.btn": {"en": "Share", "hr": "Podijeli", "es": "Compartir"}, "share.text": {"en": "Join us to celebrate Juliana & Marko's wedding — 17 October 2026.", "hr": "Pridružite nam se u slavlju vjenčanja Juliane i Marka — 17. listopada 2026.", "es": "Acompáñanos a celebrar la boda de Juliana y Marko — 17 de octubre de 2026."}, "share.copied": {"en": "Link copied!", "hr": "Poveznica kopirana!", "es": "¡Enlace copiado!"}, "msg.sending": {"en": "Sending…", "hr": "Šaljem…", "es": "Enviando…"}, "msg.err": {"en": "Something went wrong — please try again.", "hr": "Nešto je pošlo po zlu — pokušajte ponovno.", "es": "Algo salió mal — inténtalo de nuevo."}, "msg.neterr": {"en": "Network error — please try again.", "hr": "Pogreška mreže — pokušajte ponovno.", "es": "Error de red — inténtalo de nuevo."}, "msg.rsvp.need": {"en": "Please enter your name and email.", "hr": "Unesite svoje ime i e-poštu.", "es": "Ingresa tu nombre y correo."}, "msg.rsvp.ok": {"en": "Thank you! Your RSVP has been received.", "hr": "Hvala! Vaša potvrda je zaprimljena.", "es": "¡Gracias! Recibimos tu confirmación."}, "msg.wish.name": {"en": "Please add your name.", "hr": "Dodajte svoje ime.", "es": "Añade tu nombre."}, "msg.wish.need": {"en": "Leave a message, a video, or a photo.", "hr": "Ostavite poruku, video ili fotografiju.", "es": "Deja un mensaje, un video o una foto."}, "msg.wish.ok": {"en": "Thank you — your message is on its way to Juliana & Marko. 🤍", "hr": "Hvala — vaša poruka je na putu do Juliane i Marka. 🤍", "es": "Gracias — tu mensaje va camino a Juliana y Marko. 🤍"}, "rn.h": {"en": "RSVP", "hr": "Potvrda dolaska", "es": "Confirmar asistencia"}, "rn.sub": {"en": "we hope you can join us", "hr": "nadamo se da nam se možete pridružiti", "es": "esperamos que puedas acompañarnos"}, "rn.yes": {"en": "Joyfully accepts", "hr": "Radosno prihvaćam", "es": "Acepto con alegría"}, "rn.no": {"en": "Regretfully declines", "hr": "Nažalost, ne mogu doći", "es": "Lamento no poder ir"}, "rn.party": {"en": "Number in your party (including you)", "hr": "Broj osoba (uključujući vas)", "es": "Número de personas (incluyéndote)"}, "rn.meal": {"en": "Meal preference", "hr": "Izbor jela", "es": "Preferencia de menú"}, "rn.msglabel": {"en": "A note for the couple <span class=\"opt\">(optional)</span>", "hr": "Poruka za par <span class=\"opt\">(neobavezno)</span>", "es": "Un mensaje para la pareja <span class=\"opt\">(opcional)</span>"}, "rn.msg.ph": {"en": "A few words…", "hr": "Nekoliko riječi…", "es": "Unas palabras…"}, "rn.deadline": {"en": "Please reply by {date}", "hr": "Molimo odgovorite do {date}", "es": "Por favor responde antes del {date}"}, "msg.rsvp.okdecline": {"en": "Thank you for letting us know — you'll be missed! 🤍", "hr": "Hvala što ste nam javili — nedostajat ćete nam! 🤍", "es": "Gracias por avisarnos — ¡te echaremos de menos! 🤍"}, "msg.rsvp.needname": {"en": "Please enter your name.", "hr": "Unesite svoje ime.", "es": "Ingresa tu nombre."}, "msg.rsvp.needemail": {"en": "Please add your email so we can confirm.", "hr": "Dodajte e-poštu kako bismo mogli potvrditi.", "es": "Añade tu correo para poder confirmar."}};
   const LANGS = ['en','hr','es'];
   let CURRENT_LANG = 'en';
   function t(k){ var e=I18N[k]; return (e && (e[CURRENT_LANG]||e.en)) || ''; }
@@ -621,7 +684,7 @@
   }
 
   /* ---- RSVP forms (Kitchen Tea + Hens) → Cloudflare Worker ---- */
-  document.querySelectorAll('.rsvp-form').forEach(function(form){
+  document.querySelectorAll('.rsvp-form:not(#rnForm)').forEach(function(form){
     form.addEventListener('submit', function(e){
       e.preventDefault();
       var msg = form.querySelector('.rsvp-msg');
@@ -853,6 +916,8 @@
       // Find Your Seat — shown only if the couple published seating
       var seating = Array.isArray(d.seating) ? d.seating : [];
       if(seating.length){ setupFindSeat(seating); var fsec = document.getElementById('findseat'); if(fsec) fsec.style.display = ''; }
+      // Native RSVP — shown only if the couple enabled it (off for this couple; they use WithJoy)
+      if(d.rsvp && d.rsvp.enabled){ setupNativeRsvp(d.rsvp); }
     }).catch(function(){});
     function setupFindSeat(seating){
       var map = {};
@@ -868,6 +933,75 @@
       }
       btn.addEventListener('click', look);
       inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); look(); } });
+    }
+    function setupNativeRsvp(cfg){
+      var sec = document.getElementById('rsvp-native'); if(!sec) return;
+      var form = document.getElementById('rnForm'); if(!form) return;
+      // Intro message
+      var msgEl = document.getElementById('rnMessage');
+      if(msgEl && (cfg.message||'').trim()){ msgEl.textContent = cfg.message.trim(); msgEl.style.display=''; }
+      // Reply-by deadline
+      var dlEl = document.getElementById('rnDeadline');
+      if(dlEl && (cfg.deadline||'').trim()){ dlEl.textContent = t('rn.deadline').replace('{date}', cfg.deadline.trim()); dlEl.style.display=''; }
+      // Optional question fields
+      var askParty = cfg.askParty !== false;      // default on
+      var askDietary = cfg.askDietary !== false;  // default on
+      var askMessage = cfg.askMessage !== false;  // default on
+      var meals = Array.isArray(cfg.mealOptions) ? cfg.mealOptions.filter(function(m){ return (m||'').trim(); }) : [];
+      var partyWrap = document.getElementById('rnPartyWrap');
+      var mealWrap = document.getElementById('rnMealWrap');
+      var dietWrap = document.getElementById('rnDietWrap');
+      var msgWrap = document.getElementById('rnMsgWrap');
+      if(partyWrap && askParty) partyWrap.style.display='';
+      if(dietWrap && askDietary) dietWrap.style.display='';
+      if(msgWrap && askMessage) msgWrap.style.display='';
+      if(mealWrap && meals.length){
+        var sel = mealWrap.querySelector('select');
+        if(sel){ meals.forEach(function(m){ var o=document.createElement('option'); o.value=String(m).trim(); o.textContent=String(m).trim(); sel.appendChild(o); }); mealWrap.style.display=''; }
+      }
+      // Show / hide the attending-only block when the guest toggles yes/no
+      var attFields = document.getElementById('rnAttendingFields');
+      function syncAttend(){
+        var no = form.querySelector('input[name="attending"]:checked');
+        var attending = !no || no.value !== 'no';
+        if(attFields) attFields.style.display = attending ? '' : 'none';
+      }
+      form.querySelectorAll('input[name="attending"]').forEach(function(r){ r.addEventListener('change', syncAttend); });
+      syncAttend();
+      // Reveal the section and repoint the RSVP links (nav + hero CTA) to it
+      sec.style.display='';
+      ['a[href*="withjoy"][data-i18n="nav.rsvp"]','a[href*="withjoy"][data-i18n="cta.rsvp"]'].forEach(function(q){
+        var a=document.querySelector(q); if(a){ a.setAttribute('href','#rsvp-native'); a.removeAttribute('target'); a.removeAttribute('rel'); }
+      });
+      // Submit
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var msg = form.querySelector('.rsvp-msg');
+        var sbtn = form.querySelector('button[type="submit"]');
+        var name = (form.querySelector('[name="name"]').value||'').trim();
+        var att = form.querySelector('input[name="attending"]:checked');
+        var attending = !att || att.value !== 'no';
+        var emailEl = form.querySelector('[name="email"]');
+        var email = emailEl ? (emailEl.value||'').trim() : '';
+        if(!name){ msg.className='rsvp-msg bad'; msg.textContent=t('msg.rsvp.needname'); return; }
+        if(attending && !email){ msg.className='rsvp-msg bad'; msg.textContent=t('msg.rsvp.needemail'); return; }
+        var extra = { attending: attending };
+        if(attending){
+          if(askParty){ var p=parseInt((form.querySelector('[name="party"]')||{}).value,10); if(p>0) extra.party=p; }
+          if(meals.length){ var mv=(form.querySelector('[name="meal"]')||{}).value; if(mv) extra.meal=mv; }
+          if(askDietary){ var dv=((form.querySelector('[name="dietary"]')||{}).value||'').trim(); if(dv) extra.dietary=dv; }
+        }
+        if(askMessage){ var gv=((form.querySelector('[name="message"]')||{}).value||'').trim(); if(gv) extra.message=gv; }
+        var data = { event:'wedding', name:name, email:email, extra:extra };
+        var label = sbtn.textContent; sbtn.disabled=true; sbtn.textContent=t('msg.sending'); msg.className='rsvp-msg'; msg.textContent='';
+        fetch(WORKER_URL + '/rsvp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) })
+          .then(function(r){ return r.json().catch(function(){return {};}).then(function(jj){ return {ok:r.ok, j:jj}; }); })
+          .then(function(res){
+            if(res.ok){ form.reset(); msg.className='rsvp-msg ok'; msg.textContent = attending ? t('msg.rsvp.ok') : t('msg.rsvp.okdecline'); sbtn.style.display='none'; }
+            else { msg.className='rsvp-msg bad'; msg.textContent=(res.j && res.j.error) || t('msg.err'); sbtn.disabled=false; sbtn.textContent=label; }
+          })
+          .catch(function(){ msg.className='rsvp-msg bad'; msg.textContent=t('msg.neterr'); sbtn.disabled=false; sbtn.textContent=label; });
+      });
     }
   })();
 </script>

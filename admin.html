@@ -100,6 +100,17 @@
   .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
   .scard .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);}
   .scard .val{font-family:"Cormorant Garamond",serif;font-size:1.4rem;font-weight:600;margin-top:2px;color:var(--ink);}
+  .rc-check{display:flex;align-items:center;gap:8px;font-size:.9rem;margin:7px 0;color:var(--ink);cursor:pointer;}
+  .rc-check input{width:auto;margin:0;}
+  .rc-main{font-size:.98rem;}
+  .rc-meal-row{display:flex;gap:8px;align-items:center;margin:6px 0;}
+  .rc-meal-row input{flex:1;}
+  .wr-tally{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px;}
+  .wr-chip{background:#fff;border:1px solid var(--rule);border-radius:20px;padding:4px 12px;font-size:.82rem;color:var(--ink);}
+  .wr-chip b{color:var(--rust);}
+  .wr-diet{margin:2px 0 12px;font-size:.86rem;color:var(--ink-soft);}
+  .rowdel-sm{background:none;border:0;color:var(--ink-soft);cursor:pointer;font-size:1rem;line-height:1;padding:2px 6px;}
+  .rowdel-sm:hover{color:#b5481f;}
   /* expense pie + printable run sheet */
   .pie-wrap{margin:14px 0 4px;}
   .pie-flex{display:flex;gap:22px;align-items:center;flex-wrap:wrap;}
@@ -190,6 +201,24 @@
         <button class="btn" id="csv-kitchen">Download CSV</button>
       </div>
       <div class="tablewrap" id="table-kitchen"></div>
+    </section>
+
+    <section class="event" id="ev-wedrsvp" style="display:none">
+      <div class="meta">
+        <div>
+          <h2>Wedding RSVPs</h2>
+          <span class="count" id="count-wedrsvp"></span>
+        </div>
+        <button class="btn" id="csv-wedrsvp">Download CSV</button>
+      </div>
+      <p class="subnote">Replies from the RSVP form on your wedding site. Turn the form on below in &ldquo;Wedding RSVP form.&rdquo;</p>
+      <div class="summary" id="wedrsvp-summary" style="display:none">
+        <div class="scard"><div class="lab">Attending</div><div class="val" id="wr-attending">0</div></div>
+        <div class="scard"><div class="lab">Can't make it</div><div class="val" id="wr-declined">0</div></div>
+        <div class="scard"><div class="lab">Total guests</div><div class="val" id="wr-heads">0</div></div>
+      </div>
+      <div id="wr-meals" class="wr-tally"></div>
+      <div class="tablewrap" id="table-wedrsvp"></div>
     </section>
 
     <section class="event" id="ev-sched">
@@ -328,6 +357,36 @@
       </div>
     </section>
 
+    <section class="event" id="ev-rsvpcfg">
+      <div class="meta">
+        <div>
+          <h2>Wedding RSVP form</h2>
+          <span class="count">collect RSVPs on your site</span>
+        </div>
+        <div class="savebar"><span class="saved" id="siteSaved2"></span></div>
+      </div>
+      <p class="subnote">Turn this on to collect RSVPs right on your wedding site &mdash; guests reply on the page and their answers show up above in &ldquo;Wedding RSVPs.&rdquo; Leave it off if you use an outside service (Juliana &amp; Marko use WithJoy, so it stays off for them). Saves automatically.</p>
+      <div class="reg-editor">
+        <label class="rc-check rc-main"><input type="checkbox" id="rc-enabled"> <strong>Collect RSVPs on my site</strong></label>
+        <div id="rc-fields" style="display:none;margin-top:6px;">
+          <label class="reg-lab">A short message <span class="reg-note">(optional, shown above the form)</span></label>
+          <textarea id="rc-message" rows="2" placeholder="e.g. We can't wait to celebrate with you — kindly reply below."></textarea>
+
+          <label class="reg-lab">Reply-by date <span class="reg-note">(optional)</span></label>
+          <input type="text" id="rc-deadline" placeholder="e.g. 1 September 2026">
+
+          <label class="reg-lab">Meal choices <span class="reg-note">&mdash; add options to ask guests to pick a meal; leave empty to skip</span></label>
+          <div id="rc-meals"></div>
+          <button class="btn addrow" id="rc-meal-add">+ Add a meal option</button>
+
+          <label class="reg-lab" style="margin-top:14px;">What else to ask guests</label>
+          <label class="rc-check"><input type="checkbox" id="rc-party"> Number in their party (for +1s and family)</label>
+          <label class="rc-check"><input type="checkbox" id="rc-dietary"> Dietary requirements</label>
+          <label class="rc-check"><input type="checkbox" id="rc-message-ask"> A note for the couple</label>
+        </div>
+      </div>
+    </section>
+
     <section class="event" id="ev-site">
       <div class="meta">
         <div>
@@ -357,6 +416,7 @@
   const $ = id => document.getElementById(id);
   let PW = "";
   let KITCHEN = [];
+  let WEDDING = [];
 
   function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmt(ts){
@@ -366,9 +426,11 @@
     catch(_) { return d.toLocaleString(); }
   }
 
-  // Only Kitchen Tea replies are ever kept on this page.
+  // Kitchen Tea + Wedding replies are kept on this page (never hens — the worker doesn't send them here).
   function ingest(data){
-    KITCHEN = (data.items || []).filter(it => (it && it.event !== "hens"));
+    const items = (data.items || []).filter(it => it && it.event !== "hens");
+    WEDDING = items.filter(it => it.event === "wedding");
+    KITCHEN = items.filter(it => it.event !== "wedding");
   }
 
   function dietOf(it){
@@ -393,6 +455,68 @@
     box.innerHTML = h + '</tbody></table>';
   }
 
+  /* ---- Wedding RSVPs (native form; shown when the form is enabled or any replies exist) ---- */
+  function wrEnabled(){ return !!(typeof SITE !== "undefined" && SITE && SITE.rsvp && SITE.rsvp.enabled); }
+  function attendingOf(it){ const e = it && it.extra; return !(e && (e.attending === false || e.attending === "no")); }
+  function partyOf(it){ const e = it && it.extra; const p = e && parseInt(e.party, 10); return (p > 0) ? p : 1; }
+  function renderWeddingRsvps(){
+    const sec = $("ev-wedrsvp"); if(!sec) return;
+    const items = WEDDING;
+    sec.style.display = (items.length || wrEnabled()) ? "" : "none";
+    $("count-wedrsvp").textContent = items.length + (items.length === 1 ? " reply" : " replies");
+    const attend = items.filter(attendingOf);
+    const declined = items.length - attend.length;
+    const heads = attend.reduce((s, it) => s + partyOf(it), 0);
+    const sum = $("wedrsvp-summary");
+    if(items.length){ sum.style.display = ""; $("wr-attending").textContent = attend.length; $("wr-declined").textContent = declined; $("wr-heads").textContent = heads; }
+    else { sum.style.display = "none"; }
+    const meals = {}; attend.forEach(it => { const m = it.extra && it.extra.meal; if(m){ meals[m] = (meals[m] || 0) + partyOf(it); } });
+    const mealBox = $("wr-meals"); mealBox.innerHTML = "";
+    Object.keys(meals).forEach(m => { const c = document.createElement("span"); c.className = "wr-chip"; c.innerHTML = esc(m) + ': <b>' + meals[m] + '</b>'; mealBox.appendChild(c); });
+    const box = $("table-wedrsvp");
+    if(!items.length){ box.innerHTML = wrEnabled() ? '<div class="empty">No RSVPs yet &mdash; your form is live on the site.</div>' : '<div class="empty">No wedding RSVPs yet.</div>'; return; }
+    let h = '<table><thead><tr><th>Name</th><th>Coming?</th><th>Party</th><th>Meal</th><th>Dietary</th><th>Note</th><th>Email</th><th>Received</th><th></th></tr></thead><tbody>';
+    items.forEach(it => {
+      const e = it.extra || {}; const coming = attendingOf(it);
+      h += '<tr>' +
+        '<td>' + esc(it.name) + '</td>' +
+        '<td>' + (coming ? '<span style="color:var(--sage-deep)">Yes</span>' : '<span style="color:#b5481f">No</span>') + '</td>' +
+        '<td class="center">' + (coming ? partyOf(it) : '&mdash;') + '</td>' +
+        '<td>' + (e.meal ? esc(e.meal) : '<span style="color:var(--ink-soft)">&mdash;</span>') + '</td>' +
+        '<td>' + (e.dietary ? esc(e.dietary) : '<span style="color:var(--ink-soft)">&mdash;</span>') + '</td>' +
+        '<td>' + (e.message ? esc(e.message) : '<span style="color:var(--ink-soft)">&mdash;</span>') + '</td>' +
+        '<td>' + (it.email ? '<a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a>' : '<span style="color:var(--ink-soft)">&mdash;</span>') + '</td>' +
+        '<td class="when">' + esc(fmt(it.ts)) + '</td>' +
+        '<td><button class="rowdel-sm" data-ts="' + esc(it.ts) + '" title="Remove this reply">&#10005;</button></td>' +
+      '</tr>';
+    });
+    box.innerHTML = h + '</tbody></table>';
+    box.querySelectorAll('.rowdel-sm').forEach(btn => {
+      btn.addEventListener('click', function(){
+        if(this.dataset.confirm){ deleteWeddingRsvp(this.getAttribute('data-ts')); }
+        else { this.dataset.confirm = "1"; this.textContent = "Sure?"; this.style.color = "#b5481f";
+          setTimeout(() => { if(this.dataset.confirm){ this.dataset.confirm = ""; this.innerHTML = "&#10005;"; this.style.color = ""; } }, 3000); }
+      });
+    });
+  }
+  async function deleteWeddingRsvp(ts){
+    if(!PW || !ts) return;
+    try{
+      const r = await fetch(WORKER + "/rsvp-delete", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, ts }) });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok){ WEDDING = WEDDING.filter(x => x.ts !== ts); renderWeddingRsvps(); }
+    }catch(_){}
+  }
+  function downloadWeddingCSV(){
+    const rows = [["Name","Coming","Party","Meal","Dietary","Note","Email","Received"].map(csvCell).join(",")];
+    for(const it of WEDDING){ const e = it.extra || {}; const coming = attendingOf(it);
+      rows.push([it.name, coming ? "Yes" : "No", coming ? partyOf(it) : "", e.meal || "", e.dietary || "", e.message || "", it.email || "", fmt(it.ts)].map(csvCell).join(",")); }
+    const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "wedding-rsvps.csv"; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
   async function load(){
     $("status").textContent = "Loading…";
     try {
@@ -401,6 +525,7 @@
       if(!r.ok) throw new Error("failed");
       ingest(await r.json());
       renderKitchen();
+      renderWeddingRsvps();
       $("status").textContent = "";
     } catch(e){
       if(String(e.message) === "unauthorized"){
@@ -426,6 +551,7 @@
       $("app").style.display = "block";
       ingest(await r.json());
       renderKitchen();
+      renderWeddingRsvps();
       loadWedding();
       loadRegistry();
       loadSite();
@@ -858,17 +984,29 @@
   $("reg-link-add").addEventListener("click", function(){ REG.links.push({label:"",url:""}); regMark(); renderRegistry(); });
 
   /* ---- Site config editor (Details & FAQ → public /site doc; auto-saves) ---- */
-  let SITE = { travel:"", accommodation:"", faq:[] }, siteDirty = false, siteSaving = false, siteTimer = null;
-  function siteStatus(t, c){ const s = $("siteSaved"); if(s){ s.textContent = t; s.style.color = c; } }
+  function defaultRsvpCfg(){ return { enabled:false, message:"", deadline:"", mealOptions:[], askParty:true, askDietary:true, askMessage:true }; }
+  let SITE = { travel:"", accommodation:"", faq:[], rsvp: defaultRsvpCfg() }, siteDirty = false, siteSaving = false, siteTimer = null;
+  function siteStatus(t, c){ ["siteSaved","siteSaved2"].forEach(id => { const s = $(id); if(s){ s.textContent = t; s.style.color = c; } }); }
   function siteMark(){ siteDirty = true; siteStatus("Editing…", "var(--ink-soft)"); if(siteTimer) clearTimeout(siteTimer); siteTimer = setTimeout(() => { if(siteDirty && !siteSaving) saveSite(); }, 1400); }
   async function loadSite(){
     try{
       const r = await fetch(WORKER + "/site?cb=" + Date.now());
       const jj = await r.json().catch(() => ({}));
       const d = (jj && jj.data && typeof jj.data === "object") ? jj.data : {};
-      SITE = { travel: d.travel||"", accommodation: d.accommodation||"", faq: Array.isArray(d.faq)?d.faq:[] };
-    } catch(e){ SITE = { travel:"", accommodation:"", faq:[] }; }
-    siteDirty = false; siteStatus("", "var(--ink-soft)"); renderSite();
+      const rc = (d.rsvp && typeof d.rsvp === "object") ? d.rsvp : {};
+      SITE = { travel: d.travel||"", accommodation: d.accommodation||"", faq: Array.isArray(d.faq)?d.faq:[],
+               rsvp: {
+                 enabled: !!rc.enabled,
+                 message: rc.message || "",
+                 deadline: rc.deadline || "",
+                 mealOptions: Array.isArray(rc.mealOptions) ? rc.mealOptions.slice() : [],
+                 askParty: rc.askParty !== false,
+                 askDietary: rc.askDietary !== false,
+                 askMessage: rc.askMessage !== false
+               } };
+      if(d.seating) SITE.seating = d.seating;   // preserve published seating so an early save can't wipe it
+    } catch(e){ SITE = { travel:"", accommodation:"", faq:[], rsvp: defaultRsvpCfg() }; }
+    siteDirty = false; siteStatus("", "var(--ink-soft)"); renderSite(); renderWeddingRsvps();
   }
   function renderSite(){
     if($("site-travel")) $("site-travel").value = SITE.travel || "";
@@ -880,6 +1018,25 @@
       row.querySelector(".fq-q").addEventListener("input", function(){ SITE.faq[i].q = this.value; siteMark(); });
       row.querySelector(".fq-a").addEventListener("input", function(){ SITE.faq[i].a = this.value; siteMark(); });
       row.querySelector(".rowdel").addEventListener("click", function(){ SITE.faq.splice(i,1); siteMark(); renderSite(); });
+      box.appendChild(row);
+    });
+    renderRsvpCfg();
+  }
+  function renderRsvpCfg(){
+    const c = SITE.rsvp || (SITE.rsvp = defaultRsvpCfg());
+    if($("rc-enabled")) $("rc-enabled").checked = !!c.enabled;
+    if($("rc-fields")) $("rc-fields").style.display = c.enabled ? "" : "none";
+    if($("rc-message")) $("rc-message").value = c.message || "";
+    if($("rc-deadline")) $("rc-deadline").value = c.deadline || "";
+    if($("rc-party")) $("rc-party").checked = c.askParty !== false;
+    if($("rc-dietary")) $("rc-dietary").checked = c.askDietary !== false;
+    if($("rc-message-ask")) $("rc-message-ask").checked = c.askMessage !== false;
+    const box = $("rc-meals"); if(!box) return; box.innerHTML = "";
+    (c.mealOptions || []).forEach((m, i) => {
+      const row = document.createElement("div"); row.className = "rc-meal-row";
+      row.innerHTML = '<input type="text" class="rc-meal-in" placeholder="e.g. Beef" value="' + esc(m||"") + '"><button class="rowdel" title="Remove">&#10005;</button>';
+      row.querySelector(".rc-meal-in").addEventListener("input", function(){ SITE.rsvp.mealOptions[i] = this.value; siteMark(); });
+      row.querySelector(".rowdel").addEventListener("click", function(){ SITE.rsvp.mealOptions.splice(i,1); siteMark(); renderRsvpCfg(); });
       box.appendChild(row);
     });
   }
@@ -898,6 +1055,16 @@
   $("site-travel").addEventListener("input", function(){ SITE.travel = this.value; siteMark(); });
   $("site-accom").addEventListener("input", function(){ SITE.accommodation = this.value; siteMark(); });
   $("site-faq-add").addEventListener("click", function(){ SITE.faq.push({q:"",a:""}); siteMark(); renderSite(); });
+
+  // Wedding RSVP form config
+  $("rc-enabled").addEventListener("change", function(){ SITE.rsvp.enabled = this.checked; if($("rc-fields")) $("rc-fields").style.display = this.checked ? "" : "none"; siteMark(); renderWeddingRsvps(); });
+  $("rc-message").addEventListener("input", function(){ SITE.rsvp.message = this.value; siteMark(); });
+  $("rc-deadline").addEventListener("input", function(){ SITE.rsvp.deadline = this.value; siteMark(); });
+  $("rc-party").addEventListener("change", function(){ SITE.rsvp.askParty = this.checked; siteMark(); });
+  $("rc-dietary").addEventListener("change", function(){ SITE.rsvp.askDietary = this.checked; siteMark(); });
+  $("rc-message-ask").addEventListener("change", function(){ SITE.rsvp.askMessage = this.checked; siteMark(); });
+  $("rc-meal-add").addEventListener("click", function(){ SITE.rsvp.mealOptions.push(""); siteMark(); renderRsvpCfg(); });
+  $("csv-wedrsvp").addEventListener("click", downloadWeddingCSV);
 
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",who:"",item:""}); wedMark(); renderSchedule(); });
   $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
