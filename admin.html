@@ -583,10 +583,11 @@
 
   /* ---- Saturday breakfast tally ---- */
   let BREKKY = [];
-  function brekkyNice(c){ return c === "salmon" ? "Smoked salmon bagel" : (c === "bacon" ? "Bacon & egg roll" : (c || "")); }
-  function brekkySunNice(c){ return c === "salmon" ? "Oysters & champagne" : (c === "bacon" ? "Croissants (your choice of filling)" : (c || "")); }
+  function fillingOf(it){ const m = ((it && it.name) || "").match(/\(filling:\s*([\s\S]*?)\)\s*$/); return m ? m[1].trim() : ""; }
+  function brekkyNice(it){ const c = it && it.choice; return c === "salmon" ? "Smoked salmon bagel" : (c === "bacon" ? "Bacon & egg roll" : (c || "")); }
+  function brekkySunNice(it){ const c = it && it.choice; if(c === "salmon") return "Oysters & champagne"; if(c === "bacon"){ const f = fillingOf(it); return "Croissants" + (f ? " — " + f : ""); } return c || ""; }
   function isSun(it){ return ((it && it.name) || "").indexOf("[Sun] ") === 0; }
-  function sunName(it){ return ((it && it.name) || "").replace(/^\[Sun\]\s*/, ""); }
+  function sunName(it){ return ((it && it.name) || "").replace(/^\[Sun\]\s*/, "").replace(/\s*\(filling:\s*[\s\S]*?\)\s*$/, "").trim(); }
   async function loadBrekky(){
     try{
       const r = await fetch(WORKER + "/brekkys?pw=" + encodeURIComponent(PW));
@@ -607,7 +608,7 @@
     if(!items.length){ box.innerHTML = '<div class="empty">No breakfast orders yet.</div>'; return; }
     let h = '<table><thead><tr><th>Name</th><th>Breakfast</th><th>Ordered</th></tr></thead><tbody>';
     for(const it of items){
-      h += '<tr><td>' + esc(nameFn(it)) + '</td><td>' + esc(niceFn(it.choice)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+      h += '<tr><td>' + esc(nameFn(it)) + '</td><td>' + esc(niceFn(it)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
     }
     box.innerHTML = h + '</tbody></table>';
   }

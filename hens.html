@@ -341,6 +341,7 @@
         <input type="text" id="brekkySunName" placeholder="Your name" autocomplete="name" />
         <label class="brekky-opt"><input type="radio" name="brekkySun" value="oysters" /><span><b>Oysters &amp; champagne</b><small>A bougie little start</small></span></label>
         <label class="brekky-opt"><input type="radio" name="brekkySun" value="croissants" /><span><b>Croissants</b><small>With your choice of filling</small></span></label>
+        <input type="text" id="brekkySunFill" class="brekky-fill" placeholder="Your croissant filling — e.g. ham &amp; cheese, jam, Nutella" maxlength="50" autocomplete="off" style="display:none" />
         <button type="submit">Lock in my breakfast</button>
         <p class="brekky-msg" id="brekkySunMsg"></p>
       </form>
@@ -661,9 +662,14 @@
 
   /* ---- Sunday breakfast picker → same /brekky endpoint, tagged "[Sun] " so admin splits by day ---- */
   const brekkySunForm = document.getElementById("brekkySunForm");
+  const brekkySunFill = document.getElementById("brekkySunFill");
   brekkySunForm.querySelectorAll('input[name="brekkySun"]').forEach(radio => radio.addEventListener("change", () => {
     brekkySunForm.querySelectorAll(".brekky-opt").forEach(l => l.classList.remove("sel"));
     if(radio.checked) radio.closest(".brekky-opt").classList.add("sel");
+    const checked = brekkySunForm.querySelector('input[name="brekkySun"]:checked');
+    const isCroissant = checked && checked.value === "croissants";
+    brekkySunFill.style.display = isCroissant ? "block" : "none";
+    if(isCroissant) brekkySunFill.focus();
   }));
   brekkySunForm.addEventListener("submit", function(e){
     e.preventDefault();
@@ -672,14 +678,18 @@
     const sel = brekkySunForm.querySelector('input[name="brekkySun"]:checked');
     if(!name){ msg.className = "brekky-msg bad"; msg.textContent = "Please add your name."; return; }
     if(!sel){ msg.className = "brekky-msg bad"; msg.textContent = "Please pick a breakfast."; return; }
-    const choice = (sel.value === "oysters") ? "salmon" : "bacon";  // reuses the endpoint's two slots
+    const isCroissant = sel.value === "croissants";
+    const choice = isCroissant ? "bacon" : "salmon";  // reuses the endpoint's two slots
+    const filling = (brekkySunFill.value || "").trim().slice(0, 50);
+    let taggedName = "[Sun] " + name;
+    if(isCroissant && filling) taggedName += " (filling: " + filling + ")";
     const btn = brekkySunForm.querySelector("button"); const label = btn.textContent;
     btn.disabled = true; btn.textContent = "Saving…"; msg.className = "brekky-msg"; msg.textContent = "";
-    fetch(WORKER_URL + "/brekky", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ name: "[Sun] " + name, choice: choice }) })
+    fetch(WORKER_URL + "/brekky", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ name: taggedName, choice: choice }) })
       .then(r => r.json().catch(() => ({})).then(jj => ({ ok:r.ok, j:jj })))
       .then(res => {
         if(res.ok){
-          const nice = (sel.value === "oysters") ? "oysters & champagne" : "croissants";
+          const nice = isCroissant ? ("croissants" + (filling ? " with " + filling : "")) : "oysters & champagne";
           msg.className = "brekky-msg ok"; msg.textContent = "You're down for the " + nice + ", " + name + " 🥂";
           btn.textContent = "Saved ✓";
         } else {
