@@ -70,6 +70,37 @@
   .pie-sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto;}
   .pie-pct{color:var(--ink-soft);margin-left:auto;font-size:.82rem;}
   .pie-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;padding:6px 0;}
+  /* seating planner */
+  #ev-seat{width:min(1180px,94vw);margin-left:calc(50% - min(1180px,94vw)/2);}
+  .seat-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 12px;}
+  .seat-tools .btn{margin:0;}
+  .zoomlab{font-size:.82rem;color:var(--ink-soft);min-width:46px;text-align:center;}
+  .seat-layout{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;}
+  .seat-side{flex:0 0 230px;max-width:250px;}
+  .seat-side h3{font-family:"Sacramento",cursive;font-weight:400;color:var(--sage-deep);font-size:1.5rem;margin:0 0 4px;}
+  .pool{display:flex;flex-wrap:wrap;gap:6px;min-height:42px;padding:9px;border:1px dashed rgba(0,0,0,.18);border-radius:8px;background:#fafafa;}
+  .chip{font-size:.82rem;padding:4px 10px;border:1px solid var(--sage);border-radius:14px;background:#fff;cursor:pointer;user-select:none;line-height:1.3;}
+  .chip:hover{background:#f2f2f2;}
+  .chip.picked{background:var(--rust);color:#fff;border-color:var(--rust);}
+  .seat-hint{font-size:.78rem;color:var(--ink-soft);margin:6px 0;line-height:1.45;}
+  .addguest{display:flex;gap:6px;margin-top:8px;}
+  .addguest input{flex:1;font-family:inherit;font-size:.9rem;padding:.45rem .55rem;border:1px solid var(--sage);border-radius:4px;min-width:0;}
+  .floor-wrap{flex:1;min-width:300px;overflow:auto;border:1px solid rgba(0,0,0,.12);border-radius:8px;background:#fff;background-image:radial-gradient(rgba(0,0,0,.06) 1px,transparent 1px);background-size:24px 24px;height:540px;position:relative;}
+  .floor{position:relative;width:1400px;height:1000px;transform-origin:0 0;}
+  .tbl{position:absolute;border:2px solid var(--sage-deep);background:rgba(138,154,107,.16);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:grab;user-select:none;box-shadow:0 5px 14px -9px rgba(0,0,0,.55);touch-action:none;}
+  .tbl.round{border-radius:50%;}
+  .tbl.sel{border-color:var(--rust);background:rgba(201,106,43,.18);box-shadow:0 0 0 3px rgba(201,106,43,.28);z-index:3;}
+  .tbl.full{border-style:dashed;}
+  .tbl .tl-name{font-weight:600;font-size:.9rem;line-height:1.12;padding:0 6px;word-break:break-word;}
+  .tbl .tl-occ{font-size:.72rem;color:var(--ink-soft);margin-top:3px;}
+  .tdetail{margin-top:14px;border:1px solid var(--rule);border-radius:8px;padding:13px 15px;background:#fff;}
+  .tdetail .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+  .tdetail label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--rust);}
+  .tdetail input[type=text],.tdetail input[type=number]{font-family:inherit;font-size:.92rem;padding:.4rem .5rem;border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);}
+  .seated{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px;}
+  .seated .chip{background:#f4f4f4;cursor:default;}
+  .seated .chip .x{color:#b5643f;margin-left:7px;font-weight:700;cursor:pointer;}
+  .seated .chip .x:hover{color:#8a1f0f;}
 </style>
 </head>
 <body>
@@ -145,6 +176,43 @@
         <tbody id="wexp-body"></tbody>
       </table></div>
       <button class="btn addrow" id="wexp-add">+ Add supplier / expense</button>
+    </section>
+
+    <section class="event" id="ev-seat">
+      <div class="meta">
+        <div>
+          <h2>Seating Planner</h2>
+          <span class="count" id="seat-count"></span>
+        </div>
+        <div class="savebar">
+          <label class="btn" style="cursor:pointer;margin:0;">Import guest CSV<input type="file" id="seat-csv" accept=".csv,text/csv" style="display:none;"></label>
+        </div>
+      </div>
+      <p class="subnote">Drag tables around your floor plan. Add round or square tables, then click a guest and click a table to seat them. Saved with the &ldquo;Save wedding plan&rdquo; button above.</p>
+      <div class="seat-tools">
+        <button class="btn" id="add-round">+ Round table</button>
+        <button class="btn" id="add-square">+ Square table</button>
+        <span style="flex:1"></span>
+        <button class="btn" id="zoom-out" title="Zoom out">&#8722;</button>
+        <span class="zoomlab" id="zoomlab">100%</span>
+        <button class="btn" id="zoom-in" title="Zoom in">&#43;</button>
+      </div>
+      <div class="seat-layout">
+        <div class="seat-side">
+          <h3>Guests</h3>
+          <div class="seat-hint">Click a guest, then click a table to seat them. <span id="pickstate"></span></div>
+          <div class="pool" id="guest-pool"></div>
+          <div class="addguest">
+            <input type="text" id="guest-add-name" placeholder="Add a guest by name" />
+            <button class="btn" id="guest-add">Add</button>
+          </div>
+        </div>
+        <div class="floor-wrap" id="floor-wrap">
+          <div class="floor" id="floor"></div>
+        </div>
+      </div>
+      <div class="status" id="seat-msg" style="min-height:1em;text-align:left;margin-top:6px;"></div>
+      <div class="tdetail" id="tdetail" style="display:none;"></div>
     </section>
   </div>
 </div>
@@ -265,8 +333,11 @@
     WED = (w && typeof w === "object") ? w : defaultWED();
     if(!Array.isArray(WED.schedule)) WED.schedule = defaultWED().schedule;
     if(!Array.isArray(WED.expenses)) WED.expenses = defaultWED().expenses;
+    if(!WED.seating || typeof WED.seating !== "object") WED.seating = { guests:[], tables:[] };
+    if(!Array.isArray(WED.seating.guests)) WED.seating.guests = [];
+    if(!Array.isArray(WED.seating.tables)) WED.seating.tables = [];
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
-    renderSchedule(); renderWexp();
+    renderSchedule(); renderWexp(); renderSeat();
   }
   function renderSchedule(){
     const b = $("sched-body"); b.innerHTML = "";
@@ -386,6 +457,180 @@
     a.download = "kitchen-tea-rsvps.csv"; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
+
+  /* ---- Seating planner. State lives in WED.seating = {guests:[names], tables:[{id,shape,label,seats,x,y,guests:[names]}]}
+         and rides along with "Save wedding plan" (it is part of WED). ---- */
+  let ZOOM = 1, pickedGuest = null, selTable = null, drag = null;
+  function seatMsg(m){ const e = $("seat-msg"); if(e) e.textContent = m || ""; }
+  function allGuestNames(){
+    const a = WED.seating.guests.slice();
+    WED.seating.tables.forEach(t => (t.guests || []).forEach(n => a.push(n)));
+    return a;
+  }
+  function nextTid(){ let m = 0; WED.seating.tables.forEach(t => { if(+t.id > m) m = +t.id; }); return m + 1; }
+  function tblSize(t){ return Math.max(88, Math.min(172, 92 + Math.max(0,(t.seats||8) - 6) * 7)); }
+  function updatePickState(){ const e = $("pickstate"); if(e) e.textContent = pickedGuest ? ("Seating: " + pickedGuest + " — click a table.") : ""; }
+
+  function renderPool(){
+    const pool = $("guest-pool"); if(!pool) return;
+    const g = WED.seating.guests;
+    if(!g.length){ pool.innerHTML = '<span class="seat-hint">No unassigned guests. Import a CSV or add names below.</span>'; updatePickState(); return; }
+    pool.innerHTML = "";
+    g.forEach(n => {
+      const c = document.createElement("span");
+      c.className = "chip" + (pickedGuest === n ? " picked" : "");
+      c.textContent = n;
+      c.addEventListener("click", () => { pickedGuest = (pickedGuest === n ? null : n); renderPool(); });
+      pool.appendChild(c);
+    });
+    updatePickState();
+  }
+  function renderFloor(){
+    const floor = $("floor"); if(!floor) return;
+    floor.style.transform = "scale(" + ZOOM + ")";
+    floor.innerHTML = "";
+    WED.seating.tables.forEach(t => {
+      const size = tblSize(t), full = (t.seats||0) > 0 && (t.guests||[]).length >= (t.seats||0);
+      const el = document.createElement("div");
+      el.className = "tbl " + (t.shape === "round" ? "round" : "square") + (selTable === t.id ? " sel" : "") + (full ? " full" : "");
+      el.style.left = (t.x||0) + "px"; el.style.top = (t.y||0) + "px";
+      el.style.width = size + "px"; el.style.height = size + "px";
+      el.innerHTML = '<div class="tl-name">' + esc(t.label || "Table") + '</div><div class="tl-occ">' + ((t.guests||[]).length) + ' / ' + (t.seats||0) + '</div>';
+      attachDrag(el, t);
+      floor.appendChild(el);
+    });
+  }
+  function renderDetail(){
+    const box = $("tdetail"); if(!box) return;
+    const t = WED.seating.tables.find(x => x.id === selTable);
+    if(!t){ box.style.display = "none"; box.innerHTML = ""; return; }
+    box.style.display = "block";
+    const seated = (t.guests||[]).length
+      ? (t.guests||[]).map((n,i) => '<span class="chip">' + esc(n) + '<span class="x" data-i="' + i + '" title="Unseat">&times;</span></span>').join("")
+      : '<span class="seat-hint">No one seated here yet — click a guest, then this table.</span>';
+    box.innerHTML =
+      '<div class="row"><label>Table name</label><input type="text" id="td-name" value="' + esc(t.label||"") + '">' +
+      '<label>Seats</label><input type="number" id="td-seats" min="1" max="30" value="' + (t.seats||0) + '" style="width:72px">' +
+      '<span class="seat-hint">' + (t.shape === "round" ? "Round" : "Square") + ' table</span>' +
+      '<span style="flex:1"></span><button class="btn" id="td-del">Delete table</button></div>' +
+      '<div class="seated">' + seated + '</div>';
+    $("td-name").addEventListener("input", function(){ t.label = this.value; wedMark(); renderFloor(); });
+    $("td-seats").addEventListener("input", function(){ t.seats = Math.max(1, Math.min(30, parseInt(this.value||"0",10) || 0)); wedMark(); renderFloor(); renderSeat(); });
+    $("td-del").addEventListener("click", () => {
+      (t.guests||[]).forEach(n => WED.seating.guests.push(n));
+      const idx = WED.seating.tables.indexOf(t); if(idx >= 0) WED.seating.tables.splice(idx,1);
+      selTable = null; wedMark(); renderSeat(); seatMsg("Table removed — its guests are back in the list.");
+    });
+    box.querySelectorAll(".seated .x").forEach(x => {
+      x.addEventListener("click", function(){
+        const i = +this.getAttribute("data-i");
+        if(i >= 0 && i < t.guests.length){ const n = t.guests.splice(i,1)[0]; WED.seating.guests.push(n); wedMark(); renderSeat(); seatMsg(n + " is back in the guest list."); }
+      });
+    });
+  }
+  function renderSeat(){
+    renderPool(); renderFloor(); renderDetail();
+    const tot = allGuestNames().length;
+    const seated = WED.seating.tables.reduce((s,t) => s + ((t.guests||[]).length), 0);
+    const nt = WED.seating.tables.length;
+    const el = $("seat-count");
+    if(el) el.textContent = tot + " guest" + (tot===1?"":"s") + " • " + seated + " seated • " + nt + " table" + (nt===1?"":"s");
+  }
+  function seatGuest(t, name){
+    if((t.seats||0) > 0 && (t.guests||[]).length >= (t.seats||0)){ seatMsg((t.label||"That table") + " is full."); return; }
+    const pi = WED.seating.guests.indexOf(name);
+    if(pi >= 0) WED.seating.guests.splice(pi,1);
+    else WED.seating.tables.forEach(o => { const k = (o.guests||[]).indexOf(name); if(k >= 0) o.guests.splice(k,1); });
+    if(!Array.isArray(t.guests)) t.guests = [];
+    t.guests.push(name); wedMark(); seatMsg(name + " seated at " + (t.label||"table") + ".");
+  }
+  function onTableClick(t){
+    if(pickedGuest){ seatGuest(t, pickedGuest); pickedGuest = null; }
+    selTable = t.id; renderSeat();
+  }
+  function attachDrag(el, t){
+    el.addEventListener("pointerdown", function(ev){
+      if(ev.button !== 0) return;
+      ev.preventDefault();
+      drag = { t:t, el:el, sx:ev.clientX, sy:ev.clientY, ox:t.x||0, oy:t.y||0, moved:false, nx:t.x||0, ny:t.y||0 };
+      try{ el.setPointerCapture(ev.pointerId); }catch(_){}
+      el.style.cursor = "grabbing";
+    });
+  }
+  document.addEventListener("pointermove", function(ev){
+    if(!drag) return;
+    const dx = (ev.clientX - drag.sx) / ZOOM, dy = (ev.clientY - drag.sy) / ZOOM;
+    if(Math.abs(dx) > 3 || Math.abs(dy) > 3) drag.moved = true;
+    drag.nx = Math.max(0, drag.ox + dx); drag.ny = Math.max(0, drag.oy + dy);
+    drag.el.style.left = drag.nx + "px"; drag.el.style.top = drag.ny + "px";
+  });
+  document.addEventListener("pointerup", function(){
+    if(!drag) return;
+    const d = drag; drag = null; d.el.style.cursor = "grab";
+    if(d.moved){ d.t.x = d.nx; d.t.y = d.ny; wedMark(); }
+    else onTableClick(d.t);
+  });
+  function addTable(shape){
+    const n = WED.seating.tables.length;
+    WED.seating.tables.push({ id:nextTid(), shape:shape, label:"Table " + (n+1), seats:8, x:40 + (n*46)%520, y:40 + Math.floor((n*46)/520)*150, guests:[] });
+    wedMark(); renderSeat();
+  }
+  function setZoom(z){ ZOOM = Math.max(0.4, Math.min(1.6, Math.round(z*10)/10)); const l = $("zoomlab"); if(l) l.textContent = Math.round(ZOOM*100) + "%"; renderFloor(); }
+  function addGuestManual(){
+    const inp = $("guest-add-name"); const v = (inp.value||"").trim(); if(!v) return;
+    if(allGuestNames().some(n => n.toLowerCase() === v.toLowerCase())){ seatMsg(v + " is already on the list."); return; }
+    WED.seating.guests.push(v); inp.value = ""; wedMark(); renderSeat(); seatMsg("Added " + v + ".");
+  }
+  function parseCSV(text){
+    const rows = []; let i = 0, field = "", row = [], inQ = false;
+    text = String(text).replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+    while(i < text.length){
+      const c = text[i];
+      if(inQ){
+        if(c === '"'){ if(text[i+1] === '"'){ field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+        field += c; i++; continue;
+      }
+      if(c === '"'){ inQ = true; i++; continue; }
+      if(c === ','){ row.push(field); field = ""; i++; continue; }
+      if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+      field += c; i++;
+    }
+    if(field.length || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(r => r.some(x => String(x).trim() !== ""));
+  }
+  function importCSV(text){
+    const rows = parseCSV(text);
+    if(!rows.length){ seatMsg("That file looks empty."); return; }
+    const head = rows[0].map(x => String(x).trim().toLowerCase());
+    const looksHeader = head.some(h => /name|email|guest|first|last|rsvp|party/.test(h));
+    const nameIdx = Math.max(0, head.findIndex(h => /(^|\s)name/.test(h) || h === "name" || /full ?name|guest/.test(h)));
+    const firstIdx = head.findIndex(h => /first/.test(h));
+    const lastIdx = head.findIndex(h => /last|surname/.test(h));
+    const start = looksHeader ? 1 : 0;
+    const existing = new Set(allGuestNames().map(n => n.toLowerCase()));
+    let added = 0;
+    for(let r = start; r < rows.length; r++){
+      let nm = "";
+      if(firstIdx >= 0 || lastIdx >= 0) nm = [firstIdx>=0?rows[r][firstIdx]:"", lastIdx>=0?rows[r][lastIdx]:""].join(" ").trim();
+      if(!nm) nm = String(rows[r][nameIdx] || "").trim();
+      if(!nm || existing.has(nm.toLowerCase())) continue;
+      existing.add(nm.toLowerCase()); WED.seating.guests.push(nm); added++;
+    }
+    wedMark(); renderSeat();
+    seatMsg(added ? ("Imported " + added + " guest" + (added===1?"":"s") + " into the list.") : "No new guests found in that file.");
+  }
+
+  $("add-round").addEventListener("click", () => addTable("round"));
+  $("add-square").addEventListener("click", () => addTable("square"));
+  $("zoom-in").addEventListener("click", () => setZoom(ZOOM + 0.1));
+  $("zoom-out").addEventListener("click", () => setZoom(ZOOM - 0.1));
+  $("guest-add").addEventListener("click", addGuestManual);
+  $("guest-add-name").addEventListener("keydown", e => { if(e.key === "Enter") addGuestManual(); });
+  $("seat-csv").addEventListener("change", async function(e){
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    try{ importCSV(await f.text()); } catch(err){ seatMsg("Couldn't read that file — please try a plain CSV."); }
+    e.target.value = "";
+  });
 
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
