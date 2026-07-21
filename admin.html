@@ -193,6 +193,18 @@
       <div class="tablewrap matrix"><table id="tbl-part"><thead id="part-head"></thead><tbody id="part-body"></tbody></table></div>
     </section>
 
+    <section class="event" id="ev-brekky">
+      <div class="meta">
+        <div>
+          <h2>Saturday Breakfast</h2>
+          <span class="count" id="count-brekky"></span>
+        </div>
+        <button class="btn" id="refresh-brekky">Refresh</button>
+      </div>
+      <div class="summary" id="brekky-tally"></div>
+      <div class="tablewrap" id="table-brekky"></div>
+    </section>
+
     <section class="event" id="ev-gallery">
       <div class="meta">
         <div>
@@ -236,6 +248,7 @@
       renderAll();
       loadGallery();
       loadTracker();
+      loadBrekky();
       $("status").textContent = "";
     } catch(e){
       if(String(e.message) === "unauthorized"){
@@ -328,6 +341,7 @@
       renderAll();
       loadGallery();
       loadTracker();
+      loadBrekky();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
@@ -543,9 +557,39 @@
     $("trkSave").disabled = false;
   }
 
+  /* ---- Saturday breakfast tally ---- */
+  let BREKKY = [];
+  function brekkyNice(c){ return c === "salmon" ? "Smoked salmon bagel" : (c === "bacon" ? "Bacon & egg roll" : (c || "")); }
+  async function loadBrekky(){
+    try{
+      const r = await fetch(WORKER + "/brekkys?pw=" + encodeURIComponent(PW));
+      const data = await r.json();
+      BREKKY = (data && data.items) || [];
+      renderBrekky();
+    } catch(e){ $("count-brekky").textContent = "couldn't load"; }
+  }
+  function renderBrekky(){
+    const items = BREKKY;
+    const salmon = items.filter(x => x.choice === "salmon").length;
+    const bacon = items.filter(x => x.choice === "bacon").length;
+    $("count-brekky").textContent = items.length + (items.length === 1 ? " order" : " orders");
+    $("brekky-tally").innerHTML =
+      '<div class="scard"><div class="lab">Salmon bagel</div><div class="val">' + salmon + '</div></div>' +
+      '<div class="scard"><div class="lab">Bacon &amp; egg roll</div><div class="val">' + bacon + '</div></div>' +
+      '<div class="scard"><div class="lab">Total orders</div><div class="val">' + items.length + '</div></div>';
+    const box = $("table-brekky");
+    if(!items.length){ box.innerHTML = '<div class="empty">No breakfast orders yet.</div>'; return; }
+    let h = '<table><thead><tr><th>Name</th><th>Breakfast</th><th>Ordered</th></tr></thead><tbody>';
+    for(const it of items){
+      h += '<tr><td>' + esc(it.name) + '</td><td>' + esc(brekkyNice(it.choice)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+    }
+    box.innerHTML = h + '</tbody></table>';
+  }
+
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
-  $("refresh").addEventListener("click", () => { load(); loadGallery(); });
+  $("refresh").addEventListener("click", () => { load(); loadGallery(); loadBrekky(); });
+  $("refresh-brekky").addEventListener("click", loadBrekky);
   $("refresh-gallery").addEventListener("click", loadGallery);
   $("exp-add").addEventListener("click", () => { TRK.expenses.push({ what:"", amount:null, paid:false }); markDirty(); renderExpenses(); updateMoney(); });
   $("con-add").addEventListener("click", () => { TRK.contributions.push({ name:"", amount:null, notes:"" }); markDirty(); renderContributions(); updateMoney(); });

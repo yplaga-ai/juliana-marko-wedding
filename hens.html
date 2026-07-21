@@ -135,6 +135,23 @@
   .gal-grid.selectmode .gal-save{display:none;}
   .gal-tile.sel .gal-check{background:var(--rust);color:#fff;}
   .gal-empty{text-align:center;color:var(--ink-soft);font-size:.9rem;padding:18px 0;}
+
+  /* Saturday breakfast picker */
+  .brekky{max-width:420px;margin:6px auto 0;text-align:left;}
+  .brekky > input[type=text]{font-family:inherit;font-size:1rem;padding:.65rem .85rem;width:100%;box-sizing:border-box;border:1px solid var(--sage);border-radius:5px;background:#fff;margin-bottom:12px;color:var(--ink);}
+  .brekky-opt{display:flex;align-items:flex-start;gap:12px;border:1px solid rgba(201,123,63,.3);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s;}
+  .brekky-opt:hover{border-color:var(--rust);}
+  .brekky-opt input{margin-top:3px;accent-color:var(--rust);width:18px;height:18px;flex:0 0 auto;}
+  .brekky-opt span{display:flex;flex-direction:column;}
+  .brekky-opt b{font-size:1rem;color:var(--ink);font-weight:600;}
+  .brekky-opt small{font-size:.85rem;color:var(--ink-soft);margin-top:1px;}
+  .brekky-opt.sel{border-color:var(--rust);background:#fdf6ee;}
+  .brekky button{margin-top:6px;width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
+  .brekky button:hover{background:var(--rust-deep);}
+  .brekky button:disabled{opacity:.65;cursor:default;}
+  .brekky-msg{min-height:1.2em;margin:12px 0 0;font-size:.85rem;text-align:center;}
+  .brekky-msg.ok{color:var(--sage-deep);}
+  .brekky-msg.bad{color:#b5481f;}
 </style>
 </head>
 <body>
@@ -194,7 +211,7 @@
         <div class="itin-day">
           <h4>Saturday</h4>
           <div class="dm">12 September &bull; Party Day</div>
-          <div class="itin-row"><div class="itin-time">Morning</div><div class="itin-act">Slow start &amp; brunch<span class="note"><span class="tba">TBA</span></span></div></div>
+          <div class="itin-row"><div class="itin-time">Morning</div><div class="itin-act">Breakfast at Cousin Gilbert<span class="note">Pick yours below &darr;</span></div></div>
           <div class="itin-row"><div class="itin-time">Afternoon</div><div class="itin-act">Winery tour<span class="note">Details <span class="tba">TBA</span></span></div></div>
           <div class="itin-row"><div class="itin-time">Evening</div><div class="itin-act">Games &amp; party night</div></div>
         </div>
@@ -215,6 +232,18 @@
         </div>
 
       </div>
+
+      <hr class="rule" />
+
+      <div class="sech">Saturday Breakfast</div>
+      <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 8px;max-width:440px">Pick your Saturday breakfast and pop your name on it, so we can order ahead.</p>
+      <form id="brekkyForm" class="brekky">
+        <input type="text" id="brekkyName" placeholder="Your name" autocomplete="name" />
+        <label class="brekky-opt"><input type="radio" name="brekky" value="salmon" /><span><b>Smoked salmon bagel</b><small>Cream cheese, red onion &amp; rocket</small></span></label>
+        <label class="brekky-opt"><input type="radio" name="brekky" value="bacon" /><span><b>Bacon &amp; egg roll</b><small>Cheese, avocado &amp; tomato relish</small></span></label>
+        <button type="submit">Lock in my breakfast</button>
+        <p class="brekky-msg" id="brekkyMsg"></p>
+      </form>
 
       <hr class="rule" />
 
@@ -431,6 +460,37 @@
   document.getElementById('galSelect').addEventListener('click', () => galSetSelect(!galSelectMode));
   document.getElementById('galSaveSel').addEventListener('click', galSaveSelected);
   document.getElementById('galRefresh').addEventListener('click', galLoad);
+
+  /* ---- Saturday breakfast picker → Cloudflare Worker ---- */
+  const brekkyForm = document.getElementById("brekkyForm");
+  brekkyForm.querySelectorAll('input[name="brekky"]').forEach(radio => radio.addEventListener("change", () => {
+    brekkyForm.querySelectorAll(".brekky-opt").forEach(l => l.classList.remove("sel"));
+    if(radio.checked) radio.closest(".brekky-opt").classList.add("sel");
+  }));
+  brekkyForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    const msg = document.getElementById("brekkyMsg");
+    const name = (document.getElementById("brekkyName").value || "").trim();
+    const sel = brekkyForm.querySelector('input[name="brekky"]:checked');
+    if(!name){ msg.className = "brekky-msg bad"; msg.textContent = "Please add your name."; return; }
+    if(!sel){ msg.className = "brekky-msg bad"; msg.textContent = "Please pick a breakfast."; return; }
+    const choice = sel.value;
+    const btn = brekkyForm.querySelector("button"); const label = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…"; msg.className = "brekky-msg"; msg.textContent = "";
+    fetch(WORKER_URL + "/brekky", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ name: name, choice: choice }) })
+      .then(r => r.json().catch(() => ({})).then(jj => ({ ok:r.ok, j:jj })))
+      .then(res => {
+        if(res.ok){
+          const nice = (choice === "salmon") ? "smoked salmon bagel" : "bacon & egg roll";
+          msg.className = "brekky-msg ok"; msg.textContent = "You're down for the " + nice + ", " + name + " 🥂";
+          btn.textContent = "Saved ✓";
+        } else {
+          msg.className = "brekky-msg bad"; msg.textContent = (res.j && res.j.error) || "Something went wrong — try again.";
+          btn.disabled = false; btn.textContent = label;
+        }
+      })
+      .catch(() => { msg.className = "brekky-msg bad"; msg.textContent = "Something went wrong — try again."; btn.disabled = false; btn.textContent = label; });
+  });
 </script>
 </body>
 </html>
