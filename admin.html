@@ -48,6 +48,7 @@
   /* Wedding-day planner */
   .subnote{font-size:.85rem;color:var(--ink-soft);margin:0 0 10px;}
   #tbl-sched input[type=text], #tbl-wexp input[type=text], #tbl-wexp input[type=number], #tbl-wexp input[type=date]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  .who-sel{font-family:inherit;font-size:.72rem;padding:.5rem .5rem;border:1px solid var(--sage);border-radius:4px;background:#fff;color:var(--ink);max-width:150px;}
   #tbl-wexp input.amt{text-align:right;}
   #tbl-wexp td.f-bal{text-align:right;font-weight:600;white-space:nowrap;color:var(--ink);}
   #tbl-wexp td.f-bal.clear{color:var(--sage-deep);font-weight:500;}
@@ -139,6 +140,8 @@
   .seat-dot.free{background:#fff;border:1.5px dashed var(--sage);}
   .seat-dot.taken{background:var(--rust);border:1.5px solid var(--rust-deep);color:#fff;}
   .seat-dot:hover{transform:scale(1.18);z-index:5;}
+  .seat-publish-lab{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.85rem;color:var(--ink);margin-top:10px;}
+  .seat-publish-lab input{width:16px;height:16px;}
   .tdetail{margin-top:14px;border:1px solid var(--rule);border-radius:8px;padding:13px 15px;background:#fff;}
   .tdetail .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
   .tdetail label{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--rust);}
@@ -195,17 +198,19 @@
           <h2>Wedding Day &mdash; Run Sheet</h2>
           <span class="count">makeup, hair, photographer &amp; more</span>
         </div>
-        <div class="savebar">
+        <div class="savebar" style="flex-wrap:wrap;gap:8px;">
           <span class="saved" id="wedSaved"></span>
+          <select id="sched-who" class="who-sel" title="Whose schedule to print"><option value="">Everyone</option></select>
           <button class="btn" id="sched-print">Print run sheet</button>
           <button class="btn primary" id="wedSave">Save now</button>
         </div>
       </div>
-      <p class="subnote">Your timeline for the day. Pop the time next to each thing, add or remove rows. <strong>Everything on this page saves automatically as you go</strong> &mdash; the run sheet, expenses, seating and checklist all together. (&ldquo;Save now&rdquo; forces an immediate save if you like.)</p>
+      <p class="subnote">Your timeline for the day. Add the time, <strong>who it's for</strong> (Bride, Groom, Photographer, Everyone&hellip;), and what's happening. Print the master schedule, or pick a person above to print just theirs. <strong>Everything saves automatically.</strong></p>
       <div class="tablewrap"><table id="tbl-sched">
-        <thead><tr><th style="width:130px">Time</th><th>What</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th style="width:120px">Time</th><th style="width:130px">Who</th><th>What</th><th style="width:40px"></th></tr></thead>
         <tbody id="sched-body"></tbody>
       </table></div>
+      <datalist id="who-list"></datalist>
       <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
     </section>
 
@@ -294,6 +299,7 @@
         </div>
       </div>
       <div class="status" id="seat-msg" style="min-height:1em;text-align:left;margin-top:6px;"></div>
+      <label class="seat-publish-lab"><input type="checkbox" id="seat-publish"> Let guests &ldquo;find their table&rdquo; on the main site <span class="reg-note">(shows a name lookup; only table names + guest names are made public)</span></label>
       <div class="tdetail" id="tdetail" style="display:none;"></div>
     </section>
 
@@ -444,14 +450,14 @@
   function defaultWED(){
     return {
       schedule: [
-        {time:"", item:"Makeup artist arrives"},
-        {time:"", item:"Hair"},
-        {time:"", item:"Photographer arrives"},
-        {time:"", item:"Videographer arrives"},
-        {time:"", item:"Bridesmaids ready"},
-        {time:"", item:"Into the dress"},
-        {time:"", item:"Cars arrive"},
-        {time:"", item:"Leave for ceremony"}
+        {time:"", who:"Bride", item:"Makeup artist arrives"},
+        {time:"", who:"Bride", item:"Hair"},
+        {time:"", who:"Everyone", item:"Photographer arrives"},
+        {time:"", who:"Everyone", item:"Videographer arrives"},
+        {time:"", who:"Bridesmaids", item:"Bridesmaids ready"},
+        {time:"", who:"Bride", item:"Into the dress"},
+        {time:"", who:"Everyone", item:"Cars arrive"},
+        {time:"", who:"Everyone", item:"Leave for ceremony"}
       ],
       expenses: [
         {item:"Venue", amount:null, paid:false},
@@ -480,9 +486,12 @@
     if(!WED.seating || typeof WED.seating !== "object") WED.seating = { guests:[], tables:[] };
     if(!Array.isArray(WED.seating.guests)) WED.seating.guests = [];
     if(!Array.isArray(WED.seating.tables)) WED.seating.tables = [];
+    if(typeof WED.seating.publish !== "boolean") WED.seating.publish = false;
     if(!Array.isArray(WED.todos)) WED.todos = defaultTodos();
+    seatingReady = false;
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
     renderSchedule(); renderWexp(); renderSeat(); renderTodos();
+    seatingReady = true;
   }
   function defaultTodos(){
     return [
@@ -494,20 +503,29 @@
       {text:"Pack the emergency kit (safety pins, tissues, meds)", done:false}
     ];
   }
+  function whoList(){ const s = new Set(); WED.schedule.forEach(r => { if((r.who||"").trim()) s.add(r.who.trim()); }); return Array.from(s); }
+  function refreshSchedWho(){
+    const dl = $("who-list"); if(dl) dl.innerHTML = whoList().map(w => '<option value="' + esc(w) + '">').join("");
+    const sel = $("sched-who"); if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">Everyone</option>' + whoList().map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join(""); sel.value = whoList().indexOf(cur) >= 0 ? cur : ""; }
+  }
   function renderSchedule(){
     const b = $("sched-body"); b.innerHTML = "";
     WED.schedule.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td><input type="text" value="' + esc(row.time || "") + '" placeholder="e.g. 8:00 am"></td>' +
-        '<td><input type="text" value="' + esc(row.item || "") + '" placeholder="e.g. Makeup artist"></td>' +
+        '<td><input type="text" class="s-time" value="' + esc(row.time || "") + '" placeholder="e.g. 8:00 am"></td>' +
+        '<td><input type="text" class="s-who" list="who-list" value="' + esc(row.who || "") + '" placeholder="e.g. Bride"></td>' +
+        '<td><input type="text" class="s-item" value="' + esc(row.item || "") + '" placeholder="e.g. Makeup artist"></td>' +
         '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const inps = tr.querySelectorAll("input");
-      inps[0].addEventListener("input", () => { WED.schedule[i].time = inps[0].value; wedMark(); });
-      inps[1].addEventListener("input", () => { WED.schedule[i].item = inps[1].value; wedMark(); });
+      const ti = tr.querySelector(".s-time"), wh = tr.querySelector(".s-who"), it = tr.querySelector(".s-item");
+      ti.addEventListener("input", () => { WED.schedule[i].time = ti.value; wedMark(); });
+      wh.addEventListener("input", () => { WED.schedule[i].who = wh.value; wedMark(); });
+      wh.addEventListener("change", refreshSchedWho);
+      it.addEventListener("input", () => { WED.schedule[i].item = it.value; wedMark(); });
       tr.querySelector(".rowdel").addEventListener("click", () => { WED.schedule.splice(i,1); wedMark(); renderSchedule(); });
       b.appendChild(tr);
     });
+    refreshSchedWho();
   }
   function rowBalance(row){ return row.paid ? 0 : Math.max(0, num(row.amount) - num(row.deposit)); }
   function renderWexp(){
@@ -712,21 +730,28 @@
       '<div class="pie-legend">' + legend + '</div></div>';
   }
   function printRunSheet(){
+    var person = ($("sched-who") && $("sched-who").value || "").trim();
     var rows = "";
     WED.schedule.forEach(function(r){
-      if(!(r.time || r.item)) return;
-      rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
+      if(!(r.time || r.item || r.who)) return;
+      if(person && (r.who||"").trim() !== person) return;
+      if(person){
+        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
+      } else {
+        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td class="w">' + esc(r.who||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
+      }
     });
     var w = window.open("", "_blank");
     if(!w){ alert("Please allow pop-ups so the run sheet can open to print."); return; }
-    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Wedding Day Run Sheet</title>' +
+    var subtitle = person ? (esc(person) + "'s Schedule &bull; 17 October 2026") : "Wedding Day Run Sheet &bull; 17 October 2026";
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>' + (person?esc(person)+" — Run Sheet":"Wedding Day Run Sheet") + '</title>' +
       '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">' +
-      '<style>body{font-family:"Cormorant Garamond",Georgia,serif;color:#413F3A;max-width:640px;margin:40px auto;padding:0 24px;}' +
+      '<style>body{font-family:"Cormorant Garamond",Georgia,serif;color:#413F3A;max-width:660px;margin:40px auto;padding:0 24px;}' +
       'h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:3rem;text-align:center;margin:0;}' +
       '.sub{text-align:center;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;color:#6f6a60;margin:4px 0 26px;}' +
       'table{border-collapse:collapse;width:100%;font-size:1.05rem;}td{padding:10px 6px;border-bottom:1px solid #e5ded0;vertical-align:top;}' +
-      'td.t{color:#C96A2B;font-weight:600;white-space:nowrap;width:120px;}@media print{body{margin:0;}}</style></head><body>' +
-      '<h1>Juliana &amp; Marko</h1><div class="sub">Wedding Day Run Sheet &bull; 17 October 2026</div>' +
+      'td.t{color:#C96A2B;font-weight:600;white-space:nowrap;width:110px;}td.w{color:#6f7f52;white-space:nowrap;width:130px;}@media print{body{margin:0;}}</style></head><body>' +
+      '<h1>Juliana &amp; Marko</h1><div class="sub">' + subtitle + '</div>' +
       '<table>' + (rows || '<tr><td>Nothing on the run sheet yet.</td></tr>') + '</table>' +
       '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt></body></html>';
     w.document.write(html); w.document.close();
@@ -874,7 +899,7 @@
   $("site-accom").addEventListener("input", function(){ SITE.accommodation = this.value; siteMark(); });
   $("site-faq-add").addEventListener("click", function(){ SITE.faq.push({q:"",a:""}); siteMark(); renderSite(); });
 
-  $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
+  $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",who:"",item:""}); wedMark(); renderSchedule(); });
   $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",contact:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
   $("wexp-cal-all").addEventListener("click", addAllReminders);
   $("wexp-budget").addEventListener("input", function(){ WED.budget = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
@@ -896,8 +921,16 @@
 
   /* ---- Seating planner. State lives in WED.seating = {guests:[names], tables:[{id,shape,label,seats,x,y,guests:[names]}]}
          and rides along with "Save wedding plan" (it is part of WED). ---- */
-  let ZOOM = 1, pickedGuest = null, selTable = null, drag = null;
+  let ZOOM = 1, pickedGuest = null, selTable = null, drag = null, seatingReady = false;
   function seatMsg(m){ const e = $("seat-msg"); if(e) e.textContent = m || ""; }
+  /* Publish a stripped seating snapshot (table label + guest names only) into the PUBLIC /site
+     config so guests can "find their table" on the main site. Opt-in via the toggle. */
+  function seatingSnapshot(){ return WED.seating.tables.filter(t => (t.guests||[]).length).map(t => ({ table: t.label || "Table", guests: (t.guests||[]).slice() })); }
+  function syncSeatingPublish(){
+    if(typeof SITE === "undefined") return;
+    if(WED.seating.publish){ SITE.seating = seatingSnapshot(); } else { delete SITE.seating; }
+    siteMark();
+  }
   function allGuestNames(){
     const a = WED.seating.guests.slice();
     WED.seating.tables.forEach(t => (t.guests || []).forEach(n => a.push(n)));
@@ -1043,6 +1076,8 @@
     const nt = WED.seating.tables.length;
     const el = $("seat-count");
     if(el) el.textContent = tot + " guest" + (tot===1?"":"s") + " • " + seated + " seated • " + nt + " table" + (nt===1?"":"s");
+    const pub = $("seat-publish"); if(pub) pub.checked = !!WED.seating.publish;
+    if(seatingReady && WED.seating.publish) syncSeatingPublish();
   }
   function seatGuest(t, name){
     if((t.seats||0) > 0 && (t.guests||[]).length >= (t.seats||0)){ seatMsg((t.label||"That table") + " is full."); return; }
@@ -1198,6 +1233,7 @@
     seatMsg("Seating chart opened in a new tab to print or save as PDF.");
   }
 
+  $("seat-publish").addEventListener("change", function(){ WED.seating.publish = this.checked; wedMark(); syncSeatingPublish(); seatMsg(this.checked ? "Guests can now find their table on the main site." : "Guest table lookup turned off."); });
   $("add-round").addEventListener("click", () => addTable("round"));
   $("add-square").addEventListener("click", () => addTable("square"));
   $("add-rect").addEventListener("click", () => addTable("rectangle"));
