@@ -59,6 +59,17 @@
   .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
   .scard .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);}
   .scard .val{font-family:"Cormorant Garamond",serif;font-size:1.4rem;font-weight:600;margin-top:2px;color:var(--ink);}
+  /* expense pie + printable run sheet */
+  .pie-wrap{margin:14px 0 4px;}
+  .pie-flex{display:flex;gap:22px;align-items:center;flex-wrap:wrap;}
+  .pie-svg{width:150px;height:150px;flex:0 0 auto;}
+  .pie-tot-lab{font-size:9px;fill:var(--rust);letter-spacing:.08em;text-transform:uppercase;}
+  .pie-tot-val{font-size:15px;fill:var(--ink);font-weight:600;font-family:"Cormorant Garamond",serif;}
+  .pie-legend{flex:1;min-width:200px;display:grid;gap:6px;}
+  .pie-li{font-size:.9rem;display:flex;align-items:center;gap:8px;}
+  .pie-sw{width:12px;height:12px;border-radius:3px;flex:0 0 auto;}
+  .pie-pct{color:var(--ink-soft);margin-left:auto;font-size:.82rem;}
+  .pie-empty{color:var(--ink-soft);font-style:italic;font-size:.9rem;padding:6px 0;}
 </style>
 </head>
 <body>
@@ -103,6 +114,7 @@
         </div>
         <div class="savebar">
           <span class="saved" id="wedSaved"></span>
+          <button class="btn" id="sched-print">Print run sheet</button>
           <button class="btn primary" id="wedSave">Save wedding plan</button>
         </div>
       </div>
@@ -127,6 +139,7 @@
         <div class="scard"><div class="lab">Paid</div><div class="val" id="wexp-paid">A$0</div></div>
         <div class="scard"><div class="lab">Still owing</div><div class="val" id="wexp-owing">A$0</div></div>
       </div>
+      <div class="pie-wrap" id="wexp-pie"></div>
       <div class="tablewrap"><table id="tbl-wexp">
         <thead><tr><th>Supplier / item</th><th style="width:140px">Amount (A$)</th><th style="width:64px" class="center">Paid</th><th style="width:40px"></th></tr></thead>
         <tbody id="wexp-body"></tbody>
@@ -295,6 +308,57 @@
     $("wexp-paid").textContent  = "A$" + paid.toLocaleString();
     $("wexp-owing").textContent = "A$" + (total - paid).toLocaleString();
     $("wexp-count").textContent = WED.expenses.length + (WED.expenses.length===1 ? " item" : " items");
+    renderPie();
+  }
+  var PIE_COLORS = ['#C96A2B','#8A9A6B','#d99a5c','#6f7f52','#e0b07a','#a9531c','#b7c39a','#cf8a4e','#7c6f5a','#9db37a','#e6c9a8','#5f7a3a'];
+  function renderPie(){
+    var box = $("wexp-pie"); if(!box) return;
+    var items = [];
+    WED.expenses.forEach(function(e){ var v = num(e.amount); if(v>0) items.push({label:(e.item||"—"), val:v}); });
+    var total = items.reduce(function(s,x){ return s+x.val; }, 0);
+    if(!total){ box.innerHTML = '<div class="pie-empty">Add amounts above to see the cost breakdown.</div>'; return; }
+    var R=70, r=42, cx=80, cy=80, paths="";
+    if(items.length === 1){
+      paths = '<circle cx="80" cy="80" r="' + ((R+r)/2) + '" fill="none" stroke="' + PIE_COLORS[0] + '" stroke-width="' + (R-r) + '"></circle>';
+    } else {
+      var acc = 0;
+      items.forEach(function(x, idx){
+        var frac = x.val/total, a0 = acc*2*Math.PI - Math.PI/2; acc += frac; var a1 = acc*2*Math.PI - Math.PI/2;
+        var large = frac>0.5 ? 1 : 0;
+        var x0=cx+R*Math.cos(a0), y0=cy+R*Math.sin(a0), x1=cx+R*Math.cos(a1), y1=cy+R*Math.sin(a1);
+        var xi1=cx+r*Math.cos(a1), yi1=cy+r*Math.sin(a1), xi0=cx+r*Math.cos(a0), yi0=cy+r*Math.sin(a0);
+        paths += '<path d="M ' + x0 + ' ' + y0 + ' A ' + R + ' ' + R + ' 0 ' + large + ' 1 ' + x1 + ' ' + y1 +
+                 ' L ' + xi1 + ' ' + yi1 + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + xi0 + ' ' + yi0 + ' Z" fill="' + PIE_COLORS[idx%PIE_COLORS.length] + '"></path>';
+      });
+    }
+    var legend = items.map(function(x, idx){
+      return '<div class="pie-li"><span class="pie-sw" style="background:' + PIE_COLORS[idx%PIE_COLORS.length] + '"></span>' +
+             esc(x.label) + ' <b>A$' + x.val.toLocaleString() + '</b><span class="pie-pct">' + Math.round(x.val/total*100) + '%</span></div>';
+    }).join("");
+    box.innerHTML = '<div class="pie-flex"><svg viewBox="0 0 160 160" class="pie-svg">' + paths +
+      '<text x="80" y="75" text-anchor="middle" class="pie-tot-lab">Total</text>' +
+      '<text x="80" y="95" text-anchor="middle" class="pie-tot-val">A$' + total.toLocaleString() + '</text></svg>' +
+      '<div class="pie-legend">' + legend + '</div></div>';
+  }
+  function printRunSheet(){
+    var rows = "";
+    WED.schedule.forEach(function(r){
+      if(!(r.time || r.item)) return;
+      rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td>' + esc(r.item||"") + '</td></tr>';
+    });
+    var w = window.open("", "_blank");
+    if(!w){ alert("Please allow pop-ups so the run sheet can open to print."); return; }
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Wedding Day Run Sheet</title>' +
+      '<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Great+Vibes&display=swap" rel="stylesheet">' +
+      '<style>body{font-family:"Cormorant Garamond",Georgia,serif;color:#413F3A;max-width:640px;margin:40px auto;padding:0 24px;}' +
+      'h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:3rem;text-align:center;margin:0;}' +
+      '.sub{text-align:center;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;color:#6f6a60;margin:4px 0 26px;}' +
+      'table{border-collapse:collapse;width:100%;font-size:1.05rem;}td{padding:10px 6px;border-bottom:1px solid #e5ded0;vertical-align:top;}' +
+      'td.t{color:#C96A2B;font-weight:600;white-space:nowrap;width:120px;}@media print{body{margin:0;}}</style></head><body>' +
+      '<h1>Juliana &amp; Marko</h1><div class="sub">Wedding Day Run Sheet &bull; 17 October 2026</div>' +
+      '<table>' + (rows || '<tr><td>Nothing on the run sheet yet.</td></tr>') + '</table>' +
+      '<scr'+'ipt>window.onload=function(){setTimeout(function(){window.print();},500);};</scr'+'ipt></body></html>';
+    w.document.write(html); w.document.close();
   }
   async function saveWedding(){
     $("wedSave").disabled = true; $("wedSaved").textContent = "Saving…"; $("wedSaved").style.color = "var(--ink-soft)";
@@ -310,6 +374,7 @@
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
   $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",amount:null,paid:false}); wedMark(); renderWexp(); });
   $("wedSave").addEventListener("click", saveWedding);
+  $("sched-print").addEventListener("click", printRunSheet);
   window.addEventListener("beforeunload", e => { if(wedDirty){ e.preventDefault(); e.returnValue = ""; } });
 
   function csvCell(s){ s=(s==null?"":String(s)); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
