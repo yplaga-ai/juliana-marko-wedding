@@ -2,6 +2,7 @@
   "rewrites": [
     { "source": "/album", "destination": "/album.html" },
     { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/MOHadmin", "destination": "/MOHadmin.html" },
     { "source": "/hens", "destination": "/hens.html" },
     { "source": "/hens-itinerary", "destination": "/hens-itinerary.html" },
     { "source": "/(.*)", "destination": "/index.html" }

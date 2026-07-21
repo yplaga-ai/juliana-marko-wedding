@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
-<title>Juliana &amp; Marko — Guest Admin</title>
+<title>Juliana &amp; Marko — Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Sacramento&display=swap" rel="stylesheet" />
@@ -16,9 +16,7 @@
   h1{font-family:"Great Vibes",cursive;font-weight:400;font-size:3rem;margin:.1rem 0;color:var(--ink);}
   .sub{text-transform:uppercase;letter-spacing:.22em;font-size:.72rem;color:var(--ink-soft);}
   .rule{height:1px;background:var(--rule);opacity:.5;border:0;max-width:960px;margin:16px auto;}
-  .wrap{max-width:960px;margin:0 auto;padding:0 18px 70px;}
-
-  /* login */
+  .wrap{max-width:820px;margin:0 auto;padding:0 18px 70px;}
   .gate{max-width:400px;margin:30px auto;background:#fff;border:1px solid rgba(201,106,43,.22);border-radius:8px;padding:34px 28px;text-align:center;box-shadow:0 10px 30px -20px rgba(80,60,30,.4);}
   .lock{font-size:2rem;}
   .gate p{color:var(--ink-soft);font-size:.95rem;}
@@ -27,14 +25,12 @@
   .gate button:hover{background:var(--rust-deep);}
   .gate button:disabled{opacity:.6;cursor:default;}
   .err{color:#b5481f;font-size:.85rem;margin-top:10px;min-height:1.1em;}
-
   #app{display:none;}
   .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:6px 0 26px;}
   .btn{font-family:inherit;font-size:.72rem;text-transform:uppercase;letter-spacing:.18em;padding:.55rem .9rem;border-radius:4px;cursor:pointer;border:1px solid var(--sage);background:#fff;color:var(--ink);text-decoration:none;display:inline-block;}
   .btn:hover{background:#f3efe4;}
   .btn.primary{background:var(--rust);color:#fff;border-color:var(--rust);}
   .btn.primary:hover{background:var(--rust-deep);}
-
   .event{margin:0 0 40px;}
   .event h2{font-family:"Sacramento",cursive;font-weight:400;font-size:2.3rem;color:var(--rust);margin:0 0 2px;}
   .event .meta{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
@@ -44,54 +40,11 @@
   th,td{text-align:left;padding:11px 14px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:top;}
   th{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;color:var(--rust);background:#faf6ee;position:sticky;top:0;}
   tr:last-child td{border-bottom:0;}
-  td.notes{white-space:pre-wrap;color:var(--ink-soft);max-width:340px;}
   td.when{color:var(--ink-soft);font-size:.85rem;white-space:nowrap;}
   a.email{color:var(--sage-deep);text-decoration:none;}
   a.email:hover{text-decoration:underline;}
   .empty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
   .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
-
-  /* Hens gallery management */
-  .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
-  .acell{position:relative;border-radius:8px;overflow:hidden;background:#eee6d8;aspect-ratio:1;}
-  .acell img,.acell video{width:100%;height:100%;object-fit:cover;display:block;}
-  .acell .open{position:absolute;inset:0;cursor:zoom-in;}
-  .acell .play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:1.4rem;text-shadow:0 1px 5px rgba(0,0,0,.55);pointer-events:none;}
-  .adel{position:absolute;right:6px;bottom:6px;background:rgba(181,72,31,.92);color:#fff;border:0;border-radius:5px;padding:.3rem .6rem;font-size:.7rem;font-weight:700;cursor:pointer;z-index:2;}
-  .adel:hover{background:#b5481f;}
-  .adel.confirm{background:#8a1f0f;}
-  .adel:disabled{opacity:.7;cursor:default;}
-  .agempty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
-  .gallery-note{font-size:.85rem;color:var(--ink-soft);margin:0 0 12px;}
-
-  /* Hens money & activities tracker */
-  .trk h3{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:1.18rem;color:var(--rust-deep);margin:20px 0 4px;}
-  .trk .subnote{font-size:.83rem;color:var(--ink-soft);margin:0 0 8px;}
-  .trk input[type=text], .trk input[type=number]{font-family:inherit;font-size:.9rem;padding:.42rem .55rem;border:1px solid var(--rule);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
-  .trk input.amt{text-align:right;}
-  .trk td, .trk th{padding:8px 10px;}
-  .trk .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1rem;line-height:1;padding:2px 6px;}
-  .trk .rowdel:hover{color:#8a1f0f;}
-  .trk .addrow{margin:10px 0 2px;}
-  .trk tfoot td{font-weight:600;background:#faf6ee;color:var(--ink);}
-  .summary{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px;}
-  .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
-  .scard .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);}
-  .scard .val{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:600;margin-top:2px;color:var(--ink);}
-  .scard.good .val{color:var(--sage-deep);}
-  .scard.short .val{color:#b5481f;}
-  .scard .headin{width:64px;text-align:center;font-family:inherit;font-size:1rem;padding:.25rem;border:1px solid var(--rule);border-radius:4px;}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px;}
-  .chip{display:inline-flex;align-items:center;gap:4px;background:#f3efe4;border:1px solid var(--rule);border-radius:16px;padding:3px 6px 3px 12px;font-size:.85rem;}
-  .chip button{background:none;border:0;color:#b5643f;cursor:pointer;font-size:.9rem;line-height:1;}
-  .matrix table{min-width:520px;}
-  .matrix th.act{white-space:nowrap;}
-  .matrix td.center, .matrix th.center{text-align:center;}
-  .paidtag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:10px;white-space:nowrap;}
-  .paidtag.y{background:#e7efdd;color:var(--sage-deep);}
-  .paidtag.n{background:#f7e2d6;color:#b5643f;}
-  .savebar{display:flex;gap:10px;align-items:center;}
-  .saved{font-size:.82rem;min-width:110px;}
 </style>
 </head>
 <body>
@@ -103,8 +56,8 @@
 
 <div id="login" class="gate">
   <div class="lock">&#128274;</div>
-  <p>Enter your admin password, Juliana.</p>
-  <input type="password" id="pw" placeholder="Admin password" autocomplete="current-password" />
+  <p>Enter your password, Juliana.</p>
+  <input type="password" id="pw" placeholder="Password" autocomplete="current-password" />
   <button id="go">Enter</button>
   <div class="err" id="err"></div>
 </div>
@@ -123,110 +76,9 @@
           <h2>Kitchen Tea</h2>
           <span class="count" id="count-kitchen"></span>
         </div>
-        <button class="btn" data-csv="kitchen">Download CSV</button>
+        <button class="btn" id="csv-kitchen">Download CSV</button>
       </div>
       <div class="tablewrap" id="table-kitchen"></div>
-    </section>
-
-    <section class="event" id="ev-hens">
-      <div class="meta">
-        <div>
-          <h2>Hens</h2>
-          <span class="count" id="count-hens"></span>
-        </div>
-        <button class="btn" data-csv="hens">Download CSV</button>
-      </div>
-      <div class="tablewrap" id="table-hens"></div>
-    </section>
-
-    <section class="event trk" id="ev-money">
-      <div class="meta">
-        <div>
-          <h2>Hens — Money &amp; Activities</h2>
-          <span class="count" id="count-money"></span>
-        </div>
-        <div class="savebar">
-          <span class="saved" id="trkSaved"></span>
-          <button class="btn primary" id="trkSave">Save changes</button>
-        </div>
-      </div>
-
-      <h3>Suppliers &amp; expenses</h3>
-      <p class="subnote">What the hens is costing. Tick &ldquo;Paid&rdquo; once a supplier has actually been paid.</p>
-      <div class="tablewrap"><table id="tbl-exp">
-        <thead><tr><th>What / supplier</th><th style="width:140px">Amount (A$)</th><th style="width:64px" class="center">Paid</th><th style="width:36px"></th></tr></thead>
-        <tbody id="exp-body"></tbody>
-        <tfoot><tr><td>Total cost</td><td class="amt" id="exp-total">A$0</td><td colspan="2"></td></tr></tfoot>
-      </table></div>
-      <button class="btn addrow" id="exp-add">+ Add expense</button>
-
-      <h3>Who&rsquo;s paid what</h3>
-      <p class="subnote">Everyone chipping in for the kitty. Names you already have from RSVPs are suggested as you type.</p>
-      <div class="tablewrap"><table id="tbl-con">
-        <thead><tr><th>Name</th><th style="width:140px">Paid in (A$)</th><th>Notes</th><th style="width:36px"></th></tr></thead>
-        <tbody id="con-body"></tbody>
-        <tfoot><tr><td>Total collected</td><td class="amt" id="con-total">A$0</td><td colspan="2"></td></tr></tfoot>
-      </table></div>
-      <button class="btn addrow" id="con-add">+ Add contribution</button>
-      <datalist id="guestnames"></datalist>
-
-      <h3>The kitty</h3>
-      <div class="summary">
-        <div class="scard"><div class="lab">Total cost</div><div class="val" id="s-cost">A$0</div></div>
-        <div class="scard"><div class="lab">Collected</div><div class="val" id="s-coll">A$0</div></div>
-        <div class="scard" id="s-balcard"><div class="lab">Balance</div><div class="val" id="s-bal">A$0</div></div>
-        <div class="scard"><div class="lab">Heads</div><div class="val"><input type="number" min="1" step="1" class="headin" id="s-heads" /></div></div>
-        <div class="scard"><div class="lab">Per head</div><div class="val" id="s-per">A$0</div></div>
-      </div>
-      <div class="tablewrap"><table id="tbl-split">
-        <thead><tr><th>Guest</th><th style="width:110px">Share</th><th style="width:110px">Paid</th><th style="width:150px">Standing</th></tr></thead>
-        <tbody id="split-body"></tbody>
-      </table></div>
-
-      <h3>Activities &amp; participation</h3>
-      <p class="subnote">Who&rsquo;s in for what. Add or remove activities, then tick who&rsquo;s joining each. Guests come from the RSVPs and contributions above.</p>
-      <div class="chips" id="act-chips"></div>
-      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        <input type="text" id="act-new" placeholder="Add an activity…" style="max-width:240px;font-family:inherit;font-size:.9rem;padding:.45rem .6rem;border:1px solid var(--rule);border-radius:4px;">
-        <button class="btn" id="act-add">Add activity</button>
-      </div>
-      <div class="tablewrap matrix"><table id="tbl-part"><thead id="part-head"></thead><tbody id="part-body"></tbody></table></div>
-    </section>
-
-    <section class="event" id="ev-brekky">
-      <div class="meta">
-        <div>
-          <h2>Saturday Breakfast</h2>
-          <span class="count" id="count-brekky"></span>
-        </div>
-        <button class="btn" id="refresh-brekky">Refresh</button>
-      </div>
-      <div class="summary" id="brekky-tally"></div>
-      <div class="tablewrap" id="table-brekky"></div>
-    </section>
-
-    <section class="event" id="ev-brekky-sun">
-      <div class="meta">
-        <div>
-          <h2>Sunday Breakfast</h2>
-          <span class="count" id="count-brekky-sun"></span>
-        </div>
-        <button class="btn" id="refresh-brekky-sun">Refresh</button>
-      </div>
-      <div class="summary" id="brekky-sun-tally"></div>
-      <div class="tablewrap" id="table-brekky-sun"></div>
-    </section>
-
-    <section class="event" id="ev-gallery">
-      <div class="meta">
-        <div>
-          <h2>Hens Gallery</h2>
-          <span class="count" id="count-gallery"></span>
-        </div>
-        <button class="btn" id="refresh-gallery">Refresh gallery</button>
-      </div>
-      <p class="gallery-note">Everyone's uploaded photos &amp; videos from the hens. Tap an item to open it. Only you can delete here &mdash; deletes are permanent, so each needs a second click to confirm.</p>
-      <div class="agrid" id="gallery-grid"></div>
     </section>
   </div>
 </div>
@@ -235,7 +87,7 @@
   const WORKER = "https://juliana-marko-photos.xanivarcloud.workers.dev";
   const $ = id => document.getElementById(id);
   let PW = "";
-  let ALL = { kitchen: [], hens: [] };
+  let KITCHEN = [];
 
   function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmt(ts){
@@ -245,42 +97,13 @@
     catch(_) { return d.toLocaleString(); }
   }
 
-  async function load(){
-    $("status").textContent = "Loading…";
-    try {
-      const r = await fetch(WORKER + "/rsvps?pw=" + encodeURIComponent(PW));
-      if(r.status === 401) throw new Error("unauthorized");
-      if(!r.ok) throw new Error("failed");
-      const data = await r.json();
-      ALL = { kitchen: [], hens: [] };
-      for(const it of (data.items || [])){
-        const ev = (it.event === "hens") ? "hens" : "kitchen";
-        ALL[ev].push(it);
-      }
-      renderAll();
-      loadGallery();
-      loadTracker();
-      loadBrekky();
-      $("status").textContent = "";
-    } catch(e){
-      if(String(e.message) === "unauthorized"){
-        // password rejected after entering app — send back to login
-        $("app").style.display = "none";
-        $("login").style.display = "block";
-        $("err").textContent = "That password isn't right — try again.";
-      } else {
-        $("status").textContent = "Couldn't load RSVPs — please refresh.";
-      }
-    }
-  }
-
-  function renderAll(){
-    renderKitchen();
-    renderHens();
+  // Only Kitchen Tea replies are ever kept on this page.
+  function ingest(data){
+    KITCHEN = (data.items || []).filter(it => (it && it.event !== "hens"));
   }
 
   function renderKitchen(){
-    const items = ALL.kitchen;
+    const items = KITCHEN;
     $("count-kitchen").textContent = items.length + (items.length === 1 ? " reply" : " replies");
     const box = $("table-kitchen");
     if(!items.length){ box.innerHTML = '<div class="empty">No Kitchen Tea RSVPs yet.</div>'; return; }
@@ -293,62 +116,30 @@
     box.innerHTML = h + '</tbody></table>';
   }
 
-  function renderHens(){
-    const items = ALL.hens;
-    $("count-hens").textContent = items.length + (items.length === 1 ? " reply" : " replies");
-    const box = $("table-hens");
-    if(!items.length){ box.innerHTML = '<div class="empty">No Hens RSVPs yet.</div>'; return; }
-    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Leaving</th><th>Booking details / notes</th><th>Received</th></tr></thead><tbody>';
-    for(const it of items){
-      h += '<tr><td>' + esc(it.name) + '</td>' +
-           '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
-           '<td>' + esc(depOf(it) || "—") + '</td>' +
-           '<td class="notes">' + esc(notesOf(it)) + '</td>' +
-           '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+  async function load(){
+    $("status").textContent = "Loading…";
+    try {
+      const r = await fetch(WORKER + "/rsvps?pw=" + encodeURIComponent(PW));
+      if(r.status === 401) throw new Error("unauthorized");
+      if(!r.ok) throw new Error("failed");
+      ingest(await r.json());
+      renderKitchen();
+      $("status").textContent = "";
+    } catch(e){
+      if(String(e.message) === "unauthorized"){
+        $("app").style.display = "none";
+        $("login").style.display = "block";
+        $("err").textContent = "That password isn't right — try again.";
+      } else {
+        $("status").textContent = "Couldn't load RSVPs — please refresh.";
+      }
     }
-    box.innerHTML = h + '</tbody></table>';
-  }
-
-  // Departure: prefer a stored field; otherwise parse a leading "Leaving: …" line from notes.
-  function depOf(it){
-    if(it.departure) return it.departure;
-    const m = (it.notes || "").match(/^Leaving:\s*(.+)$/m);
-    return m ? m[1].trim() : "";
-  }
-  function notesOf(it){
-    if(it.departure) return it.notes || "";
-    return (it.notes || "").replace(/^Leaving:.*(?:\r?\n)?/m, "").trim();
-  }
-
-  function csvCell(s){
-    s = (s==null?"":String(s));
-    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
-    return s;
-  }
-  function downloadCSV(ev){
-    const items = ALL[ev] || [];
-    const isHens = (ev === "hens");
-    const head = isHens ? ["Name","Email","Leaving","Booking details / notes","Received"] : ["Name","Email","Received"];
-    const rows = [head.map(csvCell).join(",")];
-    for(const it of items){
-      const row = isHens
-        ? [it.name, it.email, depOf(it), notesOf(it), fmt(it.ts)]
-        : [it.name, it.email, fmt(it.ts)];
-      rows.push(row.map(csvCell).join(","));
-    }
-    const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = (isHens ? "hens" : "kitchen-tea") + "-rsvps.csv";
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
   async function attempt(){
     const val = $("pw").value.trim();
     if(!val){ $("err").textContent = "Please enter the password."; return; }
-    $("go").disabled = true;
-    $("err").textContent = "";
+    $("go").disabled = true; $("err").textContent = "";
     try {
       const r = await fetch(WORKER + "/rsvps?pw=" + encodeURIComponent(val));
       if(r.status === 401){ $("err").textContent = "That password isn't right — try again."; $("go").disabled = false; return; }
@@ -356,283 +147,28 @@
       PW = val;
       $("login").style.display = "none";
       $("app").style.display = "block";
-      const data = await r.json();
-      ALL = { kitchen: [], hens: [] };
-      for(const it of (data.items || [])){
-        const ev = (it.event === "hens") ? "hens" : "kitchen";
-        ALL[ev].push(it);
-      }
-      renderAll();
-      loadGallery();
-      loadTracker();
-      loadBrekky();
+      ingest(await r.json());
+      renderKitchen();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
     $("go").disabled = false;
   }
 
-  /* ---- Hens gallery management (view + admin-only delete) ---- */
-  const HENS_TOKEN = "bubbly";
-  let HMEDIA = [];
-  function hUrl(key){ return WORKER + "/hens-file/" + key + "?pw=" + encodeURIComponent(HENS_TOKEN); }
-  function hIsVid(key){ return /\.(mp4|mov|m4v|webm|3gp|avi|mkv|qt)$/i.test(key); }
-
-  async function loadGallery(){
-    try{
-      const r = await fetch(WORKER + "/hens-list?pw=" + encodeURIComponent(HENS_TOKEN));
-      const data = await r.json();
-      HMEDIA = (data && data.items) || [];
-      renderGallery();
-    } catch(e){ $("count-gallery").textContent = "couldn't load gallery"; }
-  }
-  function galleryCount(){ $("count-gallery").textContent = HMEDIA.length + (HMEDIA.length === 1 ? " item" : " items"); }
-  function renderGallery(){
-    galleryCount();
-    const box = $("gallery-grid");
-    if(!HMEDIA.length){ box.innerHTML = '<div class="agempty">No hens photos or videos yet.</div>'; return; }
-    box.innerHTML = "";
-    for(const it of HMEDIA){
-      const key = it.key, url = hUrl(key);
-      const cell = document.createElement("div"); cell.className = "acell";
-      if(hIsVid(key)){
-        const v = document.createElement("video"); v.src = url; v.muted = true; v.preload = "metadata"; cell.appendChild(v);
-        const p = document.createElement("div"); p.className = "play"; p.textContent = "▶"; cell.appendChild(p);
-      } else {
-        const img = document.createElement("img"); img.loading = "lazy"; img.src = url; img.alt = ""; cell.appendChild(img);
-      }
-      const open = document.createElement("div"); open.className = "open"; open.title = "Open";
-      open.addEventListener("click", () => window.open(url, "_blank")); cell.appendChild(open);
-      const del = document.createElement("button"); del.className = "adel"; del.textContent = "Delete";
-      del.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if(del.classList.contains("confirm")){ doDelete(key, del, cell); }
-        else {
-          del.classList.add("confirm"); del.textContent = "Confirm?";
-          setTimeout(() => { if(del.isConnected && del.classList.contains("confirm")){ del.classList.remove("confirm"); del.textContent = "Delete"; } }, 3500);
-        }
-      });
-      cell.appendChild(del);
-      box.appendChild(cell);
-    }
-  }
-  async function doDelete(key, del, cell){
-    del.disabled = true; del.textContent = "Deleting…";
-    try{
-      const r = await fetch(WORKER + "/hens-delete", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ key: key, pw: PW }) });
-      const j = await r.json().catch(() => ({}));
-      if(r.ok && j.ok){
-        HMEDIA = HMEDIA.filter(x => x.key !== key);
-        cell.remove();
-        if(!HMEDIA.length) renderGallery(); else galleryCount();
-        $("status").textContent = "Item deleted.";
-      } else {
-        del.disabled = false; del.classList.remove("confirm"); del.textContent = "Delete";
-        $("status").textContent = (j && j.error) || "Couldn't delete that item.";
-      }
-    } catch(e){ del.disabled = false; del.textContent = "Delete"; $("status").textContent = "Couldn't delete that item."; }
-  }
-
-  /* ---- Hens money & activities tracker ---- */
-  let TRK = null, trkDirty = false;
-  function defaultTRK(){ return { expenses:[], contributions:[], headcount:null, activities:["Accommodation","Friday night","Winery tour","Games & party night","Spa day","Group dinner"], participation:{}, guests:[] }; }
-  function num(n){ n = Number(n); return isFinite(n) ? n : 0; }
-  function money(n){ n = num(n); const dec = (Math.abs(n % 1) > 0.005) ? 2 : 0; return "A$" + n.toLocaleString('en-AU', { minimumFractionDigits: dec, maximumFractionDigits: 2 }); }
-  function guestList(){
-    const set = new Set();
-    (ALL.hens || []).forEach(r => { if(r.name) set.add(String(r.name).trim()); });
-    if(TRK){ (TRK.contributions || []).forEach(c => { if(c.name) set.add(String(c.name).trim()); });
-             (TRK.guests || []).forEach(n => { if(n) set.add(String(n).trim()); }); }
-    return Array.from(set).filter(Boolean).sort((a,b) => a.localeCompare(b));
-  }
-  function markDirty(){ trkDirty = true; const s = $("trkSaved"); s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; }
-
-  async function loadTracker(){
-    if(TRK && trkDirty) return; // don't clobber unsaved edits on a refresh
-    try{
-      const r = await fetch(WORKER + "/hens-tracker?pw=" + encodeURIComponent(PW));
-      const jj = await r.json().catch(() => ({}));
-      TRK = (jj && jj.data) ? Object.assign(defaultTRK(), jj.data) : defaultTRK();
-    } catch(e){ TRK = defaultTRK(); }
-    trkDirty = false; $("trkSaved").textContent = "";
-    renderTracker();
-  }
-  function renderTracker(){ renderExpenses(); renderContributions(); renderGuestNames(); renderActivities(); renderParticipation(); updateMoney(); }
-
-  function renderExpenses(){
-    const b = $("exp-body"); b.innerHTML = "";
-    TRK.expenses.forEach((e, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td><input type="text" data-f="what" value="' + esc(e.what || "") + '" placeholder="e.g. Cousin Gilbert accommodation"></td>' +
-        '<td><input type="number" class="amt" data-f="amount" min="0" step="0.01" value="' + (e.amount==null?"":e.amount) + '"></td>' +
-        '<td class="center"><input type="checkbox" data-f="paid"' + (e.paid?" checked":"") + '></td>' +
-        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      tr.querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
-        const f = inp.getAttribute("data-f");
-        TRK.expenses[i][f] = (f==="paid") ? inp.checked : (f==="amount" ? (inp.value===""?null:num(inp.value)) : inp.value);
-        markDirty(); if(f!=="what") updateMoney();
-      }));
-      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.expenses.splice(i,1); markDirty(); renderExpenses(); updateMoney(); });
-      b.appendChild(tr);
-    });
-  }
-
-  function renderContributions(){
-    const b = $("con-body"); b.innerHTML = "";
-    TRK.contributions.forEach((c, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td><input type="text" list="guestnames" data-f="name" value="' + esc(c.name || "") + '" placeholder="Guest name"></td>' +
-        '<td><input type="number" class="amt" data-f="amount" min="0" step="0.01" value="' + (c.amount==null?"":c.amount) + '"></td>' +
-        '<td><input type="text" data-f="notes" value="' + esc(c.notes || "") + '" placeholder="e.g. bank transfer, 21 Jul"></td>' +
-        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const nameInp = tr.querySelector('[data-f="name"]'), amtInp = tr.querySelector('[data-f="amount"]'), notesInp = tr.querySelector('[data-f="notes"]');
-      nameInp.addEventListener("input", () => { TRK.contributions[i].name = nameInp.value; markDirty(); });
-      nameInp.addEventListener("change", () => { renderGuestNames(); renderParticipation(); updateMoney(); });
-      amtInp.addEventListener("input", () => { TRK.contributions[i].amount = (amtInp.value===""?null:num(amtInp.value)); markDirty(); updateMoney(); });
-      notesInp.addEventListener("input", () => { TRK.contributions[i].notes = notesInp.value; markDirty(); });
-      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.contributions.splice(i,1); markDirty(); renderContributions(); renderGuestNames(); renderParticipation(); updateMoney(); });
-      b.appendChild(tr);
-    });
-  }
-
-  function renderGuestNames(){ $("guestnames").innerHTML = guestList().map(n => '<option value="' + esc(n) + '">').join(""); }
-
-  function renderActivities(){
-    const c = $("act-chips"); c.innerHTML = "";
-    TRK.activities.forEach((a, i) => {
-      const sp = document.createElement("span"); sp.className = "chip";
-      sp.innerHTML = esc(a) + ' <button title="Remove">&#10005;</button>';
-      sp.querySelector("button").addEventListener("click", () => { delete TRK.participation[a]; TRK.activities.splice(i,1); markDirty(); renderActivities(); renderParticipation(); });
-      c.appendChild(sp);
-    });
-  }
-  function addActivity(){
-    const inp = $("act-new"); const v = (inp.value || "").trim();
-    if(!v) return;
-    if(TRK.activities.some(a => a.toLowerCase() === v.toLowerCase())){ inp.value = ""; return; }
-    TRK.activities.push(v); inp.value = ""; markDirty(); renderActivities(); renderParticipation();
-  }
-
-  function renderParticipation(){
-    const head = $("part-head"), body = $("part-body");
-    const acts = TRK.activities, guests = guestList();
-    head.innerHTML = '<tr><th>Guest</th>' + acts.map(a => '<th class="act center">' + esc(a) + '</th>').join("") + '</tr>';
-    body.innerHTML = "";
-    if(!guests.length){ body.innerHTML = '<tr><td colspan="' + (acts.length+1) + '" class="empty">No guests yet — they appear here from RSVPs and contributions.</td></tr>'; return; }
-    guests.forEach(g => {
-      const tr = document.createElement("tr");
-      let cells = '<td>' + esc(g) + '</td>';
-      acts.forEach((a, ai) => { const on = (TRK.participation[a] || []).indexOf(g) >= 0; cells += '<td class="center"><input type="checkbox" data-ai="' + ai + '"' + (on?" checked":"") + '></td>'; });
-      tr.innerHTML = cells;
-      tr.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
-        const a = TRK.activities[num(inp.getAttribute("data-ai"))];
-        TRK.participation[a] = TRK.participation[a] || [];
-        const arr = TRK.participation[a], idx = arr.indexOf(g);
-        if(inp.checked && idx < 0) arr.push(g);
-        if(!inp.checked && idx >= 0) arr.splice(idx, 1);
-        markDirty();
-      }));
-      body.appendChild(tr);
-    });
-  }
-
-  function updateMoney(){
-    if(!TRK) return;
-    const cost = TRK.expenses.reduce((s,e) => s + num(e.amount), 0);
-    const coll = TRK.contributions.reduce((s,c) => s + num(c.amount), 0);
-    $("exp-total").textContent = money(cost);
-    $("con-total").textContent = money(coll);
-    $("s-cost").textContent = money(cost);
-    $("s-coll").textContent = money(coll);
-    const bal = coll - cost;
-    $("s-bal").textContent = (bal < 0 ? "−" : "") + money(Math.abs(bal));
-    const card = $("s-balcard"); card.classList.toggle("good", bal >= 0); card.classList.toggle("short", bal < 0);
-    const guests = guestList();
-    const heads = (TRK.headcount && TRK.headcount > 0) ? TRK.headcount : (guests.length || 1);
-    if(document.activeElement !== $("s-heads")) $("s-heads").value = TRK.headcount || "";
-    $("s-heads").placeholder = String(guests.length || "");
-    const per = cost / heads;
-    $("s-per").textContent = money(per);
-    const paidBy = {};
-    TRK.contributions.forEach(c => { const n = (c.name||"").trim(); if(n) paidBy[n] = (paidBy[n]||0) + num(c.amount); });
-    const sb = $("split-body"); sb.innerHTML = "";
-    if(!guests.length){ sb.innerHTML = '<tr><td colspan="4" class="empty">Add guests via RSVPs or contributions to see the split.</td></tr>'; }
-    guests.forEach(g => {
-      const paid = paidBy[g] || 0, out = per - paid;
-      const tag = (out > 0.005) ? ('<span class="paidtag n">' + money(out) + ' to go</span>') : '<span class="paidtag y">settled</span>';
-      const tr = document.createElement("tr");
-      tr.innerHTML = '<td>' + esc(g) + '</td><td>' + money(per) + '</td><td>' + money(paid) + '</td><td>' + tag + '</td>';
-      sb.appendChild(tr);
-    });
-    $("count-money").textContent = money(coll) + " collected of " + money(cost);
-  }
-
-  async function saveTracker(){
-    if(!TRK) return;
-    $("trkSave").disabled = true; $("trkSaved").textContent = "Saving…"; $("trkSaved").style.color = "var(--ink-soft)";
-    try{
-      const r = await fetch(WORKER + "/hens-tracker", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: TRK }) });
-      const jj = await r.json().catch(() => ({}));
-      if(r.ok && jj.ok){ trkDirty = false; $("trkSaved").textContent = "Saved ✓"; $("trkSaved").style.color = "var(--sage-deep)"; }
-      else { $("trkSaved").textContent = (jj && jj.error) || "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
-    } catch(e){ $("trkSaved").textContent = "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
-    $("trkSave").disabled = false;
-  }
-
-  /* ---- Saturday breakfast tally ---- */
-  let BREKKY = [];
-  function fillingOf(it){ const m = ((it && it.name) || "").match(/\(filling:\s*([\s\S]*?)\)\s*$/); return m ? m[1].trim() : ""; }
-  function brekkyNice(it){ const c = it && it.choice; return c === "salmon" ? "Smoked salmon bagel" : (c === "bacon" ? "Bacon & egg roll" : (c || "")); }
-  function brekkySunNice(it){ const c = it && it.choice; if(c === "salmon") return "Oysters & champagne"; if(c === "bacon"){ const f = fillingOf(it); return "Croissants" + (f ? " — " + f : ""); } return c || ""; }
-  function isSun(it){ return ((it && it.name) || "").indexOf("[Sun] ") === 0; }
-  function sunName(it){ return ((it && it.name) || "").replace(/^\[Sun\]\s*/, "").replace(/\s*\(filling:\s*[\s\S]*?\)\s*$/, "").trim(); }
-  async function loadBrekky(){
-    try{
-      const r = await fetch(WORKER + "/brekkys?pw=" + encodeURIComponent(PW));
-      const data = await r.json();
-      BREKKY = (data && data.items) || [];
-      renderBrekky();
-    } catch(e){ $("count-brekky").textContent = "couldn't load"; $("count-brekky-sun").textContent = "couldn't load"; }
-  }
-  function renderDay(items, prefix, opt1lab, opt2lab, niceFn, nameFn){
-    const o1 = items.filter(x => x.choice === "salmon").length;
-    const o2 = items.filter(x => x.choice === "bacon").length;
-    $("count-" + prefix).textContent = items.length + (items.length === 1 ? " order" : " orders");
-    $(prefix + "-tally").innerHTML =
-      '<div class="scard"><div class="lab">' + opt1lab + '</div><div class="val">' + o1 + '</div></div>' +
-      '<div class="scard"><div class="lab">' + opt2lab + '</div><div class="val">' + o2 + '</div></div>' +
-      '<div class="scard"><div class="lab">Total orders</div><div class="val">' + items.length + '</div></div>';
-    const box = $("table-" + prefix);
-    if(!items.length){ box.innerHTML = '<div class="empty">No breakfast orders yet.</div>'; return; }
-    let h = '<table><thead><tr><th>Name</th><th>Breakfast</th><th>Ordered</th></tr></thead><tbody>';
-    for(const it of items){
-      h += '<tr><td>' + esc(nameFn(it)) + '</td><td>' + esc(niceFn(it)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
-    }
-    box.innerHTML = h + '</tbody></table>';
-  }
-  function renderBrekky(){
-    const sat = BREKKY.filter(x => !isSun(x));
-    const sun = BREKKY.filter(isSun);
-    renderDay(sat, "brekky", "Salmon bagel", "Bacon &amp; egg roll", brekkyNice, function(it){ return it.name; });
-    renderDay(sun, "brekky-sun", "Oysters &amp; champagne", "Croissants", brekkySunNice, sunName);
+  function csvCell(s){ s=(s==null?"":String(s)); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+  function downloadCSV(){
+    const rows = [["Name","Email","Received"].map(csvCell).join(",")];
+    for(const it of KITCHEN){ rows.push([it.name, it.email, fmt(it.ts)].map(csvCell).join(",")); }
+    const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "kitchen-tea-rsvps.csv"; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
-  $("refresh").addEventListener("click", () => { load(); loadGallery(); loadBrekky(); });
-  $("refresh-brekky").addEventListener("click", loadBrekky);
-  $("refresh-brekky-sun").addEventListener("click", loadBrekky);
-  $("refresh-gallery").addEventListener("click", loadGallery);
-  $("exp-add").addEventListener("click", () => { TRK.expenses.push({ what:"", amount:null, paid:false }); markDirty(); renderExpenses(); updateMoney(); });
-  $("con-add").addEventListener("click", () => { TRK.contributions.push({ name:"", amount:null, notes:"" }); markDirty(); renderContributions(); updateMoney(); });
-  $("act-add").addEventListener("click", addActivity);
-  $("act-new").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); addActivity(); } });
-  $("s-heads").addEventListener("input", () => { const v = $("s-heads").value; TRK.headcount = (v===""?null:num(v)); markDirty(); updateMoney(); });
-  $("trkSave").addEventListener("click", saveTracker);
-  window.addEventListener("beforeunload", e => { if(trkDirty){ e.preventDefault(); e.returnValue = ""; } });
-  document.querySelectorAll("[data-csv]").forEach(b => b.addEventListener("click", () => downloadCSV(b.getAttribute("data-csv"))));
+  $("refresh").addEventListener("click", load);
+  $("csv-kitchen").addEventListener("click", downloadCSV);
 </script>
 </body>
 </html>
