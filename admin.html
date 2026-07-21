@@ -205,6 +205,18 @@
       <div class="tablewrap" id="table-brekky"></div>
     </section>
 
+    <section class="event" id="ev-brekky-sun">
+      <div class="meta">
+        <div>
+          <h2>Sunday Breakfast</h2>
+          <span class="count" id="count-brekky-sun"></span>
+        </div>
+        <button class="btn" id="refresh-brekky-sun">Refresh</button>
+      </div>
+      <div class="summary" id="brekky-sun-tally"></div>
+      <div class="tablewrap" id="table-brekky-sun"></div>
+    </section>
+
     <section class="event" id="ev-gallery">
       <div class="meta">
         <div>
@@ -572,36 +584,45 @@
   /* ---- Saturday breakfast tally ---- */
   let BREKKY = [];
   function brekkyNice(c){ return c === "salmon" ? "Smoked salmon bagel" : (c === "bacon" ? "Bacon & egg roll" : (c || "")); }
+  function brekkySunNice(c){ return c === "salmon" ? "Oysters & champagne" : (c === "bacon" ? "Croissants (your choice of filling)" : (c || "")); }
+  function isSun(it){ return ((it && it.name) || "").indexOf("[Sun] ") === 0; }
+  function sunName(it){ return ((it && it.name) || "").replace(/^\[Sun\]\s*/, ""); }
   async function loadBrekky(){
     try{
       const r = await fetch(WORKER + "/brekkys?pw=" + encodeURIComponent(PW));
       const data = await r.json();
       BREKKY = (data && data.items) || [];
       renderBrekky();
-    } catch(e){ $("count-brekky").textContent = "couldn't load"; }
+    } catch(e){ $("count-brekky").textContent = "couldn't load"; $("count-brekky-sun").textContent = "couldn't load"; }
   }
-  function renderBrekky(){
-    const items = BREKKY;
-    const salmon = items.filter(x => x.choice === "salmon").length;
-    const bacon = items.filter(x => x.choice === "bacon").length;
-    $("count-brekky").textContent = items.length + (items.length === 1 ? " order" : " orders");
-    $("brekky-tally").innerHTML =
-      '<div class="scard"><div class="lab">Salmon bagel</div><div class="val">' + salmon + '</div></div>' +
-      '<div class="scard"><div class="lab">Bacon &amp; egg roll</div><div class="val">' + bacon + '</div></div>' +
+  function renderDay(items, prefix, opt1lab, opt2lab, niceFn, nameFn){
+    const o1 = items.filter(x => x.choice === "salmon").length;
+    const o2 = items.filter(x => x.choice === "bacon").length;
+    $("count-" + prefix).textContent = items.length + (items.length === 1 ? " order" : " orders");
+    $(prefix + "-tally").innerHTML =
+      '<div class="scard"><div class="lab">' + opt1lab + '</div><div class="val">' + o1 + '</div></div>' +
+      '<div class="scard"><div class="lab">' + opt2lab + '</div><div class="val">' + o2 + '</div></div>' +
       '<div class="scard"><div class="lab">Total orders</div><div class="val">' + items.length + '</div></div>';
-    const box = $("table-brekky");
+    const box = $("table-" + prefix);
     if(!items.length){ box.innerHTML = '<div class="empty">No breakfast orders yet.</div>'; return; }
     let h = '<table><thead><tr><th>Name</th><th>Breakfast</th><th>Ordered</th></tr></thead><tbody>';
     for(const it of items){
-      h += '<tr><td>' + esc(it.name) + '</td><td>' + esc(brekkyNice(it.choice)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
+      h += '<tr><td>' + esc(nameFn(it)) + '</td><td>' + esc(niceFn(it.choice)) + '</td><td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
     }
     box.innerHTML = h + '</tbody></table>';
+  }
+  function renderBrekky(){
+    const sat = BREKKY.filter(x => !isSun(x));
+    const sun = BREKKY.filter(isSun);
+    renderDay(sat, "brekky", "Salmon bagel", "Bacon &amp; egg roll", brekkyNice, function(it){ return it.name; });
+    renderDay(sun, "brekky-sun", "Oysters &amp; champagne", "Croissants", brekkySunNice, sunName);
   }
 
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
   $("refresh").addEventListener("click", () => { load(); loadGallery(); loadBrekky(); });
   $("refresh-brekky").addEventListener("click", loadBrekky);
+  $("refresh-brekky-sun").addEventListener("click", loadBrekky);
   $("refresh-gallery").addEventListener("click", loadGallery);
   $("exp-add").addEventListener("click", () => { TRK.expenses.push({ what:"", amount:null, paid:false }); markDirty(); renderExpenses(); updateMoney(); });
   $("con-add").addEventListener("click", () => { TRK.contributions.push({ name:"", amount:null, notes:"" }); markDirty(); renderContributions(); updateMoney(); });
