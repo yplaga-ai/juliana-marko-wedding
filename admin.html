@@ -47,8 +47,13 @@
   .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
   /* Wedding-day planner */
   .subnote{font-size:.85rem;color:var(--ink-soft);margin:0 0 10px;}
-  #tbl-sched input[type=text], #tbl-wexp input[type=text], #tbl-wexp input[type=number]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  #tbl-sched input[type=text], #tbl-wexp input[type=text], #tbl-wexp input[type=number], #tbl-wexp input[type=date]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
   #tbl-wexp input.amt{text-align:right;}
+  #tbl-wexp td.f-bal{text-align:right;font-weight:600;white-space:nowrap;color:var(--ink);}
+  #tbl-wexp td.f-bal.clear{color:var(--sage-deep);font-weight:500;}
+  .calbtn{background:none;border:0;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 6px;}
+  .calbtn:hover{filter:brightness(1.1);}
+  .calbtn.dim{opacity:.3;cursor:default;}
   th.center,td.center{text-align:center;}
   .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1.05rem;line-height:1;padding:2px 8px;}
   .rowdel:hover{color:#8a1f0f;}
@@ -164,18 +169,22 @@
           <span class="count" id="wexp-count"></span>
         </div>
       </div>
-      <p class="subnote">What the day is costing. Tick &ldquo;Paid&rdquo; once a supplier's settled. The &ldquo;Save wedding plan&rdquo; button above saves this too.</p>
+      <p class="subnote">What the day is costing. Pop in the total, what you've paid so far (deposit), and when the balance is due. Tick &ldquo;Paid&rdquo; once it's fully settled. Use the &#128197; to drop a payment reminder into your calendar. The &ldquo;Save wedding plan&rdquo; button above saves all of this.</p>
       <div class="summary">
         <div class="scard"><div class="lab">Total</div><div class="val" id="wexp-total">A$0</div></div>
-        <div class="scard"><div class="lab">Paid</div><div class="val" id="wexp-paid">A$0</div></div>
-        <div class="scard"><div class="lab">Still owing</div><div class="val" id="wexp-owing">A$0</div></div>
+        <div class="scard"><div class="lab">Paid so far</div><div class="val" id="wexp-paid">A$0</div></div>
+        <div class="scard"><div class="lab">Balance owing</div><div class="val" id="wexp-owing">A$0</div></div>
       </div>
       <div class="pie-wrap" id="wexp-pie"></div>
       <div class="tablewrap"><table id="tbl-wexp">
-        <thead><tr><th>Supplier / item</th><th style="width:140px">Amount (A$)</th><th style="width:64px" class="center">Paid</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th>Supplier / item</th><th style="width:118px">Amount (A$)</th><th style="width:120px">Deposit paid</th><th style="width:104px">Balance</th><th style="width:150px">Balance due</th><th style="width:52px" class="center">Paid</th><th style="width:78px"></th></tr></thead>
         <tbody id="wexp-body"></tbody>
       </table></div>
-      <button class="btn addrow" id="wexp-add">+ Add supplier / expense</button>
+      <div class="savebar" style="margin-top:10px;flex-wrap:wrap;">
+        <button class="btn addrow" id="wexp-add" style="margin:0;">+ Add supplier / expense</button>
+        <button class="btn" id="wexp-cal-all" title="Download calendar reminders for every balance with a due date">&#128197; Add all reminders to calendar</button>
+        <span class="saved" id="wexp-msg" style="min-width:0;color:var(--ink-soft);"></span>
+      </div>
     </section>
 
     <section class="event" id="ev-seat">
@@ -236,15 +245,23 @@
     KITCHEN = (data.items || []).filter(it => (it && it.event !== "hens"));
   }
 
+  function dietOf(it){
+    if(it && it.dietary) return String(it.dietary);
+    const n = (it && it.notes) ? String(it.notes) : "";
+    const m = n.match(/(^|\n)\s*Dietary:\s*([^\n]*)/i);
+    return m ? m[2].trim() : "";
+  }
   function renderKitchen(){
     const items = KITCHEN;
     $("count-kitchen").textContent = items.length + (items.length === 1 ? " reply" : " replies");
     const box = $("table-kitchen");
     if(!items.length){ box.innerHTML = '<div class="empty">No Kitchen Tea RSVPs yet.</div>'; return; }
-    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Received</th></tr></thead><tbody>';
+    let h = '<table><thead><tr><th>Name</th><th>Email</th><th>Dietary</th><th>Received</th></tr></thead><tbody>';
     for(const it of items){
+      const d = dietOf(it);
       h += '<tr><td>' + esc(it.name) + '</td>' +
            '<td><a class="email" href="mailto:' + esc(it.email) + '">' + esc(it.email) + '</a></td>' +
+           '<td>' + (d ? esc(d) : '<span style="color:var(--ink-soft)">—</span>') + '</td>' +
            '<td class="when">' + esc(fmt(it.ts)) + '</td></tr>';
     }
     box.innerHTML = h + '</tbody></table>';
@@ -354,32 +371,103 @@
       b.appendChild(tr);
     });
   }
+  function rowBalance(row){ return row.paid ? 0 : Math.max(0, num(row.amount) - num(row.deposit)); }
   function renderWexp(){
     const b = $("wexp-body"); b.innerHTML = "";
     WED.expenses.forEach((row, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td><input type="text" value="' + esc(row.item || "") + '" placeholder="Supplier / item"></td>' +
-        '<td><input type="number" class="amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
-        '<td class="center"><input type="checkbox"' + (row.paid?" checked":"") + '></td>' +
-        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const it = tr.querySelector('input[type=text]'), am = tr.querySelector('input.amt'), pd = tr.querySelector('input[type=checkbox]');
-      it.addEventListener("input", () => { WED.expenses[i].item = it.value; wedMark(); });
-      am.addEventListener("input", () => { WED.expenses[i].amount = (am.value===""?null:num(am.value)); wedMark(); updateWexp(); });
-      pd.addEventListener("change", () => { WED.expenses[i].paid = pd.checked; wedMark(); updateWexp(); });
-      tr.querySelector(".rowdel").addEventListener("click", () => { WED.expenses.splice(i,1); wedMark(); renderWexp(); });
+        '<td><input type="text" class="f-item" value="' + esc(row.item || "") + '" placeholder="Supplier / item"></td>' +
+        '<td><input type="number" class="amt f-amt" value="' + (row.amount==null?"":esc(row.amount)) + '" placeholder="0"></td>' +
+        '<td><input type="number" class="amt f-dep" value="' + (row.deposit==null?"":esc(row.deposit)) + '" placeholder="0"></td>' +
+        '<td class="f-bal"></td>' +
+        '<td><input type="date" class="f-due" value="' + esc(row.due || "") + '"></td>' +
+        '<td class="center"><input type="checkbox" class="f-paid"' + (row.paid?" checked":"") + '></td>' +
+        '<td style="white-space:nowrap"><button class="calbtn f-cal" title="Add a payment reminder to your calendar">&#128197;</button><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const it = tr.querySelector('.f-item'), am = tr.querySelector('.f-amt'), dep = tr.querySelector('.f-dep'),
+            due = tr.querySelector('.f-due'), pd = tr.querySelector('.f-paid'), bal = tr.querySelector('.f-bal'), cal = tr.querySelector('.f-cal');
+      function refreshBal(){
+        const v = rowBalance(row);
+        bal.textContent = "A$" + v.toLocaleString();
+        bal.classList.toggle("clear", v === 0);
+        cal.classList.toggle("dim", !(row.due && v > 0));
+      }
+      it.addEventListener("input", () => { row.item = it.value; wedMark(); });
+      am.addEventListener("input", () => { row.amount = (am.value===""?null:num(am.value)); wedMark(); refreshBal(); updateWexp(); });
+      dep.addEventListener("input", () => { row.deposit = (dep.value===""?null:num(dep.value)); wedMark(); refreshBal(); updateWexp(); });
+      due.addEventListener("input", () => { row.due = due.value; wedMark(); refreshBal(); });
+      pd.addEventListener("change", () => { row.paid = pd.checked; wedMark(); refreshBal(); updateWexp(); });
+      cal.addEventListener("click", () => { addRowReminder(row); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.expenses.indexOf(row); if(k>=0) WED.expenses.splice(k,1); wedMark(); renderWexp(); });
+      refreshBal();
       b.appendChild(tr);
     });
     updateWexp();
   }
   function updateWexp(){
-    const total = WED.expenses.reduce((s,e) => s + num(e.amount), 0);
-    const paid  = WED.expenses.reduce((s,e) => s + (e.paid ? num(e.amount) : 0), 0);
+    let total = 0, paidSoFar = 0;
+    WED.expenses.forEach(e => {
+      const amt = num(e.amount), dep = num(e.deposit);
+      total += amt;
+      paidSoFar += e.paid ? amt : Math.min(dep, amt);
+    });
     $("wexp-total").textContent = "A$" + total.toLocaleString();
-    $("wexp-paid").textContent  = "A$" + paid.toLocaleString();
-    $("wexp-owing").textContent = "A$" + (total - paid).toLocaleString();
+    $("wexp-paid").textContent  = "A$" + paidSoFar.toLocaleString();
+    $("wexp-owing").textContent = "A$" + Math.max(0, total - paidSoFar).toLocaleString();
     $("wexp-count").textContent = WED.expenses.length + (WED.expenses.length===1 ? " item" : " items");
     renderPie();
+  }
+  /* ---- Calendar payment reminders (.ics, works with Apple / Google / Outlook) ---- */
+  function icsEsc(s){ return String(s==null?"":s).replace(/([,;\\])/g, "\\$1").replace(/\r?\n/g, "\\n"); }
+  function expSlug(s){ return String(s||"payment").toLowerCase().replace(/[^\w]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40) || "payment"; }
+  function buildICS(events){
+    const L = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Juliana & Marko//Wedding Admin//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+    events.forEach(e => {
+      const dt = String(e.date).replace(/-/g,"");
+      L.push("BEGIN:VEVENT");
+      L.push("UID:" + e.uid);
+      L.push("DTSTAMP:20260721T090000Z");
+      L.push("DTSTART;VALUE=DATE:" + dt);
+      L.push("DTEND;VALUE=DATE:" + dt);
+      L.push("SUMMARY:" + icsEsc(e.title));
+      if(e.desc) L.push("DESCRIPTION:" + icsEsc(e.desc));
+      L.push("BEGIN:VALARM");
+      L.push("TRIGGER:-P3D");
+      L.push("ACTION:DISPLAY");
+      L.push("DESCRIPTION:" + icsEsc(e.title));
+      L.push("END:VALARM");
+      L.push("END:VEVENT");
+    });
+    L.push("END:VCALENDAR");
+    return L.join("\r\n");
+  }
+  function downloadICS(filename, ics){
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function rowEvent(row){
+    const bal = rowBalance(row);
+    return {
+      uid: expSlug(row.item) + "-" + row.due + "@julianamarko.com",
+      date: row.due,
+      title: "Pay " + (row.item || "supplier") + " balance — A$" + bal.toLocaleString(),
+      desc: "Balance owing A$" + bal.toLocaleString() + " for " + (row.item || "this supplier") + ". Juliana & Marko wedding, 17 Oct 2026."
+    };
+  }
+  function expMsg(m){ const e = $("wexp-msg"); if(e) e.textContent = m || ""; }
+  function addRowReminder(row){
+    if(!row.due){ expMsg("Add a “Balance due” date for " + (row.item || "that row") + " first."); return; }
+    if(rowBalance(row) <= 0){ expMsg((row.item || "That one") + " is fully paid — no balance to remind about."); return; }
+    downloadICS("reminder-" + expSlug(row.item) + ".ics", buildICS([rowEvent(row)]));
+    expMsg("Calendar reminder for " + (row.item || "that supplier") + " downloaded — open it to add it.");
+  }
+  function addAllReminders(){
+    const due = WED.expenses.filter(e => e.due && rowBalance(e) > 0);
+    if(!due.length){ expMsg("No balances with a due date yet — add a “Balance due” date to a row."); return; }
+    downloadICS("wedding-payment-reminders.ics", buildICS(due.map(rowEvent)));
+    expMsg("Downloaded " + due.length + " payment reminder" + (due.length===1?"":"s") + " — open the file to add them to your calendar.");
   }
   var PIE_COLORS = ['#C96A2B','#8A9A6B','#d99a5c','#6f7f52','#e0b07a','#a9531c','#b7c39a','#cf8a4e','#7c6f5a','#9db37a','#e6c9a8','#5f7a3a'];
   function renderPie(){
@@ -443,15 +531,16 @@
     $("wedSave").disabled = false;
   }
   $("sched-add").addEventListener("click", () => { WED.schedule.push({time:"",item:""}); wedMark(); renderSchedule(); });
-  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",amount:null,paid:false}); wedMark(); renderWexp(); });
+  $("wexp-add").addEventListener("click", () => { WED.expenses.push({item:"",amount:null,deposit:null,due:"",paid:false}); wedMark(); renderWexp(); });
+  $("wexp-cal-all").addEventListener("click", addAllReminders);
   $("wedSave").addEventListener("click", saveWedding);
   $("sched-print").addEventListener("click", printRunSheet);
   window.addEventListener("beforeunload", e => { if(wedDirty){ e.preventDefault(); e.returnValue = ""; } });
 
   function csvCell(s){ s=(s==null?"":String(s)); return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; }
   function downloadCSV(){
-    const rows = [["Name","Email","Received"].map(csvCell).join(",")];
-    for(const it of KITCHEN){ rows.push([it.name, it.email, fmt(it.ts)].map(csvCell).join(",")); }
+    const rows = [["Name","Email","Dietary","Received"].map(csvCell).join(",")];
+    for(const it of KITCHEN){ rows.push([it.name, it.email, dietOf(it), fmt(it.ts)].map(csvCell).join(",")); }
     const blob = new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv;charset=utf-8;" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
     a.download = "kitchen-tea-rsvps.csv"; document.body.appendChild(a); a.click();
