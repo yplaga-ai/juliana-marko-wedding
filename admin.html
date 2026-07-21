@@ -63,6 +63,35 @@
   .adel:disabled{opacity:.7;cursor:default;}
   .agempty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
   .gallery-note{font-size:.85rem;color:var(--ink-soft);margin:0 0 12px;}
+
+  /* Hens money & activities tracker */
+  .trk h3{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:1.18rem;color:var(--rust-deep);margin:20px 0 4px;}
+  .trk .subnote{font-size:.83rem;color:var(--ink-soft);margin:0 0 8px;}
+  .trk input[type=text], .trk input[type=number]{font-family:inherit;font-size:.9rem;padding:.42rem .55rem;border:1px solid var(--rule);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
+  .trk input.amt{text-align:right;}
+  .trk td, .trk th{padding:8px 10px;}
+  .trk .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1rem;line-height:1;padding:2px 6px;}
+  .trk .rowdel:hover{color:#8a1f0f;}
+  .trk .addrow{margin:10px 0 2px;}
+  .trk tfoot td{font-weight:600;background:#faf6ee;color:var(--ink);}
+  .summary{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px;}
+  .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
+  .scard .lab{font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--rust);}
+  .scard .val{font-family:"Cormorant Garamond",serif;font-size:1.5rem;font-weight:600;margin-top:2px;color:var(--ink);}
+  .scard.good .val{color:var(--sage-deep);}
+  .scard.short .val{color:#b5481f;}
+  .scard .headin{width:64px;text-align:center;font-family:inherit;font-size:1rem;padding:.25rem;border:1px solid var(--rule);border-radius:4px;}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px;}
+  .chip{display:inline-flex;align-items:center;gap:4px;background:#f3efe4;border:1px solid var(--rule);border-radius:16px;padding:3px 6px 3px 12px;font-size:.85rem;}
+  .chip button{background:none;border:0;color:#b5643f;cursor:pointer;font-size:.9rem;line-height:1;}
+  .matrix table{min-width:520px;}
+  .matrix th.act{white-space:nowrap;}
+  .matrix td.center, .matrix th.center{text-align:center;}
+  .paidtag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .paidtag.y{background:#e7efdd;color:var(--sage-deep);}
+  .paidtag.n{background:#f7e2d6;color:#b5643f;}
+  .savebar{display:flex;gap:10px;align-items:center;}
+  .saved{font-size:.82rem;min-width:110px;}
 </style>
 </head>
 <body>
@@ -110,6 +139,60 @@
       <div class="tablewrap" id="table-hens"></div>
     </section>
 
+    <section class="event trk" id="ev-money">
+      <div class="meta">
+        <div>
+          <h2>Hens — Money &amp; Activities</h2>
+          <span class="count" id="count-money"></span>
+        </div>
+        <div class="savebar">
+          <span class="saved" id="trkSaved"></span>
+          <button class="btn primary" id="trkSave">Save changes</button>
+        </div>
+      </div>
+
+      <h3>Suppliers &amp; expenses</h3>
+      <p class="subnote">What the hens is costing. Tick &ldquo;Paid&rdquo; once a supplier has actually been paid.</p>
+      <div class="tablewrap"><table id="tbl-exp">
+        <thead><tr><th>What / supplier</th><th style="width:140px">Amount (A$)</th><th style="width:64px" class="center">Paid</th><th style="width:36px"></th></tr></thead>
+        <tbody id="exp-body"></tbody>
+        <tfoot><tr><td>Total cost</td><td class="amt" id="exp-total">A$0</td><td colspan="2"></td></tr></tfoot>
+      </table></div>
+      <button class="btn addrow" id="exp-add">+ Add expense</button>
+
+      <h3>Who&rsquo;s paid what</h3>
+      <p class="subnote">Everyone chipping in for the kitty. Names you already have from RSVPs are suggested as you type.</p>
+      <div class="tablewrap"><table id="tbl-con">
+        <thead><tr><th>Name</th><th style="width:140px">Paid in (A$)</th><th>Notes</th><th style="width:36px"></th></tr></thead>
+        <tbody id="con-body"></tbody>
+        <tfoot><tr><td>Total collected</td><td class="amt" id="con-total">A$0</td><td colspan="2"></td></tr></tfoot>
+      </table></div>
+      <button class="btn addrow" id="con-add">+ Add contribution</button>
+      <datalist id="guestnames"></datalist>
+
+      <h3>The kitty</h3>
+      <div class="summary">
+        <div class="scard"><div class="lab">Total cost</div><div class="val" id="s-cost">A$0</div></div>
+        <div class="scard"><div class="lab">Collected</div><div class="val" id="s-coll">A$0</div></div>
+        <div class="scard" id="s-balcard"><div class="lab">Balance</div><div class="val" id="s-bal">A$0</div></div>
+        <div class="scard"><div class="lab">Heads</div><div class="val"><input type="number" min="1" step="1" class="headin" id="s-heads" /></div></div>
+        <div class="scard"><div class="lab">Per head</div><div class="val" id="s-per">A$0</div></div>
+      </div>
+      <div class="tablewrap"><table id="tbl-split">
+        <thead><tr><th>Guest</th><th style="width:110px">Share</th><th style="width:110px">Paid</th><th style="width:150px">Standing</th></tr></thead>
+        <tbody id="split-body"></tbody>
+      </table></div>
+
+      <h3>Activities &amp; participation</h3>
+      <p class="subnote">Who&rsquo;s in for what. Add or remove activities, then tick who&rsquo;s joining each. Guests come from the RSVPs and contributions above.</p>
+      <div class="chips" id="act-chips"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <input type="text" id="act-new" placeholder="Add an activity…" style="max-width:240px;font-family:inherit;font-size:.9rem;padding:.45rem .6rem;border:1px solid var(--rule);border-radius:4px;">
+        <button class="btn" id="act-add">Add activity</button>
+      </div>
+      <div class="tablewrap matrix"><table id="tbl-part"><thead id="part-head"></thead><tbody id="part-body"></tbody></table></div>
+    </section>
+
     <section class="event" id="ev-gallery">
       <div class="meta">
         <div>
@@ -152,6 +235,7 @@
       }
       renderAll();
       loadGallery();
+      loadTracker();
       $("status").textContent = "";
     } catch(e){
       if(String(e.message) === "unauthorized"){
@@ -243,6 +327,7 @@
       }
       renderAll();
       loadGallery();
+      loadTracker();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
@@ -310,10 +395,165 @@
     } catch(e){ del.disabled = false; del.textContent = "Delete"; $("status").textContent = "Couldn't delete that item."; }
   }
 
+  /* ---- Hens money & activities tracker ---- */
+  let TRK = null, trkDirty = false;
+  function defaultTRK(){ return { expenses:[], contributions:[], headcount:null, activities:["Accommodation","Friday night","Winery tour","Games & party night","Spa day","Group dinner"], participation:{}, guests:[] }; }
+  function num(n){ n = Number(n); return isFinite(n) ? n : 0; }
+  function money(n){ n = num(n); const dec = (Math.abs(n % 1) > 0.005) ? 2 : 0; return "A$" + n.toLocaleString('en-AU', { minimumFractionDigits: dec, maximumFractionDigits: 2 }); }
+  function guestList(){
+    const set = new Set();
+    (ALL.hens || []).forEach(r => { if(r.name) set.add(String(r.name).trim()); });
+    if(TRK){ (TRK.contributions || []).forEach(c => { if(c.name) set.add(String(c.name).trim()); });
+             (TRK.guests || []).forEach(n => { if(n) set.add(String(n).trim()); }); }
+    return Array.from(set).filter(Boolean).sort((a,b) => a.localeCompare(b));
+  }
+  function markDirty(){ trkDirty = true; const s = $("trkSaved"); s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; }
+
+  async function loadTracker(){
+    if(TRK && trkDirty) return; // don't clobber unsaved edits on a refresh
+    try{
+      const r = await fetch(WORKER + "/hens-tracker?pw=" + encodeURIComponent(PW));
+      const jj = await r.json().catch(() => ({}));
+      TRK = (jj && jj.data) ? Object.assign(defaultTRK(), jj.data) : defaultTRK();
+    } catch(e){ TRK = defaultTRK(); }
+    trkDirty = false; $("trkSaved").textContent = "";
+    renderTracker();
+  }
+  function renderTracker(){ renderExpenses(); renderContributions(); renderGuestNames(); renderActivities(); renderParticipation(); updateMoney(); }
+
+  function renderExpenses(){
+    const b = $("exp-body"); b.innerHTML = "";
+    TRK.expenses.forEach((e, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" data-f="what" value="' + esc(e.what || "") + '" placeholder="e.g. Cousin Gilbert accommodation"></td>' +
+        '<td><input type="number" class="amt" data-f="amount" min="0" step="0.01" value="' + (e.amount==null?"":e.amount) + '"></td>' +
+        '<td class="center"><input type="checkbox" data-f="paid"' + (e.paid?" checked":"") + '></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      tr.querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
+        const f = inp.getAttribute("data-f");
+        TRK.expenses[i][f] = (f==="paid") ? inp.checked : (f==="amount" ? (inp.value===""?null:num(inp.value)) : inp.value);
+        markDirty(); if(f!=="what") updateMoney();
+      }));
+      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.expenses.splice(i,1); markDirty(); renderExpenses(); updateMoney(); });
+      b.appendChild(tr);
+    });
+  }
+
+  function renderContributions(){
+    const b = $("con-body"); b.innerHTML = "";
+    TRK.contributions.forEach((c, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" list="guestnames" data-f="name" value="' + esc(c.name || "") + '" placeholder="Guest name"></td>' +
+        '<td><input type="number" class="amt" data-f="amount" min="0" step="0.01" value="' + (c.amount==null?"":c.amount) + '"></td>' +
+        '<td><input type="text" data-f="notes" value="' + esc(c.notes || "") + '" placeholder="e.g. bank transfer, 21 Jul"></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      const nameInp = tr.querySelector('[data-f="name"]'), amtInp = tr.querySelector('[data-f="amount"]'), notesInp = tr.querySelector('[data-f="notes"]');
+      nameInp.addEventListener("input", () => { TRK.contributions[i].name = nameInp.value; markDirty(); });
+      nameInp.addEventListener("change", () => { renderGuestNames(); renderParticipation(); updateMoney(); });
+      amtInp.addEventListener("input", () => { TRK.contributions[i].amount = (amtInp.value===""?null:num(amtInp.value)); markDirty(); updateMoney(); });
+      notesInp.addEventListener("input", () => { TRK.contributions[i].notes = notesInp.value; markDirty(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.contributions.splice(i,1); markDirty(); renderContributions(); renderGuestNames(); renderParticipation(); updateMoney(); });
+      b.appendChild(tr);
+    });
+  }
+
+  function renderGuestNames(){ $("guestnames").innerHTML = guestList().map(n => '<option value="' + esc(n) + '">').join(""); }
+
+  function renderActivities(){
+    const c = $("act-chips"); c.innerHTML = "";
+    TRK.activities.forEach((a, i) => {
+      const sp = document.createElement("span"); sp.className = "chip";
+      sp.innerHTML = esc(a) + ' <button title="Remove">&#10005;</button>';
+      sp.querySelector("button").addEventListener("click", () => { delete TRK.participation[a]; TRK.activities.splice(i,1); markDirty(); renderActivities(); renderParticipation(); });
+      c.appendChild(sp);
+    });
+  }
+  function addActivity(){
+    const inp = $("act-new"); const v = (inp.value || "").trim();
+    if(!v) return;
+    if(TRK.activities.some(a => a.toLowerCase() === v.toLowerCase())){ inp.value = ""; return; }
+    TRK.activities.push(v); inp.value = ""; markDirty(); renderActivities(); renderParticipation();
+  }
+
+  function renderParticipation(){
+    const head = $("part-head"), body = $("part-body");
+    const acts = TRK.activities, guests = guestList();
+    head.innerHTML = '<tr><th>Guest</th>' + acts.map(a => '<th class="act center">' + esc(a) + '</th>').join("") + '</tr>';
+    body.innerHTML = "";
+    if(!guests.length){ body.innerHTML = '<tr><td colspan="' + (acts.length+1) + '" class="empty">No guests yet — they appear here from RSVPs and contributions.</td></tr>'; return; }
+    guests.forEach(g => {
+      const tr = document.createElement("tr");
+      let cells = '<td>' + esc(g) + '</td>';
+      acts.forEach((a, ai) => { const on = (TRK.participation[a] || []).indexOf(g) >= 0; cells += '<td class="center"><input type="checkbox" data-ai="' + ai + '"' + (on?" checked":"") + '></td>'; });
+      tr.innerHTML = cells;
+      tr.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+        const a = TRK.activities[num(inp.getAttribute("data-ai"))];
+        TRK.participation[a] = TRK.participation[a] || [];
+        const arr = TRK.participation[a], idx = arr.indexOf(g);
+        if(inp.checked && idx < 0) arr.push(g);
+        if(!inp.checked && idx >= 0) arr.splice(idx, 1);
+        markDirty();
+      }));
+      body.appendChild(tr);
+    });
+  }
+
+  function updateMoney(){
+    if(!TRK) return;
+    const cost = TRK.expenses.reduce((s,e) => s + num(e.amount), 0);
+    const coll = TRK.contributions.reduce((s,c) => s + num(c.amount), 0);
+    $("exp-total").textContent = money(cost);
+    $("con-total").textContent = money(coll);
+    $("s-cost").textContent = money(cost);
+    $("s-coll").textContent = money(coll);
+    const bal = coll - cost;
+    $("s-bal").textContent = (bal < 0 ? "−" : "") + money(Math.abs(bal));
+    const card = $("s-balcard"); card.classList.toggle("good", bal >= 0); card.classList.toggle("short", bal < 0);
+    const guests = guestList();
+    const heads = (TRK.headcount && TRK.headcount > 0) ? TRK.headcount : (guests.length || 1);
+    if(document.activeElement !== $("s-heads")) $("s-heads").value = TRK.headcount || "";
+    $("s-heads").placeholder = String(guests.length || "");
+    const per = cost / heads;
+    $("s-per").textContent = money(per);
+    const paidBy = {};
+    TRK.contributions.forEach(c => { const n = (c.name||"").trim(); if(n) paidBy[n] = (paidBy[n]||0) + num(c.amount); });
+    const sb = $("split-body"); sb.innerHTML = "";
+    if(!guests.length){ sb.innerHTML = '<tr><td colspan="4" class="empty">Add guests via RSVPs or contributions to see the split.</td></tr>'; }
+    guests.forEach(g => {
+      const paid = paidBy[g] || 0, out = per - paid;
+      const tag = (out > 0.005) ? ('<span class="paidtag n">' + money(out) + ' to go</span>') : '<span class="paidtag y">settled</span>';
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td>' + esc(g) + '</td><td>' + money(per) + '</td><td>' + money(paid) + '</td><td>' + tag + '</td>';
+      sb.appendChild(tr);
+    });
+    $("count-money").textContent = money(coll) + " collected of " + money(cost);
+  }
+
+  async function saveTracker(){
+    if(!TRK) return;
+    $("trkSave").disabled = true; $("trkSaved").textContent = "Saving…"; $("trkSaved").style.color = "var(--ink-soft)";
+    try{
+      const r = await fetch(WORKER + "/hens-tracker", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: TRK }) });
+      const jj = await r.json().catch(() => ({}));
+      if(r.ok && jj.ok){ trkDirty = false; $("trkSaved").textContent = "Saved ✓"; $("trkSaved").style.color = "var(--sage-deep)"; }
+      else { $("trkSaved").textContent = (jj && jj.error) || "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
+    } catch(e){ $("trkSaved").textContent = "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
+    $("trkSave").disabled = false;
+  }
+
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
   $("refresh").addEventListener("click", () => { load(); loadGallery(); });
   $("refresh-gallery").addEventListener("click", loadGallery);
+  $("exp-add").addEventListener("click", () => { TRK.expenses.push({ what:"", amount:null, paid:false }); markDirty(); renderExpenses(); updateMoney(); });
+  $("con-add").addEventListener("click", () => { TRK.contributions.push({ name:"", amount:null, notes:"" }); markDirty(); renderContributions(); updateMoney(); });
+  $("act-add").addEventListener("click", addActivity);
+  $("act-new").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); addActivity(); } });
+  $("s-heads").addEventListener("input", () => { const v = $("s-heads").value; TRK.headcount = (v===""?null:num(v)); markDirty(); updateMoney(); });
+  $("trkSave").addEventListener("click", saveTracker);
+  window.addEventListener("beforeunload", e => { if(trkDirty){ e.preventDefault(); e.returnValue = ""; } });
   document.querySelectorAll("[data-csv]").forEach(b => b.addEventListener("click", () => downloadCSV(b.getAttribute("data-csv"))));
 </script>
 </body>
