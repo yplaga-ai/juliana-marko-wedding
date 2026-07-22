@@ -73,6 +73,11 @@
   .trk .rowdel{background:none;border:0;color:#b5643f;cursor:pointer;font-size:1rem;line-height:1;padding:2px 6px;}
   .trk .rowdel:hover{color:#8a1f0f;}
   .trk .addrow{margin:10px 0 2px;}
+  .trk select{font-family:inherit;font-size:.88rem;padding:.4rem .45rem;border:1px solid var(--rule);border-radius:4px;background:#fff;color:var(--ink);max-width:150px;}
+  .trk input[type=date]{font-family:inherit;font-size:.88rem;padding:.38rem .45rem;border:1px solid var(--rule);border-radius:4px;background:#fff;color:var(--ink);}
+  .st-sel.st-todo{color:var(--ink-soft);}
+  .st-sel.st-wip{color:var(--rust-deep);background:#fbf1e6;border-color:#e6c9a8;}
+  .st-sel.st-done{color:var(--sage-deep);background:#f1f4ea;border-color:#cdd7bd;}
   .trk tfoot td{font-weight:600;background:#f6f6f6;color:var(--ink);}
   .summary{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px;}
   .scard{flex:1;min-width:120px;background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px;text-align:center;}
@@ -146,8 +151,8 @@
           <span class="count" id="count-money"></span>
         </div>
         <div class="savebar">
-          <span class="saved" id="trkSaved"></span>
-          <button class="btn primary" id="trkSave">Save changes</button>
+          <span class="saved trksaved" id="trkSaved"></span>
+          <button class="btn primary trksave" id="trkSave">Save changes</button>
         </div>
       </div>
 
@@ -191,6 +196,38 @@
         <button class="btn" id="act-add">Add activity</button>
       </div>
       <div class="tablewrap matrix"><table id="tbl-part"><thead id="part-head"></thead><tbody id="part-body"></tbody></table></div>
+    </section>
+
+    <section class="event trk" id="ev-gifts">
+      <div class="meta">
+        <div>
+          <h2>Guest Goodie Bags &amp; Gifts</h2>
+          <span class="count" id="count-gi"></span>
+        </div>
+        <div class="savebar"><span class="saved trksaved"></span><button class="btn primary trksave" onclick="saveTracker()">Save changes</button></div>
+      </div>
+      <p class="subnote">Anything you&rsquo;re putting together for the girls &mdash; hoodies, tote bags, sashes, welcome bits. Track what to get, how many, and tick it off once it&rsquo;s sorted.</p>
+      <div class="tablewrap"><table id="tbl-gi">
+        <thead><tr><th>Item</th><th style="width:80px">Qty</th><th>Notes</th><th style="width:64px" class="center">Sorted</th><th style="width:36px"></th></tr></thead>
+        <tbody id="gi-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="gi-add">+ Add item</button>
+    </section>
+
+    <section class="event trk" id="ev-htasks">
+      <div class="meta">
+        <div>
+          <h2>Task Board</h2>
+          <span class="count" id="count-htasks"></span>
+        </div>
+        <div class="savebar"><span class="saved trksaved"></span><button class="btn primary trksave" onclick="saveTracker()">Save changes</button></div>
+      </div>
+      <p class="subnote">Who&rsquo;s doing what for the hens. Assign a task to one of the girls, give it a due date, and move it To&nbsp;do &rarr; In&nbsp;progress &rarr; Done. Names come from your RSVPs &amp; contributions above.</p>
+      <div class="tablewrap"><table id="tbl-htasks">
+        <thead><tr><th>Task</th><th style="width:150px">Who</th><th style="width:140px">Status</th><th style="width:150px">Due</th><th style="width:36px"></th></tr></thead>
+        <tbody id="htasks-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="htasks-add">+ Add a task</button>
     </section>
 
     <section class="event" id="ev-brekky">
@@ -456,7 +493,7 @@
 
   /* ---- Hens money & activities tracker ---- */
   let TRK = null, trkDirty = false;
-  function defaultTRK(){ return { expenses:[], contributions:[], headcount:null, activities:["Accommodation","Friday night","Winery tour","Games & party night","Spa day","Group dinner"], participation:{}, guests:[] }; }
+  function defaultTRK(){ return { expenses:[], contributions:[], headcount:null, activities:["Accommodation","Friday night","Winery tour","Games & party night","Spa day","Group dinner"], participation:{}, guests:[], guestItems:[], tasks:[] }; }
   function num(n){ n = Number(n); return isFinite(n) ? n : 0; }
   function money(n){ n = num(n); const dec = (Math.abs(n % 1) > 0.005) ? 2 : 0; return "A$" + n.toLocaleString('en-AU', { minimumFractionDigits: dec, maximumFractionDigits: 2 }); }
   function guestList(){
@@ -466,7 +503,7 @@
              (TRK.guests || []).forEach(n => { if(n) set.add(String(n).trim()); }); }
     return Array.from(set).filter(Boolean).sort((a,b) => a.localeCompare(b));
   }
-  function markDirty(){ trkDirty = true; const s = $("trkSaved"); s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; }
+  function markDirty(){ trkDirty = true; document.querySelectorAll(".trksaved").forEach(s => { s.textContent = "Unsaved changes"; s.style.color = "#b5643f"; }); }
 
   async function loadTracker(){
     if(TRK && trkDirty) return; // don't clobber unsaved edits on a refresh
@@ -478,7 +515,7 @@
     trkDirty = false; $("trkSaved").textContent = "";
     renderTracker();
   }
-  function renderTracker(){ renderExpenses(); renderContributions(); renderGuestNames(); renderActivities(); renderParticipation(); updateMoney(); }
+  function renderTracker(){ renderExpenses(); renderContributions(); renderGuestNames(); renderActivities(); renderParticipation(); updateMoney(); renderGuestItems(); renderHensTasks(); }
 
   function renderExpenses(){
     const b = $("exp-body"); b.innerHTML = "";
@@ -519,6 +556,68 @@
   }
 
   function renderGuestNames(){ $("guestnames").innerHTML = guestList().map(n => '<option value="' + esc(n) + '">').join(""); }
+
+  /* ---- Guest goodie bags & gifts ---- */
+  function renderGuestItems(){
+    if(!TRK) return;
+    if(!Array.isArray(TRK.guestItems)) TRK.guestItems = [];
+    const b = $("gi-body"); if(!b) return; b.innerHTML = "";
+    TRK.guestItems.forEach((it, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" data-f="item" value="' + esc(it.item||"") + '" placeholder="e.g. Hoodie / tote bag / sash"></td>' +
+        '<td><input type="text" class="amt" data-f="qty" value="' + esc(it.qty||"") + '" placeholder="e.g. 9"></td>' +
+        '<td><input type="text" data-f="notes" value="' + esc(it.notes||"") + '" placeholder="size, colour, where from…"></td>' +
+        '<td class="center"><input type="checkbox" data-f="done"' + (it.done?" checked":"") + '></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      tr.querySelectorAll("input").forEach(inp => inp.addEventListener("input", () => {
+        const f = inp.getAttribute("data-f");
+        TRK.guestItems[i][f] = (f==="done") ? inp.checked : inp.value;
+        markDirty(); if(f!=="notes") updateGiCount();
+      }));
+      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.guestItems.splice(i,1); markDirty(); renderGuestItems(); });
+      b.appendChild(tr);
+    });
+    if(!TRK.guestItems.length){ b.innerHTML = '<tr><td colspan="5" class="empty">No items yet — add hoodies, tote bags, welcome bits…</td></tr>'; }
+    updateGiCount();
+  }
+  function updateGiCount(){ const el = $("count-gi"); if(!el || !TRK) return; const n = (TRK.guestItems||[]).length, done = (TRK.guestItems||[]).filter(x=>x.done).length; el.textContent = n ? (done + "/" + n + " sorted") : ""; }
+
+  /* ---- Hens task board ---- */
+  function hensWhoSelect(current){
+    current = current || "";
+    const opts = ['<option value="">— who? —</option>', '<option value="Everyone"' + (current==="Everyone"?" selected":"") + '>Everyone</option>'];
+    const seen = { Everyone:1 };
+    guestList().forEach(n => { if(seen[n]) return; seen[n]=1; opts.push('<option value="' + esc(n) + '"' + (current===n?" selected":"") + '>' + esc(n) + '</option>'); });
+    if(current && !seen[current]) opts.push('<option value="' + esc(current) + '" selected>' + esc(current) + '</option>');
+    return '<select class="hk-who">' + opts.join("") + '</select>';
+  }
+  function renderHensTasks(){
+    if(!TRK) return;
+    if(!Array.isArray(TRK.tasks)) TRK.tasks = [];
+    const b = $("htasks-body"); if(!b) return; b.innerHTML = "";
+    TRK.tasks.forEach((tk, i) => {
+      const st = (tk.status==="wip"||tk.status==="done") ? tk.status : "todo";
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" data-f="text" value="' + esc(tk.text||"") + '" placeholder="e.g. Order the hoodies"><input type="text" data-f="note" value="' + esc(tk.note||"") + '" placeholder="note (optional)" style="margin-top:5px;font-size:.85rem;"></td>' +
+        '<td>' + hensWhoSelect(tk.who) + '</td>' +
+        '<td><select class="hk-status st-sel st-' + st + '"><option value="todo"' + (st==="todo"?" selected":"") + '>To do</option><option value="wip"' + (st==="wip"?" selected":"") + '>In progress</option><option value="done"' + (st==="done"?" selected":"") + '>Done</option></select></td>' +
+        '<td><input type="date" data-f="due" value="' + esc(tk.due||"") + '"></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      tr.querySelector('[data-f="text"]').addEventListener("input", function(){ tk.text = this.value; markDirty(); updateHtasksCount(); });
+      tr.querySelector('[data-f="note"]').addEventListener("input", function(){ tk.note = this.value; markDirty(); });
+      tr.querySelector(".hk-who").addEventListener("change", function(){ tk.who = this.value; markDirty(); });
+      const stsel = tr.querySelector(".hk-status");
+      stsel.addEventListener("change", function(){ tk.status = this.value; this.className = "hk-status st-sel st-" + this.value; markDirty(); updateHtasksCount(); });
+      tr.querySelector('[data-f="due"]').addEventListener("input", function(){ tk.due = this.value; markDirty(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { TRK.tasks.splice(i,1); markDirty(); renderHensTasks(); });
+      b.appendChild(tr);
+    });
+    if(!TRK.tasks.length){ b.innerHTML = '<tr><td colspan="5" class="empty">No tasks yet — add one below.</td></tr>'; }
+    updateHtasksCount();
+  }
+  function updateHtasksCount(){ const el = $("count-htasks"); if(!el || !TRK) return; const n = (TRK.tasks||[]).length, done = (TRK.tasks||[]).filter(t=>t.status==="done").length; el.textContent = n ? (done + "/" + n + " done") : ""; }
 
   function renderActivities(){
     const c = $("act-chips"); c.innerHTML = "";
@@ -592,14 +691,15 @@
 
   async function saveTracker(){
     if(!TRK) return;
-    $("trkSave").disabled = true; $("trkSaved").textContent = "Saving…"; $("trkSaved").style.color = "var(--ink-soft)";
+    const btns = document.querySelectorAll(".trksave"), inds = document.querySelectorAll(".trksaved");
+    btns.forEach(b => b.disabled = true); inds.forEach(s => { s.textContent = "Saving…"; s.style.color = "var(--ink-soft)"; });
     try{
       const r = await fetch(WORKER + "/hens-tracker", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, data: TRK }) });
       const jj = await r.json().catch(() => ({}));
-      if(r.ok && jj.ok){ trkDirty = false; $("trkSaved").textContent = "Saved ✓"; $("trkSaved").style.color = "var(--sage-deep)"; }
-      else { $("trkSaved").textContent = (jj && jj.error) || "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
-    } catch(e){ $("trkSaved").textContent = "Couldn't save"; $("trkSaved").style.color = "#b5481f"; }
-    $("trkSave").disabled = false;
+      if(r.ok && jj.ok){ trkDirty = false; inds.forEach(s => { s.textContent = "Saved ✓"; s.style.color = "var(--sage-deep)"; }); }
+      else { inds.forEach(s => { s.textContent = (jj && jj.error) || "Couldn't save"; s.style.color = "#b5481f"; }); }
+    } catch(e){ inds.forEach(s => { s.textContent = "Couldn't save"; s.style.color = "#b5481f"; }); }
+    btns.forEach(b => b.disabled = false);
   }
 
   /* ---- Saturday breakfast tally ---- */
@@ -685,6 +785,8 @@
   $("refresh-brekky-sun").addEventListener("click", loadBrekky);
   $("refresh-gallery").addEventListener("click", loadGallery);
   $("exp-add").addEventListener("click", () => { TRK.expenses.push({ what:"", amount:null, paid:false }); markDirty(); renderExpenses(); updateMoney(); });
+  $("gi-add").addEventListener("click", () => { if(!Array.isArray(TRK.guestItems)) TRK.guestItems = []; TRK.guestItems.push({ item:"", qty:"", notes:"", done:false }); markDirty(); renderGuestItems(); });
+  $("htasks-add").addEventListener("click", () => { if(!Array.isArray(TRK.tasks)) TRK.tasks = []; TRK.tasks.push({ text:"", who:"", status:"todo", note:"", due:"" }); markDirty(); renderHensTasks(); });
   $("con-add").addEventListener("click", () => { TRK.contributions.push({ name:"", amount:null, notes:"" }); markDirty(); renderContributions(); updateMoney(); });
   $("act-add").addEventListener("click", addActivity);
   $("act-new").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); addActivity(); } });
