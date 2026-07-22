@@ -184,6 +184,10 @@
   .brekky-opt b{font-size:1rem;color:var(--ink);font-weight:600;}
   .brekky-opt small{font-size:.85rem;color:var(--ink-soft);margin-top:1px;}
   .brekky-opt.sel{border-color:var(--rust);background:#f6f6f6;}
+  .brekky-opt.tba{border-style:dashed;cursor:default;opacity:.7;background:#fbfaf8;}
+  .brekky-opt.tba:hover{border-color:rgba(201,123,63,.3);}
+  .brekky-opt.tba b{color:var(--ink-soft);font-weight:600;}
+  .brekky-opt.tba input{opacity:.5;}
   .brekky button{margin-top:6px;width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
   .brekky button:hover{background:var(--rust-deep);}
   .brekky button:disabled{opacity:.65;cursor:default;}
@@ -349,6 +353,7 @@
         <input type="text" id="brekkyName" placeholder="Your name" autocomplete="name" />
         <label class="brekky-opt"><input type="radio" name="brekky" value="salmon" /><span><b>Smoked salmon bagel</b><small>Cream cheese, red onion &amp; rocket</small></span></label>
         <label class="brekky-opt"><input type="radio" name="brekky" value="bacon" /><span><b>Bacon &amp; egg roll</b><small>Cheese, avocado &amp; tomato relish</small></span></label>
+        <label class="brekky-opt tba"><input type="radio" disabled tabindex="-1" /><span><b>TBA</b><small>To be confirmed</small></span></label>
         <button type="submit">Lock in my breakfast</button>
         <p class="brekky-msg" id="brekkyMsg"></p>
       </form>
@@ -361,9 +366,22 @@
         <input type="text" id="brekkySunName" placeholder="Your name" autocomplete="name" />
         <label class="brekky-opt"><input type="radio" name="brekkySun" value="oysters" /><span><b>Oysters &amp; champagne</b><small>A bougie little start</small></span></label>
         <label class="brekky-opt"><input type="radio" name="brekkySun" value="croissants" /><span><b>Croissants</b><small>With your choice of filling</small></span></label>
+        <label class="brekky-opt tba"><input type="radio" disabled tabindex="-1" /><span><b>TBA</b><small>To be confirmed</small></span></label>
         <input type="text" id="brekkySunFill" class="brekky-fill" placeholder="Your croissant filling — e.g. ham &amp; cheese, jam, Nutella" maxlength="50" autocomplete="off" style="display:none" />
         <button type="submit">Lock in my breakfast</button>
         <p class="brekky-msg" id="brekkySunMsg"></p>
+      </form>
+
+      <hr class="rule" />
+
+      <div class="sech">Monday Breakfast</div>
+      <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 8px;max-width:440px">And Monday morning before we head home &mdash; the menu&rsquo;s still being decided, so hang tight.</p>
+      <form id="brekkyMonForm" class="brekky" onsubmit="return false">
+        <input type="text" placeholder="Your name" autocomplete="name" disabled />
+        <label class="brekky-opt tba"><input type="radio" disabled tabindex="-1" /><span><b>TBA</b><small>To be confirmed</small></span></label>
+        <label class="brekky-opt tba"><input type="radio" disabled tabindex="-1" /><span><b>TBA</b><small>To be confirmed</small></span></label>
+        <label class="brekky-opt tba"><input type="radio" disabled tabindex="-1" /><span><b>TBA</b><small>To be confirmed</small></span></label>
+        <button type="button" disabled>Coming soon</button>
       </form>
 
       <hr class="rule" />
