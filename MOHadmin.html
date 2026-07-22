@@ -228,6 +228,17 @@
       <p class="gallery-note">Everyone's uploaded photos &amp; videos from the hens. Tap an item to open it. Only you can delete here &mdash; deletes are permanent, so each needs a second click to confirm.</p>
       <div class="agrid" id="gallery-grid"></div>
     </section>
+
+    <section class="event" id="ev-suggest">
+      <div class="meta">
+        <div>
+          <h2>Suggestions &amp; Questions</h2>
+          <span class="count" id="count-suggest"></span>
+        </div>
+        <button class="btn" id="refresh-suggest">Refresh</button>
+      </div>
+      <div class="tablewrap" id="table-suggest"></div>
+    </section>
   </div>
 </div>
 
@@ -261,6 +272,7 @@
       loadGallery();
       loadTracker();
       loadBrekky();
+      loadSuggest();
       $("status").textContent = "";
     } catch(e){
       if(String(e.message) === "unauthorized"){
@@ -374,6 +386,7 @@
       loadGallery();
       loadTracker();
       loadBrekky();
+      loadSuggest();
     } catch(e){
       $("err").textContent = "Something went wrong — please try again.";
     }
@@ -626,6 +639,44 @@
     renderDay(sat, "brekky", "Salmon bagel", "Bacon &amp; egg roll", brekkyNice, function(it){ return it.name; });
     renderDay(sun, "brekky-sun", "Oysters &amp; champagne", "Croissants", brekkySunNice, sunName);
   }
+
+  /* ---- Suggestions / questions ---- */
+  let SUGGEST = [];
+  async function loadSuggest(){
+    try{
+      const r = await fetch(WORKER + "/hens-suggests?pw=" + encodeURIComponent(PW));
+      const data = await r.json();
+      SUGGEST = (data && data.items) || [];
+      renderSuggest();
+    } catch(e){ $("count-suggest").textContent = "couldn't load"; }
+  }
+  function renderSuggest(){
+    $("count-suggest").textContent = SUGGEST.length + (SUGGEST.length === 1 ? " message" : " messages");
+    const box = $("table-suggest");
+    if(!SUGGEST.length){ box.innerHTML = '<div class="empty">No suggestions or questions yet.</div>'; return; }
+    let h = '<table><thead><tr><th>Name</th><th>Suggestion / Question</th><th>Sent</th><th></th></tr></thead><tbody>';
+    for(const it of SUGGEST){
+      h += '<tr><td>' + esc(it.name) + '</td><td>' + esc(it.message).replace(/\n/g, "<br>") + '</td><td class="when">' + esc(fmt(it.ts)) +
+           '</td><td><button class="btn sdel" data-key="' + esc(it.key || "") + '" style="padding:4px 10px;font-size:.78rem">Delete</button></td></tr>';
+    }
+    box.innerHTML = h + '</tbody></table>';
+    box.querySelectorAll(".sdel").forEach(btn => btn.addEventListener("click", onDelSuggest));
+  }
+  function onDelSuggest(e){
+    const btn = e.currentTarget;
+    if(btn.dataset.confirm !== "1"){
+      btn.dataset.confirm = "1"; btn.textContent = "Sure?";
+      setTimeout(() => { if(btn.dataset.confirm === "1"){ btn.dataset.confirm = "0"; btn.textContent = "Delete"; } }, 3000);
+      return;
+    }
+    const key = btn.getAttribute("data-key");
+    btn.disabled = true; btn.textContent = "…";
+    fetch(WORKER + "/hens-suggest-delete", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ pw: PW, key: key }) })
+      .then(r => r.json().catch(() => ({})).then(jj => ({ ok:r.ok, j:jj })))
+      .then(res => { if(res.ok){ SUGGEST = SUGGEST.filter(x => x.key !== key); renderSuggest(); } else { btn.disabled = false; btn.textContent = "Delete"; } })
+      .catch(() => { btn.disabled = false; btn.textContent = "Delete"; });
+  }
+  $("refresh-suggest").addEventListener("click", loadSuggest);
 
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });

@@ -262,6 +262,63 @@ export default {
       return j({ ok: true, count: out.length, items: out }, 200);
     }
 
+    // --- Hens suggestions / questions box (public submit) ---
+    if (request.method === "POST" && url.pathname === "/hens-suggest") {
+      try {
+        let name = "", message = "";
+        const ct = request.headers.get("Content-Type") || "";
+        if (ct.includes("application/json")) {
+          const b = await request.json().catch(() => ({}));
+          name = (b.name || "").toString().trim();
+          message = (b.message || "").toString().trim();
+        } else {
+          const form = await request.formData();
+          name = (form.get("name") || "").toString().trim();
+          message = (form.get("message") || "").toString().trim();
+        }
+        if (!name) return j({ error: "Please add your name" }, 400);
+        if (!message) return j({ error: "Please add a suggestion or question" }, 400);
+        if (name.length > 120 || message.length > 5000) return j({ error: "That message is a little too long" }, 400);
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const rec = { name, message, ts: new Date().toISOString() };
+        await env.PHOTOS.put(`suggest/meta/${id}.json`, JSON.stringify(rec), { httpMetadata: { contentType: "application/json" } });
+        return j({ ok: true }, 200);
+      } catch (e) {
+        return j({ error: "Could not save your message: " + e.message }, 500);
+      }
+    }
+
+    // --- Hens suggestions list (MOH only) ---
+    if (request.method === "GET" && url.pathname === "/hens-suggests") {
+      if (url.searchParams.get("pw") !== ADMIN_PW) return j({ error: "Unauthorized" }, 401);
+      const out = [];
+      let cursor;
+      do {
+        const r = await env.PHOTOS.list({ prefix: "suggest/meta/", limit: 1000, cursor });
+        for (const o of r.objects) {
+          const obj = await env.PHOTOS.get(o.key);
+          if (obj) { try { const rec = JSON.parse(await obj.text()); rec.key = o.key; out.push(rec); } catch (_) {} }
+        }
+        cursor = r.truncated ? r.cursor : undefined;
+      } while (cursor);
+      out.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+      return j({ ok: true, count: out.length, items: out }, 200);
+    }
+
+    // --- Hens suggestion delete (MOH only) ---
+    if (request.method === "POST" && url.pathname === "/hens-suggest-delete") {
+      try {
+        const b = await request.json().catch(() => ({}));
+        if ((b.pw || "") !== ADMIN_PW) return j({ error: "Unauthorized" }, 401);
+        const key = (b.key || "").toString();
+        if (!key.startsWith("suggest/meta/")) return j({ error: "Bad key" }, 400);
+        await env.PHOTOS.delete(key);
+        return j({ ok: true }, 200);
+      } catch (e) {
+        return j({ error: "Delete failed: " + e.message }, 500);
+      }
+    }
+
     // --- Hens shared gallery: upload (public) ---
     if (request.method === "POST" && url.pathname === "/hens-upload") {
       try {

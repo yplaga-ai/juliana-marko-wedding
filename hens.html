@@ -195,6 +195,22 @@
   .calmenu{display:none;margin-top:11px;font-size:.95rem;}
   .calmenu.open{display:block;}
   .caldot{color:var(--ink-soft);margin:0 8px;}
+  /* Countdown */
+  .cd-grid{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .cd-cell{min-width:66px;background:#fff;border:1px solid rgba(201,123,63,.28);border-radius:10px;padding:11px 8px;}
+  .cd-num{font-size:1.85rem;font-weight:600;color:var(--rust);line-height:1;font-family:"Cormorant Garamond",Georgia,serif;}
+  .cd-lab{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin-top:6px;}
+  .cd-done{font-family:"Sacramento",cursive;font-size:1.9rem;color:var(--rust);}
+  /* Suggestions box */
+  .suggest{max-width:420px;margin:6px auto 0;text-align:left;}
+  .suggest input,.suggest textarea{font-family:inherit;font-size:1rem;padding:.65rem .85rem;width:100%;box-sizing:border-box;border:1px solid var(--sage);border-radius:5px;background:#fff;margin-bottom:12px;color:var(--ink);}
+  .suggest textarea{min-height:92px;resize:vertical;}
+  .suggest button{width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
+  .suggest button:hover{background:var(--rust-deep);}
+  .suggest button:disabled{opacity:.65;cursor:default;}
+  .suggest-msg{min-height:1.2em;margin:12px 0 0;font-size:.85rem;text-align:center;}
+  .suggest-msg.ok{color:var(--sage-deep);}
+  .suggest-msg.bad{color:#b5481f;}
   .brekky button{margin-top:6px;width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
   .brekky button:hover{background:var(--rust-deep);}
   .brekky button:disabled{opacity:.65;cursor:default;}
@@ -273,6 +289,11 @@
             <a class="link" id="hensCalIcs" href="#">Apple / Outlook (.ics)</a>
           </div>
         </div>
+      </div>
+
+      <div class="block">
+        <div class="caps">Countdown to the weekend</div>
+        <div class="cd-grid" id="cdGrid"><div class="wx-note">Counting down&hellip;</div></div>
       </div>
 
       <hr class="rule" />
@@ -511,6 +532,17 @@
       </div>
       <p class="wx-note">Bride share = her cost &divide; 9 of us.</p>
       <p class="wx-note">Paying in instalments is totally fine &mdash; just add your name next to each payment so we can keep track. You can PayID straight to my phone: <strong>0451&nbsp;669&nbsp;996</strong>.</p>
+
+      <hr class="rule" />
+
+      <div class="sech">Suggestions &amp; Questions</div>
+      <p style="text-align:center;font-size:.9rem;color:var(--ink-soft);margin:.2rem auto 8px;max-width:440px">Got an idea, a request, or something you want to ask? Pop it here &mdash; it goes straight to the organiser.</p>
+      <form id="suggestForm" class="suggest">
+        <input type="text" id="suggestName" placeholder="Your name" autocomplete="name" />
+        <textarea id="suggestMsg" placeholder="Your suggestion or question&hellip;" maxlength="2000"></textarea>
+        <button type="submit">Send it in</button>
+        <p class="suggest-msg" id="suggestMsgOut"></p>
+      </form>
 
     </div>
 
@@ -824,6 +856,53 @@
       document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
     });
     btn.addEventListener('click', function(){ menu.classList.toggle('open'); });
+  })();
+
+  /* ---- Countdown to the hens weekend (Fri 11 Sept 2026, 2pm arrival, Melbourne) ---- */
+  (function(){
+    var grid = document.getElementById('cdGrid'); if(!grid) return;
+    var target = new Date('2026-09-11T14:00:00+10:00').getTime();
+    function cell(n,l){ return '<div class="cd-cell"><div class="cd-num">'+n+'</div><div class="cd-lab">'+l+'</div></div>'; }
+    function tick(){
+      var diff = target - Date.now();
+      if(diff <= 0){ grid.innerHTML = '<div class="cd-done">It’s here — see you there! 🥂</div>'; clearInterval(timer); return; }
+      var d = Math.floor(diff/86400000);
+      var h = Math.floor(diff%86400000/3600000);
+      var m = Math.floor(diff%3600000/60000);
+      var s = Math.floor(diff%60000/1000);
+      grid.innerHTML = cell(d,'Days') + cell(h,'Hours') + cell(m,'Mins') + cell(s,'Secs');
+    }
+    tick();
+    var timer = setInterval(tick, 1000);
+  })();
+
+  /* ---- Suggestions / questions box → worker (MOH sees them on /MOHadmin) ---- */
+  (function(){
+    var form = document.getElementById('suggestForm'); if(!form) return;
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var out = document.getElementById('suggestMsgOut');
+      var nameEl = document.getElementById('suggestName');
+      var msgEl = document.getElementById('suggestMsg');
+      var name = (nameEl.value || '').trim();
+      var message = (msgEl.value || '').trim();
+      if(!name){ out.className = 'suggest-msg bad'; out.textContent = 'Please add your name.'; return; }
+      if(!message){ out.className = 'suggest-msg bad'; out.textContent = 'Please add a suggestion or question.'; return; }
+      var btn = form.querySelector('button'); var label = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Sending…'; out.className = 'suggest-msg'; out.textContent = '';
+      fetch(WORKER_URL + '/hens-suggest', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name:name, message:message }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(jj){ return { ok:r.ok, j:jj }; }); })
+        .then(function(res){
+          if(res.ok){
+            out.className = 'suggest-msg ok'; out.textContent = 'Thanks ' + name + ' — got it! 🌸';
+            btn.textContent = 'Sent ✓'; nameEl.value = ''; msgEl.value = '';
+          } else {
+            out.className = 'suggest-msg bad'; out.textContent = (res.j && res.j.error) || 'Something went wrong — try again.';
+            btn.disabled = false; btn.textContent = label;
+          }
+        })
+        .catch(function(){ out.className = 'suggest-msg bad'; out.textContent = 'Network error — try again.'; btn.disabled = false; btn.textContent = label; });
+    });
   })();
 </script>
 </body>
