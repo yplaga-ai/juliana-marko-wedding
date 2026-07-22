@@ -188,6 +188,13 @@
   .brekky-opt.tba:hover{border-color:rgba(201,123,63,.3);}
   .brekky-opt.tba b{color:var(--ink-soft);font-weight:600;}
   .brekky-opt.tba input{opacity:.5;}
+  /* Add to Calendar */
+  .calwrap{margin-top:15px;}
+  .calbtn{border:1px solid var(--rust);background:#fff;color:var(--rust);border-radius:6px;padding:.55rem 1.15rem;font-family:inherit;font-size:.78rem;text-transform:uppercase;letter-spacing:.16em;cursor:pointer;transition:background .15s,color .15s;}
+  .calbtn:hover{background:var(--rust);color:#fff;}
+  .calmenu{display:none;margin-top:11px;font-size:.95rem;}
+  .calmenu.open{display:block;}
+  .caldot{color:var(--ink-soft);margin:0 8px;}
   .brekky button{margin-top:6px;width:100%;border:0;border-radius:5px;padding:.75rem;cursor:pointer;background:var(--rust);color:#fff;text-transform:uppercase;letter-spacing:.2em;font-size:.75rem;}
   .brekky button:hover{background:var(--rust-deep);}
   .brekky button:disabled{opacity:.65;cursor:default;}
@@ -258,6 +265,14 @@
         <div class="caps">When</div>
         <p>Friday 11 &ndash; Monday 14 September 2026</p>
         <p class="soft">A weekend away in Daylesford &mdash; three nights</p>
+        <div class="calwrap">
+          <button type="button" class="calbtn" id="hensCalBtn">&#43; Add to Calendar</button>
+          <div class="calmenu" id="hensCalMenu">
+            <a class="link" id="hensCalGoogle" href="#" target="_blank" rel="noopener">Google Calendar</a>
+            <span class="caldot">&bull;</span>
+            <a class="link" id="hensCalIcs" href="#">Apple / Outlook (.ics)</a>
+          </div>
+        </div>
       </div>
 
       <hr class="rule" />
@@ -265,6 +280,7 @@
       <div class="block">
         <div class="caps">Where we're staying</div>
         <p><a class="link" href="https://www.booking.com/hotel/au/cousin-gilbert.en-gb.html" target="_blank" rel="noopener">Cousin Gilbert</a>, Daylesford</p>
+        <p class="soft"><a class="link" href="https://www.google.com/maps/search/?api=1&amp;query=97+Vincent+St%2C+Daylesford+VIC+3460" target="_blank" rel="noopener">97 Vincent St, Daylesford VIC 3460</a></p>
         <p class="soft">Check in Fri 11th &nbsp;&bull;&nbsp; Check out Mon 14th</p>
       </div>
 
@@ -777,6 +793,38 @@
       })
       .catch(() => { msg.className = "brekky-msg bad"; msg.textContent = "Something went wrong — try again."; btn.disabled = false; btn.textContent = label; });
   });
+
+  /* ---- Add to Calendar (the hens weekend) — works with any calendar ---- */
+  (function(){
+    var btn = document.getElementById('hensCalBtn'); if(!btn) return;
+    var menu = document.getElementById('hensCalMenu');
+    var gLink = document.getElementById('hensCalGoogle');
+    var icsLink = document.getElementById('hensCalIcs');
+    var TITLE = "Juliana's Hen's Weekend";
+    var LOC   = "Cousin Gilbert, 97 Vincent St, Daylesford VIC 3460";
+    var DESC  = "Juliana's hen's weekend away — 3 nights at Cousin Gilbert in Daylesford. 🥂";
+    // All-day, Fri 11 Sept 2026 through Mon 14 Sept 2026 (DTEND/end date is exclusive → 15th)
+    var START = "20260911", ENDX = "20260915";
+    gLink.href = "https://calendar.google.com/calendar/render?action=TEMPLATE"
+      + "&text=" + encodeURIComponent(TITLE)
+      + "&dates=" + START + "/" + ENDX
+      + "&location=" + encodeURIComponent(LOC)
+      + "&details=" + encodeURIComponent(DESC);
+    function icsEsc(s){ return String(s==null?'':s).replace(/([,;\\])/g,'\\$1').replace(/\r?\n/g,'\\n'); }
+    icsLink.addEventListener('click', function(e){
+      e.preventDefault();
+      var ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Juliana & Marko//Hens//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+        'UID:jm-hens-20260911@julianamarko.com','DTSTAMP:20260101T000000Z',
+        'DTSTART;VALUE=DATE:20260911','DTEND;VALUE=DATE:20260915',
+        'SUMMARY:'+icsEsc(TITLE),'LOCATION:'+icsEsc(LOC),'DESCRIPTION:'+icsEsc(DESC),
+        'BEGIN:VALARM','TRIGGER:-P2D','ACTION:DISPLAY','DESCRIPTION:'+icsEsc("Juliana's hen's weekend soon!"),'END:VALARM',
+        'END:VEVENT','END:VCALENDAR'].join('\r\n');
+      var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'julianas-hens-weekend.ics';
+      document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    });
+    btn.addEventListener('click', function(){ menu.classList.toggle('open'); });
+  })();
 </script>
 </body>
 </html>
