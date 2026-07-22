@@ -70,6 +70,11 @@
   #tbl-todo input[type=text]{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);}
   #tbl-tasks input[type=text],#tbl-tasks input[type=date],#tbl-tasks select,#tbl-sched select,#tbl-people input[type=text],#tbl-people textarea,#tbl-people select{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;}
   #tbl-people textarea{resize:vertical;min-height:38px;font-size:.9rem;}
+  #tbl-transport input[type=text],#tbl-transport select,#tbl-accom input[type=text],#tbl-accom input[type=date],#tbl-accom select{font-family:inherit;font-size:.95rem;padding:.5rem .6rem;border:1px solid var(--sage);border-radius:4px;width:100%;background:#fff;color:var(--ink);box-sizing:border-box;}
+  #tbl-transport .tp-stack input,#tbl-accom .ac-stack input{margin-top:5px;}
+  #tbl-transport .tp-stack input:first-child,#tbl-accom .ac-stack input:first-child{margin-top:0;}
+  .sched-auto td{background:#faf7f1;color:var(--ink-soft);}
+  .sched-auto .car{color:#C96A2B;}
   .st-sel.st-todo{color:var(--ink-soft);} .st-sel.st-wip{color:#C96A2B;font-weight:600;} .st-sel.st-done{color:var(--sage-deep);font-weight:600;}
   .pview{display:flex;flex-direction:column;gap:3px;font-size:.72rem;text-align:left;}
   .pview label{display:flex;align-items:center;gap:5px;cursor:pointer;text-transform:none;letter-spacing:0;}
@@ -266,6 +271,36 @@
       </table></div>
       <datalist id="who-list"></datalist>
       <button class="btn addrow" id="sched-add">+ Add to run sheet</button>
+    </section>
+
+    <section class="event" id="ev-transport">
+      <div class="meta">
+        <div>
+          <h2>Transport</h2>
+          <span class="count" id="transport-count"></span>
+        </div>
+      </div>
+      <p class="subnote">Cars, shuttles and lifts on the day. Each <strong>leg</strong> is one trip &mdash; getting <em>to</em> the venue and getting <em>from</em> it are two separate legs, so add one for each direction. Give it a time and a From &rarr; To, and it <strong>automatically drops into your Run Sheet</strong> (and each person&rsquo;s pack / personal login) at that time. Tick <strong>Guests</strong> to also show a leg on your wedding site (e.g. a shuttle home). Saves automatically.</p>
+      <div class="tablewrap"><table id="tbl-transport">
+        <thead><tr><th style="width:96px">Time</th><th style="width:120px">Who</th><th>From &rarr; To</th><th style="width:150px">Company / driver</th><th style="width:52px" class="center" title="Show this leg on the guest site">Guests</th><th style="width:40px"></th></tr></thead>
+        <tbody id="transport-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="transport-add">+ Add a transport leg</button>
+    </section>
+
+    <section class="event" id="ev-accom">
+      <div class="meta">
+        <div>
+          <h2>Accommodation</h2>
+          <span class="count" id="accom-count"></span>
+        </div>
+      </div>
+      <p class="subnote">Where you and the party are staying &mdash; and the places you&rsquo;d recommend to guests. Add the check-in / check-out, who&rsquo;s staying, the address and any confirmation number. Tick <strong>Guests</strong> to show a place on your wedding site (with its booking link) as a suggestion. Saves automatically.</p>
+      <div class="tablewrap"><table id="tbl-accom">
+        <thead><tr><th style="width:150px">Place</th><th style="width:120px">Check-in</th><th style="width:120px">Check-out</th><th style="width:110px">Who</th><th>Address / contact / confirmation</th><th style="width:52px" class="center" title="Show this place on the guest site">Guests</th><th style="width:40px"></th></tr></thead>
+        <tbody id="accom-body"></tbody>
+      </table></div>
+      <button class="btn addrow" id="accom-add">+ Add a place to stay</button>
     </section>
 
     <section class="event" id="ev-tasks">
@@ -680,9 +715,11 @@
     if(!Array.isArray(WED.tasks)) WED.tasks = [];
     if(!Array.isArray(WED.people)) WED.people = [];
     if(typeof WED.notes !== "string") WED.notes = "";
+    if(!Array.isArray(WED.transport)) WED.transport = [];
+    if(!Array.isArray(WED.accommodation)) WED.accommodation = [];
     seatingReady = false;
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
-    renderSchedule(); renderWexp(); renderSeat(); renderTodos(); renderPeople(); renderTasks(); renderNotes();
+    renderSchedule(); renderWexp(); renderSeat(); renderTodos(); renderPeople(); renderTasks(); renderNotes(); renderTransport(); renderAccom();
     seatingReady = true;
   }
   function defaultTodos(){
@@ -710,8 +747,8 @@
       if(sel){ const cur = sel.value; sel.innerHTML = '<option value="">' + esc(pair[1]) + '</option>' + list.map(w => '<option value="' + esc(w) + '">' + esc(w) + '</option>').join(""); sel.value = list.indexOf(cur) >= 0 ? cur : ""; }
     });
   }
-  // Rebuild the run sheet + task board "Who" dropdowns from the current People roster.
-  function syncWho(){ if($("sched-body")) renderSchedule(); if($("tasks-body")) renderTasks(); }
+  // Rebuild the "Who" dropdowns (run sheet, task board, transport, accommodation) from the current People roster.
+  function syncWho(){ if($("sched-body")) renderSchedule(); if($("tasks-body")) renderTasks(); if($("transport-body")) renderTransport(); if($("accom-body")) renderAccom(); }
   // A "Who" dropdown driven by the People & Access roster (+ Everyone, + the row's current value if it's a one-off).
   function whoSelectHTML(current, cls){
     current = (current || "");
@@ -741,6 +778,17 @@
       lo.addEventListener("input", () => { WED.schedule[i].loc = lo.value; wedMark(); });
       it.addEventListener("input", () => { WED.schedule[i].item = it.value; wedMark(); });
       tr.querySelector(".rowdel").addEventListener("click", () => { WED.schedule.splice(i,1); wedMark(); renderSchedule(); });
+      b.appendChild(tr);
+    });
+    // Read-only transport legs, pulled in from the Transport section (sorted by time). Edit them there.
+    (WED.transport||[]).filter(tpHasContent).slice().sort((a,c)=>{ var ka=timeKey(a.time),kc=timeKey(c.time); if(ka==null&&kc==null)return 0; if(ka==null)return 1; if(kc==null)return -1; return ka-kc; }).forEach(t => {
+      const tr = document.createElement("tr"); tr.className = "sched-auto";
+      tr.innerHTML =
+        '<td>' + esc(t.time||"") + '</td>' +
+        '<td>' + esc(t.who||"") + '</td>' +
+        '<td>' + esc(tpLoc(t)) + '</td>' +
+        '<td><span class="car">🚗</span> ' + esc((t.provider||"").trim() || "Transport") + ' <span class="auto-badge" title="From your Transport section">transport</span></td>' +
+        '<td></td>';
       b.appendChild(tr);
     });
     refreshSchedWho();
@@ -969,18 +1017,36 @@
     w.document.write(html); w.document.close();
   }
   function schedHasContent(r){ return !!(r.time || r.item || r.who || r.loc); }
+  // Parse a free-text time ("8:00 am", "3:30 pm", "15:00") into minutes for sorting; null if unparseable.
+  function timeKey(s){
+    s = (s||"").trim().toLowerCase();
+    if(!s) return null;
+    var m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(a|p)?\.?\s*m?/);
+    if(!m) return null;
+    var h = parseInt(m[1],10), mi = m[2] ? parseInt(m[2],10) : 0, ap = m[3];
+    if(isNaN(h)) return null;
+    if(ap === 'p' && h < 12) h += 12;
+    if(ap === 'a' && h === 12) h = 0;
+    return h*60 + mi;
+  }
+  function tpLoc(t){ var f=(t.from||"").trim(), to=(t.to||"").trim(); return (f&&to) ? (f + " → " + to) : (f || to || ""); }
+  function tpItem(t){ return "🚗 " + ((t.provider||"").trim() || "Transport"); }
+  function tpHasContent(t){ return !!(t.time || t.from || t.to || t.who || t.provider); }
+  // Merged, time-sorted timeline of schedule rows + transport legs (transport auto-links into the run sheet).
+  function timelineRows(person){
+    var items = [];
+    (WED.schedule||[]).forEach(function(r,i){ if(!schedHasContent(r)) return; items.push({ time:r.time||"", who:r.who||"", loc:r.loc||"", item:r.item||"", kind:"sched", _i:i }); });
+    (WED.transport||[]).forEach(function(t,i){ if(!tpHasContent(t)) return; items.push({ time:t.time||"", who:t.who||"", loc:tpLoc(t), item:tpItem(t), kind:"transport", _i:1000+i }); });
+    if(person){ items = items.filter(function(x){ return (x.who||"").trim() === person; }); }
+    items.sort(function(a,b){ var ka=timeKey(a.time), kb=timeKey(b.time); if(ka==null && kb==null) return a._i-b._i; if(ka==null) return 1; if(kb==null) return -1; if(ka!==kb) return ka-kb; return a._i-b._i; });
+    return items;
+  }
   function scheduleTable(person){
-    var rows = "";
-    WED.schedule.forEach(function(r){
-      if(!schedHasContent(r)) return;
-      if(person && (r.who||"").trim() !== person) return;
-      var loc = r.loc ? '<td class="l">' + esc(r.loc) + '</td>' : '<td class="l"></td>';
-      if(person){
-        rows += '<tr><td class="t">' + esc(r.time||"") + '</td>' + loc + '<td>' + esc(r.item||"") + '</td></tr>';
-      } else {
-        rows += '<tr><td class="t">' + esc(r.time||"") + '</td><td class="w">' + esc(r.who||"") + '</td>' + loc + '<td>' + esc(r.item||"") + '</td></tr>';
-      }
-    });
+    var rows = timelineRows(person).map(function(x){
+      var loc = '<td class="l">' + esc(x.loc||"") + '</td>';
+      if(person){ return '<tr><td class="t">' + esc(x.time||"") + '</td>' + loc + '<td>' + esc(x.item||"") + '</td></tr>'; }
+      return '<tr><td class="t">' + esc(x.time||"") + '</td><td class="w">' + esc(x.who||"") + '</td>' + loc + '<td>' + esc(x.item||"") + '</td></tr>';
+    }).join("");
     return rows ? ('<table>' + rows + '</table>') : '<p>Nothing on the run sheet yet.</p>';
   }
   var STATUS_LABEL = { todo:"To do", wip:"In progress", done:"Done" };
@@ -1010,14 +1076,94 @@
     }).join("");
     printDoc(pages);
   }
+  function accomTable(person){
+    var rows = "";
+    (WED.accommodation||[]).forEach(function(a){
+      if(!(a.place||"").trim()) return;
+      if(person && (a.who||"").trim() !== person) return;
+      var when = [(a.checkin||"").trim(), (a.checkout||"").trim()].filter(Boolean).join(" → ");
+      var det = [(a.address||"").trim(), (a.conf||"").trim() ? ("Conf: " + a.conf.trim()) : ""].filter(Boolean).join(" · ");
+      rows += '<tr><td class="w">' + esc(a.place) + '</td>' + (person ? "" : '<td class="l">' + esc(a.who||"") + '</td>') + '<td class="l">' + esc(when) + '</td><td>' + esc(det) + '</td></tr>';
+    });
+    return rows ? ('<table>' + rows + '</table>') : "";
+  }
   function printPersonPack(name){
     name = (name||"").trim(); if(!name){ alert("Give this person a name first."); return; }
     var person = (WED.people||[]).filter(function(p){ return (p.name||"").trim() === name; })[0] || {};
     var body = '<h1>Juliana &amp; Marko</h1><div class="sub">' + esc(name) + "'s Pack &bull; 17 October 2026</div>";
     body += '<h2>Run Sheet</h2>' + scheduleTable(name);
     body += '<h2>Tasks</h2>' + tasksTable(name);
+    var acc = accomTable(name); if(acc){ body += '<h2>Accommodation</h2>' + acc; }
     if((person.note||"").trim()){ body += '<h2>Notes</h2><div class="notes">' + esc(person.note) + '</div>'; }
     printDoc(body);
+  }
+  /* ---- Transport (auto-links into the run sheet) + Accommodation ---- */
+  function syncSched(){ if($("sched-body")) renderSchedule(); }
+  // Push the guest-flagged legs/stays into the public /site config (stripped down).
+  function syncGuestTravel(){
+    if(typeof SITE === "undefined" || !SITE) return;
+    SITE.gTransport = (WED.transport||[]).filter(function(t){ return t.guest && tpHasContent(t); })
+      .map(function(t){ return { time:(t.time||"").trim(), from:(t.from||"").trim(), to:(t.to||"").trim(), provider:(t.provider||"").trim() }; });
+    SITE.gAccom = (WED.accommodation||[]).filter(function(a){ return a.guest && (a.place||"").trim(); })
+      .map(function(a){ return { place:(a.place||"").trim(), address:(a.address||"").trim(), link:(a.link||"").trim(), note:(a.note||"").trim() }; });
+    if(typeof siteMark === "function") siteMark();
+  }
+  function renderTransport(){
+    const b = $("transport-body"); if(!b || !WED || !Array.isArray(WED.transport)) return; b.innerHTML = "";
+    WED.transport.forEach(t => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" class="tp-time" value="' + esc(t.time||"") + '" placeholder="e.g. 2:30 pm"></td>' +
+        '<td>' + whoSelectHTML(t.who, "tp-who") + '</td>' +
+        '<td><div class="tp-stack"><input type="text" class="tp-from" value="' + esc(t.from||"") + '" placeholder="From (e.g. Home)"><input type="text" class="tp-to" value="' + esc(t.to||"") + '" placeholder="To (e.g. Potters Receptions)"></div></td>' +
+        '<td><div class="tp-stack"><input type="text" class="tp-prov" value="' + esc(t.provider||"") + '" placeholder="Company / driver"><input type="text" class="tp-contact" value="' + esc(t.contact||"") + '" placeholder="phone (optional)"></div></td>' +
+        '<td class="center"><input type="checkbox" class="tp-guest"' + (t.guest ? " checked" : "") + '></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      tr.querySelector(".tp-time").addEventListener("input", function(){ t.time = this.value; wedMark(); });
+      tr.querySelector(".tp-time").addEventListener("change", syncSched);
+      tr.querySelector(".tp-who").addEventListener("change", function(){ t.who = this.value; wedMark(); syncSched(); });
+      tr.querySelector(".tp-from").addEventListener("input", function(){ t.from = this.value; wedMark(); });
+      tr.querySelector(".tp-from").addEventListener("change", function(){ syncSched(); syncGuestTravel(); });
+      tr.querySelector(".tp-to").addEventListener("input", function(){ t.to = this.value; wedMark(); });
+      tr.querySelector(".tp-to").addEventListener("change", function(){ syncSched(); syncGuestTravel(); });
+      tr.querySelector(".tp-prov").addEventListener("input", function(){ t.provider = this.value; wedMark(); });
+      tr.querySelector(".tp-prov").addEventListener("change", function(){ syncSched(); syncGuestTravel(); });
+      tr.querySelector(".tp-contact").addEventListener("input", function(){ t.contact = this.value; wedMark(); });
+      tr.querySelector(".tp-guest").addEventListener("change", function(){ t.guest = this.checked; wedMark(); syncGuestTravel(); });
+      tr.querySelector(".rowdel").addEventListener("click", function(){ const k = WED.transport.indexOf(t); if(k>=0) WED.transport.splice(k,1); wedMark(); renderTransport(); syncSched(); syncGuestTravel(); });
+      b.appendChild(tr);
+    });
+    if(!WED.transport.length){ b.innerHTML = '<tr><td colspan="6" class="empty" style="padding:14px">No transport yet — add a leg for getting to the ceremony, another for leaving the reception…</td></tr>'; }
+    const el = $("transport-count"); if(el){ const n = WED.transport.length; el.textContent = n ? (n + (n===1 ? " leg" : " legs")) : ""; }
+  }
+  function renderAccom(){
+    const b = $("accom-body"); if(!b || !WED || !Array.isArray(WED.accommodation)) return; b.innerHTML = "";
+    WED.accommodation.forEach(a => {
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        '<td><input type="text" class="ac-place" value="' + esc(a.place||"") + '" placeholder="e.g. Quest Doncaster"></td>' +
+        '<td><input type="date" class="ac-in" value="' + esc(a.checkin||"") + '"></td>' +
+        '<td><input type="date" class="ac-out" value="' + esc(a.checkout||"") + '"></td>' +
+        '<td>' + whoSelectHTML(a.who, "ac-who") + '</td>' +
+        '<td><div class="ac-stack"><input type="text" class="ac-addr" value="' + esc(a.address||"") + '" placeholder="Address / phone"><input type="text" class="ac-conf" value="' + esc(a.conf||"") + '" placeholder="Confirmation # (optional)"><input type="text" class="ac-link" value="' + esc(a.link||"") + '" placeholder="Booking link (for guests, optional)"></div></td>' +
+        '<td class="center"><input type="checkbox" class="ac-guest"' + (a.guest ? " checked" : "") + '></td>' +
+        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
+      tr.querySelector(".ac-place").addEventListener("input", function(){ a.place = this.value; wedMark(); });
+      tr.querySelector(".ac-place").addEventListener("change", syncGuestTravel);
+      tr.querySelector(".ac-in").addEventListener("input", function(){ a.checkin = this.value; wedMark(); });
+      tr.querySelector(".ac-out").addEventListener("input", function(){ a.checkout = this.value; wedMark(); });
+      tr.querySelector(".ac-who").addEventListener("change", function(){ a.who = this.value; wedMark(); });
+      tr.querySelector(".ac-addr").addEventListener("input", function(){ a.address = this.value; wedMark(); });
+      tr.querySelector(".ac-addr").addEventListener("change", syncGuestTravel);
+      tr.querySelector(".ac-conf").addEventListener("input", function(){ a.conf = this.value; wedMark(); });
+      tr.querySelector(".ac-link").addEventListener("input", function(){ a.link = this.value; wedMark(); });
+      tr.querySelector(".ac-link").addEventListener("change", syncGuestTravel);
+      tr.querySelector(".ac-guest").addEventListener("change", function(){ a.guest = this.checked; wedMark(); syncGuestTravel(); });
+      tr.querySelector(".rowdel").addEventListener("click", function(){ const k = WED.accommodation.indexOf(a); if(k>=0) WED.accommodation.splice(k,1); wedMark(); renderAccom(); syncGuestTravel(); });
+      b.appendChild(tr);
+    });
+    if(!WED.accommodation.length){ b.innerHTML = '<tr><td colspan="7" class="empty" style="padding:14px">No accommodation yet — add where you\'re staying, and any places to suggest to guests.</td></tr>'; }
+    const el = $("accom-count"); if(el){ const n = WED.accommodation.length; el.textContent = n ? (n + (n===1 ? " place" : " places")) : ""; }
   }
 
   /* ---- Notes (general plan scratchpad) ---- */
@@ -1221,6 +1367,8 @@
                  askMessage: rc.askMessage !== false
                } };
       if(d.seating) SITE.seating = d.seating;   // preserve published seating so an early save can't wipe it
+      if(Array.isArray(d.gTransport)) SITE.gTransport = d.gTransport;   // preserve published guest transport
+      if(Array.isArray(d.gAccom)) SITE.gAccom = d.gAccom;               // preserve published guest accommodation
     } catch(e){ SITE = { travel:"", accommodation:"", faq:[], rsvp: defaultRsvpCfg() }; }
     siteDirty = false; siteStatus("", "var(--ink-soft)"); renderSite(); renderWeddingRsvps();
   }
@@ -1290,6 +1438,8 @@
   $("todo-add").addEventListener("click", () => { WED.todos.push({text:"",done:false}); wedMark(); renderTodos(); });
   $("people-add").addEventListener("click", () => { WED.people.push({name:"",note:"",pw:"",view:{run:true,tasks:true,notes:false}}); wedMark(); renderPeople(); });
   $("tasks-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:""}); wedMark(); renderTasks(); });
+  $("transport-add").addEventListener("click", () => { WED.transport.push({time:"",who:"",from:"",to:"",provider:"",contact:"",guest:false}); wedMark(); renderTransport(); });
+  $("accom-add").addEventListener("click", () => { WED.accommodation.push({place:"",checkin:"",checkout:"",who:"",address:"",conf:"",link:"",guest:false}); wedMark(); renderAccom(); });
   $("tasks-filter").addEventListener("change", renderTasks);
   $("wed-notes").addEventListener("input", function(){ WED.notes = this.value; wedMark(); });
   $("wedSave").addEventListener("click", saveWedding);

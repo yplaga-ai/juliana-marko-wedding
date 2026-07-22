@@ -75,6 +75,10 @@
       <h2>Your Tasks</h2>
       <div id="tasks"></div>
     </div>
+    <div id="stays-card" class="card" style="display:none">
+      <h2>Where You're Staying</h2>
+      <div id="stays"></div>
+    </div>
     <div id="notes-card" class="card" style="display:none">
       <h2>Notes</h2>
       <div id="notes" class="notes"></div>
@@ -136,6 +140,19 @@
     } else if('tasks' in d){
       document.getElementById('tasks').innerHTML = '<div class="empty">No tasks assigned to you yet.</div>';
       document.getElementById('tasks-card').style.display = '';
+    }
+
+    // Accommodation (their stays)
+    var st = d.stays || [];
+    if(st.length){
+      var sh = st.map(function(a){
+        var when = [a.checkin, a.checkout].filter(function(x){return (x||"").trim();}).map(niceDate).join(" → ");
+        return '<div class="task"><div class="txt"><strong>' + esc(a.place||"") + '</strong>' +
+               (a.address ? '<span class="note">' + esc(a.address) + '</span>' : "") +
+               '</div>' + (when ? '<span class="due">' + esc(when) + '</span>' : "") + '</div>';
+      }).join("");
+      document.getElementById('stays').innerHTML = sh;
+      document.getElementById('stays-card').style.display = '';
     }
 
     // Shared notes

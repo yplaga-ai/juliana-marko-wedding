@@ -190,9 +190,22 @@ export default {
       const view = (me.view && typeof me.view === "object") ? me.view : { run: true, tasks: true, notes: false };
       const out = { name: pname };
       if (view.run !== false) {
-        out.schedule = (Array.isArray(wed.schedule) ? wed.schedule : [])
+        // Run sheet = their schedule rows + their transport legs, time-sorted (transport auto-links in).
+        const sched = (Array.isArray(wed.schedule) ? wed.schedule : [])
           .filter(r => r && (r.who || "").toString().trim().toLowerCase() === lc && (r.time || r.item || r.loc))
-          .map(r => ({ time: r.time || "", loc: r.loc || "", item: r.item || "" }));
+          .map(r => ({ time: r.time || "", loc: r.loc || "", item: r.item || "", _t: tmin(r.time) }));
+        const trans = (Array.isArray(wed.transport) ? wed.transport : [])
+          .filter(t => t && (t.who || "").toString().trim().toLowerCase() === lc && (t.time || t.from || t.to || t.provider))
+          .map(t => { const f = (t.from || "").toString().trim(), to = (t.to || "").toString().trim();
+            return { time: t.time || "", loc: (f && to) ? (f + " → " + to) : (f || to || ""), item: "🚗 " + ((t.provider || "").toString().trim() || "Transport"), _t: tmin(t.time) }; });
+        out.schedule = sched.concat(trans)
+          .sort((a, b) => { if (a._t == null && b._t == null) return 0; if (a._t == null) return 1; if (b._t == null) return -1; return a._t - b._t; })
+          .map(x => ({ time: x.time, loc: x.loc, item: x.item }));
+        // Where they're staying
+        const stays = (Array.isArray(wed.accommodation) ? wed.accommodation : [])
+          .filter(a => a && (a.place || "").toString().trim() && (a.who || "").toString().trim().toLowerCase() === lc)
+          .map(a => ({ place: a.place || "", checkin: a.checkin || "", checkout: a.checkout || "", address: a.address || "" }));
+        if (stays.length) out.stays = stays;
       }
       if (view.tasks !== false) {
         out.tasks = (Array.isArray(wed.tasks) ? wed.tasks : [])
@@ -538,4 +551,16 @@ function makeKey(name, prefix) {
 }
 function j(o, s) {
   return new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
+}
+// Parse a free-text time ("8:00 am", "3:30 pm", "15:00") into minutes for sorting; null if unparseable.
+function tmin(s) {
+  s = (s || "").toString().trim().toLowerCase();
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(a|p)?\.?\s*m?/);
+  if (!m) return null;
+  let h = parseInt(m[1], 10); const mi = m[2] ? parseInt(m[2], 10) : 0; const ap = m[3];
+  if (isNaN(h)) return null;
+  if (ap === "p" && h < 12) h += 12;
+  if (ap === "a" && h === 12) h = 0;
+  return h * 60 + mi;
 }
