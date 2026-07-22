@@ -313,9 +313,9 @@
           <label class="seat-hint" style="margin:0">Show <select id="tasks-filter" class="who-sel"><option value="">everyone</option></select></label>
         </div>
       </div>
-      <p class="subnote">Who&rsquo;s doing what, and where it&rsquo;s up to. Assign a task to a person and move it To&nbsp;do &rarr; In&nbsp;progress &rarr; Done. Filter by person above. Each person only sees their own tasks on their personal link. Saves automatically.</p>
+      <p class="subnote">Who&rsquo;s doing what, and where it&rsquo;s up to &mdash; your working list. Assign a task to a person, give it a due date, and move it To&nbsp;do &rarr; In&nbsp;progress &rarr; Done. Each person only sees their own tasks on their personal link. Tick <strong>Day-of</strong> and the task also appears on the <strong>Day-of Checklist</strong> below (ticking it done in either place keeps both in sync). Saves automatically.</p>
       <div class="tablewrap"><table id="tbl-tasks">
-        <thead><tr><th>Task</th><th style="width:120px">Who</th><th style="width:130px">Status</th><th style="width:140px">Due</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th>Task</th><th style="width:120px">Who</th><th style="width:130px">Status</th><th style="width:130px">Due</th><th style="width:56px" class="center" title="Also show this on the Day-of Checklist">Day-of</th><th style="width:40px"></th></tr></thead>
         <tbody id="tasks-body"></tbody>
       </table></div>
       <button class="btn addrow" id="tasks-add">+ Add a task</button>
@@ -328,12 +328,12 @@
           <span class="count" id="todo-count"></span>
         </div>
       </div>
-      <p class="subnote">Payment tasks are pulled in automatically from your suppliers (tick one to mark it paid). Add your own tasks and people to chase below. Everything saves automatically.</p>
+      <p class="subnote">Built automatically from the tasks you tick <strong>Day-of</strong> in the Task Board above (with who&rsquo;s on it and when it&rsquo;s due), plus supplier payments. Tick one off here and it&rsquo;s marked Done on the board too. Edit the task text/assignee up in the Task Board. Everything saves automatically.</p>
       <div class="tablewrap"><table id="tbl-todo">
-        <thead><tr><th style="width:56px" class="center">Done</th><th>Task</th><th style="width:40px"></th></tr></thead>
+        <thead><tr><th style="width:56px" class="center">Done</th><th>Task</th><th style="width:130px">Who</th><th style="width:120px">Due</th></tr></thead>
         <tbody id="todo-body"></tbody>
       </table></div>
-      <button class="btn addrow" id="todo-add">+ Add task</button>
+      <button class="btn addrow" id="todo-add">+ Add a day-of task</button>
     </section>
 
     <section class="event" id="ev-notes">
@@ -688,8 +688,19 @@
         {item:"Dress", amount:null, paid:false},
         {item:"Music / DJ", amount:null, paid:false}
       ],
-      people: defaultPeople()
+      people: defaultPeople(),
+      tasks: defaultTasks()
     };
+  }
+  function defaultTasks(){
+    return [
+      "Confirm final guest numbers with the venue",
+      "Make final payments to suppliers",
+      "Confirm arrival times with hair & makeup",
+      "Confirm timings with the photographer & videographer",
+      "Give the run sheet to the venue / coordinator",
+      "Pack the emergency kit (safety pins, tissues, meds)"
+    ].map(function(t){ return { text:t, who:"", status:"todo", note:"", due:"", dayof:true }; });
   }
   function defaultPeople(){
     return ["Bride","Groom","Maid of Honour","Best Man","Bridesmaids","Groomsmen",
@@ -711,8 +722,14 @@
     if(!Array.isArray(WED.seating.guests)) WED.seating.guests = [];
     if(!Array.isArray(WED.seating.tables)) WED.seating.tables = [];
     if(typeof WED.seating.publish !== "boolean") WED.seating.publish = false;
-    if(!Array.isArray(WED.todos)) WED.todos = defaultTodos();
     if(!Array.isArray(WED.tasks)) WED.tasks = [];
+    if(!Array.isArray(WED.todos)) WED.todos = [];
+    // Migrate any legacy manual day-of todos into the Task Board (as Day-of tasks) — one source of truth now.
+    if(WED.todos.length){
+      WED.todos.forEach(function(t){ WED.tasks.push({ text:(t.text||""), who:"", status:(t.done?"done":"todo"), note:"", due:"", dayof:true }); });
+      WED.todos = [];
+    }
+    WED.tasks.forEach(function(t){ if(typeof t.dayof !== "boolean") t.dayof = false; });
     if(!Array.isArray(WED.people)) WED.people = [];
     if(typeof WED.notes !== "string") WED.notes = "";
     if(!Array.isArray(WED.transport)) WED.transport = [];
@@ -721,16 +738,6 @@
     wedDirty = false; if($("wedSaved")) $("wedSaved").textContent = "";
     renderSchedule(); renderWexp(); renderSeat(); renderTodos(); renderPeople(); renderTasks(); renderNotes(); renderTransport(); renderAccom();
     seatingReady = true;
-  }
-  function defaultTodos(){
-    return [
-      {text:"Confirm final guest numbers with the venue", done:false},
-      {text:"Make final payments to suppliers", done:false},
-      {text:"Confirm arrival times with hair & makeup", done:false},
-      {text:"Confirm timings with the photographer & videographer", done:false},
-      {text:"Give the run sheet to the venue / coordinator", done:false},
-      {text:"Pack the emergency kit (safety pins, tissues, meds)", done:false}
-    ];
   }
   function whoList(){
     const s = new Set();
@@ -857,7 +864,7 @@
     } else { budVal.textContent = "—"; budVal.style.color = "var(--ink)"; budLab.textContent = "Vs budget"; }
     const bi = $("wexp-budget"); if(bi && document.activeElement !== bi) bi.value = WED.budget || "";
     renderPie(); renderDue();
-    if(WED && Array.isArray(WED.todos)) renderTodos();   // keep auto payment tasks in sync
+    if(WED) renderTodos();   // keep supplier-payment rows in sync when expenses change
   }
   function daysBetween(a, b){
     const da = new Date(a + "T00:00:00"), db = new Date(b + "T00:00:00");
@@ -1189,19 +1196,25 @@
         '<td>' + whoSelectHTML(tk.who, "tk-who") + '</td>' +
         '<td><select class="tk-status st-sel st-' + st + '"><option value="todo"' + (st==="todo"?" selected":"") + '>To do</option><option value="wip"' + (st==="wip"?" selected":"") + '>In progress</option><option value="done"' + (st==="done"?" selected":"") + '>Done</option></select></td>' +
         '<td><input type="date" class="tk-due" value="' + esc(tk.due||"") + '"></td>' +
+        '<td class="center"><input type="checkbox" class="tk-dayof"' + (tk.dayof ? " checked" : "") + '></td>' +
         '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const tx = tr.querySelector(".tk-text"), nt = tr.querySelector(".tk-note"), wh = tr.querySelector(".tk-who"), stsel = tr.querySelector(".tk-status"), du = tr.querySelector(".tk-due");
+      const tx = tr.querySelector(".tk-text"), nt = tr.querySelector(".tk-note"), wh = tr.querySelector(".tk-who"), stsel = tr.querySelector(".tk-status"), du = tr.querySelector(".tk-due"), df = tr.querySelector(".tk-dayof");
       tx.addEventListener("input", () => { tk.text = tx.value; wedMark(); });
+      tx.addEventListener("change", () => { if(tk.dayof) syncDayof(); });
       nt.addEventListener("input", () => { tk.note = nt.value; wedMark(); });
-      wh.addEventListener("change", () => { tk.who = wh.value; wedMark(); });
-      stsel.addEventListener("change", () => { tk.status = stsel.value; stsel.className = "tk-status st-sel st-" + stsel.value; wedMark(); updateTasksCount(); });
+      wh.addEventListener("change", () => { tk.who = wh.value; wedMark(); if(tk.dayof) syncDayof(); });
+      stsel.addEventListener("change", () => { tk.status = stsel.value; stsel.className = "tk-status st-sel st-" + stsel.value; wedMark(); updateTasksCount(); if(tk.dayof) syncDayof(); });
       du.addEventListener("input", () => { tk.due = du.value; wedMark(); });
-      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.tasks.indexOf(tk); if(k>=0) WED.tasks.splice(k,1); wedMark(); renderTasks(); refreshSchedWho(); });
+      du.addEventListener("change", () => { if(tk.dayof) syncDayof(); });
+      df.addEventListener("change", () => { tk.dayof = df.checked; wedMark(); syncDayof(); });
+      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.tasks.indexOf(tk); if(k>=0) WED.tasks.splice(k,1); wedMark(); renderTasks(); refreshSchedWho(); syncDayof(); });
       b.appendChild(tr);
     });
-    if(!shown){ b.innerHTML = '<tr><td colspan="5" class="empty" style="padding:14px">' + (WED.tasks.length ? "No tasks for this person." : "No tasks yet — add one below.") + '</td></tr>'; }
+    if(!shown){ b.innerHTML = '<tr><td colspan="6" class="empty" style="padding:14px">' + (WED.tasks.length ? "No tasks for this person." : "No tasks yet — add one below.") + '</td></tr>'; }
     updateTasksCount();
   }
+  // Keep the Day-of Checklist in step with the Task Board.
+  function syncDayof(){ if($("todo-body")) renderTodos(); }
 
   /* ---- People & Access ---- */
   function genPw(){ const cs = "abcdefghijkmnpqrstuvwxyz23456789"; let s = ""; for(let i=0;i<7;i++){ s += cs[Math.floor(Math.random()*cs.length)]; } return s; }
@@ -1264,40 +1277,48 @@
   }
   /* ---- Day-of checklist (auto payment tasks from suppliers + your own tasks) ---- */
   function autoPayTasks(){ return WED.expenses.filter(e => num(e.amount) > 0 && (e.item||"").trim()); }
+  // Day-of tasks = Task Board tasks flagged "Day-of", sorted by due date (undated last).
+  function dayofTasks(){
+    return (WED.tasks||[]).filter(t => t && t.dayof && (t.text||"").trim())
+      .slice().sort((a,b) => { const da=a.due||"", db=b.due||""; if(!da&&!db) return 0; if(!da) return 1; if(!db) return -1; return da < db ? -1 : (da > db ? 1 : 0); });
+  }
   function updateTodoCount(){
     const pays = autoPayTasks();
-    const done = pays.filter(e => e.paid).length + WED.todos.filter(t => t.done).length;
-    const total = pays.length + WED.todos.length;
-    const el = $("todo-count"); if(el) el.textContent = done + " / " + total + " done";
+    const dts = dayofTasks();
+    const done = pays.filter(e => e.paid).length + dts.filter(t => t.status === "done").length;
+    const total = pays.length + dts.length;
+    const el = $("todo-count"); if(el) el.textContent = total ? (done + " / " + total + " done") : "";
   }
   function renderTodos(){
-    const b = $("todo-body"); if(!b || !WED || !Array.isArray(WED.todos)) return; b.innerHTML = "";
-    // Auto-generated payment tasks, pulled from your suppliers. Tick one to mark it paid.
+    const b = $("todo-body"); if(!b || !WED) return; b.innerHTML = "";
+    // Supplier payments, pulled from your suppliers. Tick one to mark it paid.
     autoPayTasks().forEach(e => {
       const bal = rowBalance(e);
-      const label = "Pay " + e.item + " — " + (e.paid ? "paid ✓" : ("A$" + bal.toLocaleString() + (e.due ? (" (due " + niceDate(e.due) + ")") : "")));
+      const label = "Pay " + e.item + " — " + (e.paid ? "paid ✓" : ("A$" + bal.toLocaleString()));
       const tr = document.createElement("tr");
       tr.innerHTML =
         '<td class="center"><input type="checkbox"' + (e.paid?" checked":"") + '></td>' +
         '<td><span class="auto-task' + (e.paid?" done-text":"") + '">' + esc(label) + '</span> <span class="auto-badge" title="Pulled in from your suppliers">from suppliers</span></td>' +
-        '<td></td>';
+        '<td></td>' +
+        '<td class="when">' + (e.due ? esc(niceDate(e.due)) : "") + '</td>';
       tr.querySelector("input").addEventListener("change", function(){ e.paid = this.checked; wedMark(); renderWexp(); renderTodos(); });
       b.appendChild(tr);
     });
-    // Your own tasks
-    WED.todos.forEach(row => {
+    // Day-of tasks from the Task Board. Tick = mark Done on the board.
+    dayofTasks().forEach(tk => {
+      const doneNow = tk.status === "done";
       const tr = document.createElement("tr");
       tr.innerHTML =
-        '<td class="center"><input type="checkbox" class="f-td-done"' + (row.done?" checked":"") + '></td>' +
-        '<td><input type="text" class="f-td-text" value="' + esc(row.text||"") + '" placeholder="e.g. Confirm cake delivery time"></td>' +
-        '<td><button class="rowdel" title="Remove">&#10005;</button></td>';
-      const cb = tr.querySelector(".f-td-done"), tx = tr.querySelector(".f-td-text");
-      if(row.done) tx.classList.add("done-text");
-      cb.addEventListener("change", () => { row.done = cb.checked; tx.classList.toggle("done-text", cb.checked); wedMark(); updateTodoCount(); });
-      tx.addEventListener("input", () => { row.text = tx.value; wedMark(); });
-      tr.querySelector(".rowdel").addEventListener("click", () => { const k = WED.todos.indexOf(row); if(k>=0) WED.todos.splice(k,1); wedMark(); renderTodos(); });
+        '<td class="center"><input type="checkbox" class="f-td-done"' + (doneNow?" checked":"") + '></td>' +
+        '<td><span class="auto-task' + (doneNow?" done-text":"") + '">' + (esc(tk.text||"") || '<span style="color:var(--ink-soft)">(untitled task)</span>') + '</span></td>' +
+        '<td>' + ((tk.who||"").trim() ? esc(tk.who) : '<span style="color:var(--ink-soft)">—</span>') + '</td>' +
+        '<td class="when">' + (tk.due ? esc(niceDate(tk.due)) : "") + '</td>';
+      tr.querySelector(".f-td-done").addEventListener("change", function(){ tk.status = this.checked ? "done" : "todo"; wedMark(); renderTasks(); renderTodos(); });
       b.appendChild(tr);
     });
+    if(!autoPayTasks().length && !dayofTasks().length){
+      b.innerHTML = '<tr><td colspan="4" class="empty" style="padding:14px">Nothing here yet — tick &ldquo;Day-of&rdquo; on a task in the Task Board above, or add amounts to your suppliers.</td></tr>';
+    }
     updateTodoCount();
   }
 
@@ -1435,9 +1456,9 @@
   $("wexp-cal-all").addEventListener("click", addAllReminders);
   $("wexp-budget").addEventListener("input", function(){ WED.budget = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
   $("wexp-heads").addEventListener("input", function(){ WED.headcount = (this.value===""?null:num(this.value)); wedMark(); updateWexp(); });
-  $("todo-add").addEventListener("click", () => { WED.todos.push({text:"",done:false}); wedMark(); renderTodos(); });
+  $("todo-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:"",dayof:true}); wedMark(); renderTasks(); renderTodos(); });
   $("people-add").addEventListener("click", () => { WED.people.push({name:"",note:"",pw:"",view:{run:true,tasks:true,notes:false}}); wedMark(); renderPeople(); });
-  $("tasks-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:""}); wedMark(); renderTasks(); });
+  $("tasks-add").addEventListener("click", () => { WED.tasks.push({text:"",who:"",status:"todo",note:"",due:"",dayof:false}); wedMark(); renderTasks(); });
   $("transport-add").addEventListener("click", () => { WED.transport.push({time:"",who:"",from:"",to:"",provider:"",contact:"",guest:false}); wedMark(); renderTransport(); });
   $("accom-add").addEventListener("click", () => { WED.accommodation.push({place:"",checkin:"",checkout:"",who:"",address:"",conf:"",link:"",guest:false}); wedMark(); renderAccom(); });
   $("tasks-filter").addEventListener("change", renderTasks);
