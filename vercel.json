@@ -6,6 +6,7 @@
     { "source": "/hens", "destination": "/hens.html" },
     { "source": "/hens-itinerary", "destination": "/hens-itinerary.html" },
     { "source": "/crew", "destination": "/crew.html" },
+    { "source": "/kitchen-tea", "destination": "/kitchen-tea.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
