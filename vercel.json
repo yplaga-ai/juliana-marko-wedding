@@ -1,6 +1,6 @@
 {
   "redirects": [
-    { "source": "/kitchen-tea", "destination": "/bridal-shower", "permanent": true }
+    { "source": "/bridal-shower", "destination": "/kitchen-tea", "permanent": true }
   ],
   "rewrites": [
     { "source": "/album", "destination": "/album.html" },
@@ -9,7 +9,7 @@
     { "source": "/hens", "destination": "/hens.html" },
     { "source": "/hens-itinerary", "destination": "/hens-itinerary.html" },
     { "source": "/crew", "destination": "/crew.html" },
-    { "source": "/bridal-shower", "destination": "/bridal-shower.html" },
+    { "source": "/kitchen-tea", "destination": "/kitchen-tea.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
