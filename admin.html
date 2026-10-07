@@ -44,6 +44,10 @@
   a.email{color:var(--sage-deep);text-decoration:none;}
   a.email:hover{text-decoration:underline;}
   .empty{padding:22px 14px;color:var(--ink-soft);font-style:italic;}
+  .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .photo-tile{position:relative;aspect-ratio:1;overflow:hidden;border-radius:6px;background:#f0eadd;border:1px solid rgba(0,0,0,.05);}
+  .photo-tile img,.photo-tile video{width:100%;height:100%;object-fit:cover;display:block;}
+  .photo-tile .play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;}
   .status{text-align:center;color:var(--ink-soft);font-size:.9rem;margin:8px 0;min-height:1.1em;}
   /* Wedding-day planner */
   .subnote{font-size:.85rem;color:var(--ink-soft);margin:0 0 10px;}
@@ -205,6 +209,19 @@
       <a class="btn" href="/album" target="_blank" rel="noopener">Photo album &#8599;</a>
     </div>
     <div class="status" id="status"></div>
+
+    <section class="event" id="ev-photos">
+      <div class="meta">
+        <div>
+          <h2>Guest Photos</h2>
+          <span class="count" id="photos-count"></span>
+        </div>
+        <button class="btn" id="photos-refresh">Refresh</button>
+      </div>
+      <div class="status" id="photos-status"></div>
+      <div class="photo-grid" id="photos-grid"></div>
+      <div class="empty" id="photos-empty" style="display:none">No guest photos yet.</div>
+    </section>
 
     <section class="event" id="ev-kitchen">
       <div class="meta">
@@ -523,6 +540,8 @@
   let PW = "";
   let KITCHEN = [];
   let WEDDING = [];
+  const PHOTO_PW = "44Hoolis2026";
+  const PHOTO_WORKER = "https://juliana-marko-photos.xanivarcloud.workers.dev";
 
   function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmt(ts){
@@ -530,6 +549,55 @@
     if(isNaN(d)) return "";
     try { return d.toLocaleString('en-AU', { timeZone:'Australia/Melbourne', dateStyle:'medium', timeStyle:'short' }); }
     catch(_) { return d.toLocaleString(); }
+  }
+  function photoIsVideo(key){ return /\.(mp4|mov|webm|m4v|avi|3gp)$/i.test(key || ""); }
+  function photoUrl(key){ return PHOTO_WORKER + "/file/" + key + "?pw=" + encodeURIComponent(PHOTO_PW); }
+  async function loadGuestPhotos(){
+    const status = $("photos-status");
+    status.textContent = "Loading…";
+    try{
+      const r = await fetch(PHOTO_WORKER + "/list?pw=" + encodeURIComponent(PHOTO_PW));
+      if(!r.ok) throw new Error("Couldn't load guest photos.");
+      const data = await r.json();
+      const items = Array.isArray(data.items) ? data.items : [];
+      const grid = $("photos-grid");
+      grid.innerHTML = "";
+      $("photos-count").textContent = items.length + (items.length === 1 ? " photo" : " photos");
+      $("photos-empty").style.display = items.length ? "none" : "";
+      items.forEach(function(item){
+        const key = item && item.key;
+        if(!key) return;
+        const tile = document.createElement("a");
+        tile.className = "photo-tile";
+        tile.href = photoUrl(key);
+        tile.target = "_blank";
+        tile.rel = "noopener";
+        if(photoIsVideo(key)){
+          const video = document.createElement("video");
+          video.src = tile.href;
+          video.muted = true;
+          video.preload = "metadata";
+          video.setAttribute("playsinline", "");
+          tile.appendChild(video);
+          const play = document.createElement("span");
+          play.className = "play";
+          play.textContent = "\u25B6";
+          tile.appendChild(play);
+        } else {
+          const img = document.createElement("img");
+          img.src = tile.href;
+          img.loading = "lazy";
+          img.alt = "";
+          tile.appendChild(img);
+        }
+        grid.appendChild(tile);
+      });
+      status.textContent = "";
+    } catch(e){
+      $("photos-grid").innerHTML = "";
+      $("photos-empty").style.display = "none";
+      status.textContent = e.message || "Couldn't load guest photos.";
+    }
   }
 
   // Kitchen Tea + Wedding replies are kept on this page (never hens — the worker doesn't send them here).
@@ -658,6 +726,7 @@
       ingest(await r.json());
       renderKitchen();
       renderWeddingRsvps();
+      loadGuestPhotos();
       loadWedding();
       loadRegistry();
       loadSite();
@@ -1855,6 +1924,7 @@
   $("go").addEventListener("click", attempt);
   $("pw").addEventListener("keydown", e => { if(e.key === "Enter") attempt(); });
   $("refresh").addEventListener("click", load);
+  $("photos-refresh").addEventListener("click", loadGuestPhotos);
   $("csv-kitchen").addEventListener("click", downloadCSV);
 </script>
 </body>
