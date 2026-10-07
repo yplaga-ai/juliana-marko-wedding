@@ -869,7 +869,7 @@
   if (/^\/photos\/?$/i.test(location.pathname) || location.hash === '#photos') {
     const goToPhotos = () => {
       const el = document.getElementById('photos');
-      if (el) setTimeout(function(){ el.scrollIntoView({ behavior: 'auto', block: 'start' }); }, 500);
+      if (el) setTimeout(function(){ el.scrollIntoView({ behavior: 'instant', block: 'start' }); }, 500);
     };
     if (document.readyState === 'complete') goToPhotos();
     else window.addEventListener('load', goToPhotos);
